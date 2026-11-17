@@ -75,6 +75,7 @@ main.full{max-width:none}
 .hero-box a:hover,.hero-box a:focus-visible{background:rgba(255,255,255,.12);outline:none}
 @media(max-width:600px){nav{margin-left:6px}main.full{padding:8px}}
 .stg{display:flex;gap:4px;margin:8px 0}.stg i{flex:1;height:6px;border-radius:3px;background:currentColor;opacity:.15}.stg i.on{opacity:1;background:var(--ok,#2f6f46)}
+.ptabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}.ptabs button{white-space:nowrap;border:1px solid var(--line,#d4d4d4);background:var(--card,#fff);color:inherit;padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit}.ptabs button.on{background:var(--acc,#cfcfcf);color:var(--acc-t,#111);font-weight:600}.cols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px;align-items:start}@media(max-width:820px){.cols{grid-template-columns:1fr}}
 </style></head>
 <body>
 <header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing"></h1><nav id="nav"></nav><span id="sync" class="muted" style="font-size:13px"></span></header>
@@ -425,36 +426,49 @@ function boot(){
  PIN=p;pend=()=>{$('view').innerHTML='<p class="muted">Menghubungkan ke Google Sheets...</p>'};render();setSync('Menghubungkan...');
  load(true).catch(e=>{PIN='';setSync('Belum masuk');vLogin(/AUTH/.test(e.message)?'':'Gagal terhubung: '+e.message)})}
 /* ---------- GUDANG PRODUKSI ---------- */
-const STG=['cetak','bahan','cutting','jahit','finishing','selesai'],SL={cetak:'Dicetak di vendor',bahan:'Gudang bahan',cutting:'Cutting',jahit:'Jahit',finishing:'Finishing',selesai:'Masuk stok'},SBY={bahan:'Petugas gudang',cutting:'Nama tukang cutting',jahit:'Nama penjahit',finishing:'Petugas finishing',selesai:'Petugas QC'};
-let tgt=0;
+const STG=['cetak','bahan','cutting','jahit','finishing','selesai'],SL={cetak:'Dicetak di vendor',bahan:'Rak bahan',cutting:'Cutting',jahit:'Jahit',finishing:'Finishing',selesai:'Masuk stok'},SBY={bahan:'Petugas rak bahan',cutting:'Nama tukang cutting',jahit:'Nama penjahit',finishing:'Petugas finishing',selesai:'Petugas QC'};
+const PT=[['cetak','Cetak'],['bahan','Rak bahan'],['cutting','Cutting'],['jahit','Jahit'],['finishing','Finishing'],['selesai','Selesai']];
+let pst='cetak',pq='',pOnly=true,tgt=0,draft=[],pday='';
+const ymd=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
 const lowN=()=>ready?allV().filter(x=>!isJ(x.v)&&x.v.stock<=S.low).length:0;
-function vProd(){
- const jobs=S.jobs||[],act=jobs.filter(j=>j.stage!=='selesai'),inJ={},sold={},d30=Date.now()-30*864e5;
- act.forEach(j=>j.items.forEach(i=>inJ[i.vid]=(inJ[i.vid]||0)+i.qty));
- S.sales.forEach(s=>{if(new Date(s.date)>d30)s.items.forEach(c=>sold[c.id]=(sold[c.id]||0)+c.qty)});
- const t=tgt||S.low*3,sug=allV().filter(x=>!isJ(x.v)&&x.v.stock<=S.low).map(x=>{const pj=inJ[x.v.id]||0,s30=sold[x.v.id]||0;return{...x,pj,s30,n:Math.max(Math.max(t,s30)-x.v.stock-pj,0)}}).sort((a,b)=>a.v.stock-b.v.stock);
- const cnt=s=>act.filter(j=>j.stage===s).reduce((a,j)=>a+j.items.reduce((b,i)=>b+i.qty,0),0);
- let h='<div class="stats">'+STG.slice(0,5).map(s=>'<div class="card stat"><span>'+SL[s]+'</span><div class="num">'+cnt(s)+'</div></div>').join('')+'</div>';
- h+='<div class="card" style="margin-top:14px"><h2 style="margin:0 0 6px">Saran cetak dari katalog</h2><p class="muted" style="margin:0 0 8px">Varian habis atau menipis (batas '+S.low+' unit). Jumlah saran = yang terbesar antara target stok dan penjualan 30 hari, dikurangi stok dan yang sedang diproduksi.</p><div class="bar" style="align-items:center"><span class="muted">Target stok per varian</span><input type="number" min="1" value="'+t+'" style="width:90px" onchange="tgt=Math.max(1,+this.value||0);vProd()"></div>';
- h+=sug.length?'<div class="scroll"><table><tr><th></th><th>Varian</th><th>Stok</th><th>Terjual 30 hari</th><th>Sedang diproduksi</th><th>Jumlah cetak</th></tr>'+sug.map(({p,v,pj,s30,n})=>'<tr><td><input type="checkbox" id="sc'+v.id+'" '+(n>0?'checked':'')+'></td><td><b>'+esc(cn(p,v))+'</b></td><td>'+v.stock+' '+sbadge(v)+'</td><td>'+(s30||'-')+'</td><td>'+(pj||'-')+'</td><td><input type="number" min="0" id="sq'+v.id+'" value="'+n+'" style="width:90px"></td></tr>').join('')+'</table></div><div class="form" style="margin-top:10px"><input id="vend" placeholder="Nama vendor cetak"><button class="btn" onclick="mkJob()">Buat order cetak</button></div>':'<p class="muted">Semua stok katalog aman, tidak ada yang perlu dicetak.</p>';
- h+='</div><h2 style="margin:18px 0 0">Order produksi berjalan</h2>'+(act.length?act.slice().sort((a,b)=>STG.indexOf(a.stage)-STG.indexOf(b.stage)).map(jobCard).join(''):'<p class="muted">Belum ada order berjalan.</p>');
- const dn=jobs.filter(j=>j.stage==='selesai').slice(0,8);
- if(dn.length)h+='<div class="card" style="margin-top:14px"><h2 style="margin:0 0 6px">Selesai (masuk stok POS)</h2><div class="scroll"><table><tr><th>No</th><th>Selesai</th><th>Item</th><th>Masuk</th><th>Reject</th></tr>'+dn.map(j=>'<tr><td>'+esc(j.no)+'</td><td>'+fmt((j.hist[j.hist.length-1]||{}).date||j.date)+'</td><td>'+j.items.map(i=>esc(i.name)).join(', ')+'</td><td>'+j.items.reduce((a,i)=>a+i.qty-(i.rej||0),0)+'</td><td>'+j.items.reduce((a,i)=>a+(i.rej||0),0)+'</td></tr>').join('')+'</table></div></div>';
- $('view').innerHTML=h}
-function jobCard(j){const i=STG.indexOf(j.stage),nx=STG[i+1],lh=j.hist[j.hist.length-1]||{};
- return '<div class="card" style="margin-top:12px"><div class="row"><b>'+esc(j.no)+'</b><span class="badge">'+SL[j.stage]+'</span></div><div class="muted">Dibuat '+fmt(j.date)+(j.vendor?' · Vendor: '+esc(j.vendor):'')+(i>0?' · Terakhir: '+fmt(lh.date)+(lh.by?' oleh '+esc(lh.by):'')+(lh.note?' ('+esc(lh.note)+')':''):'')+'</div><div class="stg">'+STG.map((s,k)=>'<i class="'+(k<=i?'on':'')+'"></i>').join('')+'</div>'
- +'<div class="scroll"><table><tr><th>Item</th><th>Jumlah</th>'+(nx==='selesai'?'<th>Reject</th>':'')+'</tr>'+j.items.map(it=>'<tr><td>'+esc(it.name)+'</td><td>'+it.qty+'</td>'+(nx==='selesai'?'<td><input type="number" min="0" max="'+it.qty+'" id="rj'+j.id+'_'+it.vid+'" placeholder="0" style="width:80px"></td>':'')+'</tr>').join('')+'</table></div>'
- +'<div class="form" style="margin-top:10px"><input id="by'+j.id+'" placeholder="'+(SBY[nx]||'')+'"><input id="nt'+j.id+'" placeholder="Catatan (opsional)"><button class="btn" onclick="adv(\''+j.id+'\')">'+(nx==='selesai'?'Selesai: masuk stok POS':nx==='bahan'?'Sudah dicetak: masuk gudang bahan':'Lanjut: '+SL[nx])+'</button>'+(isAdm?'<button class="btn sec" onclick="delJ(\''+j.id+'\')">Batalkan</button>':'')+'</div></div>'}
-function mkJob(){const items=[];allV().forEach(({p,v})=>{const c=$('sc'+v.id);if(c&&c.checked){const n=Math.floor(+$('sq'+v.id).value)||0;if(n>0)items.push({vid:v.id,name:cn(p,v),qty:n})}});
- if(!items.length){alert('Pilih minimal satu varian dengan jumlah lebih dari 0.');return}
- const vd=$('vend').value.trim(),now=new Date().toISOString();S.jobs=S.jobs||[];
- S.jobs.unshift({id:String(nid()),no:invId().replace('INV','PRD'),date:now,stage:'cetak',vendor:vd,items,hist:[{stage:'cetak',date:now,by:vd||ME,note:'Order cetak dibuat'}]});save();render()}
-async function adv(id){const j=(S.jobs||[]).find(x=>x.id===id);if(!j)return;const rej={};
- j.items.forEach(it=>{const e=$('rj'+id+'_'+it.vid);if(e&&+e.value>0)rej[it.vid]=+e.value});
- busyW++;setSync('Menyimpan...');let err='';
- try{await api('jobAdvance',id,j.stage,($('by'+id)||{}).value||'',($('nt'+id)||{}).value||'',rej)}catch(e){err=e.message}
+const jlist=s=>(S.jobs||[]).filter(j=>j.stage===s),lastH=j=>j.hist[j.hist.length-1]||{date:j.date},jq=j=>j.items.reduce((a,i)=>a+i.qty,0),jn=j=>j.items.map(i=>i.name).join(', '),tq=a=>a.reduce((s,j)=>s+jq(j),0);
+function vProd(){if(!pday)pday=ymd(new Date());
+ $('view').innerHTML='<div class="ptabs">'+PT.map(([k,l])=>{const n=k==='selesai'?0:tq(jlist(k));return'<button class="'+(k===pst?'on':'')+'" onclick="pst=\''+k+'\';vProd()">'+l+(n?' ('+n+')':'')+'</button>'}).join('')+'</div><div id="pbody"></div>';
+ if(pst==='cetak')cetakView();else if(pst==='selesai')doneView();else stageView(pst)}
+/* ----- Cetak: produk di kiri, order di kanan ----- */
+function cetakView(){$('pbody').innerHTML='<div class="cols"><div class="card"><h2 style="margin:0 0 8px">Produk</h2><div class="bar" style="align-items:center;flex-wrap:wrap"><input id="pq" placeholder="Cari produk, mis. kaos pe anak hitam L" value="'+esc(pq)+'" oninput="pq=this.value;fillL()" style="flex:1;min-width:160px"><label class="muted"><input type="checkbox" '+(pOnly?'checked':'')+' onchange="pOnly=this.checked;fillL()"> Hanya habis/menipis</label><span class="muted">Target stok</span><input type="number" min="1" value="'+(tgt||S.low*3)+'" style="width:80px" onchange="tgt=Math.max(1,+this.value||0);fillL()"></div><div id="pl" class="scroll"></div></div><div id="pr"></div></div>';fillL();fillR()}
+function pdata(){const inJ={},sold={},d30=Date.now()-30*864e5;(S.jobs||[]).filter(j=>j.stage!=='selesai').forEach(j=>j.items.forEach(i=>inJ[i.vid]=(inJ[i.vid]||0)+i.qty));S.sales.forEach(s=>{if(new Date(s.date)>d30)s.items.forEach(c=>sold[c.id]=(sold[c.id]||0)+c.qty)});return{inJ,sold}}
+function fillL(){const{inJ,sold}=pdata(),t=tgt||S.low*3,q=pq.trim().toLowerCase();
+ let rows=allV().filter(x=>!isJ(x.v)).map(x=>{const pj=inJ[x.v.id]||0,s30=sold[x.v.id]||0;return{...x,pj,s30,n:Math.max(Math.max(t,s30)-x.v.stock-pj,0)}}).filter(x=>(!q||cn(x.p,x.v).toLowerCase().includes(q))&&(!pOnly||q||x.v.stock<=S.low)).sort((a,b)=>a.v.stock-b.v.stock);
+ const tot=rows.length;rows=rows.slice(0,80);
+ $('pl').innerHTML=rows.length?'<table><tr><th>Produk</th><th>Stok</th><th>Terjual 30 hari</th><th>Diproduksi</th><th>Jumlah</th><th></th></tr>'+rows.map(({p,v,pj,s30,n})=>'<tr><td><b>'+esc(cn(p,v))+'</b></td><td>'+v.stock+' '+sbadge(v)+'</td><td>'+(s30||'-')+'</td><td>'+(pj||'-')+'</td><td><input type="number" min="1" id="q'+v.id+'" value="'+(n||'')+'" style="width:80px"></td><td><button class="btn sec" onclick="addD('+v.id+')">+ Order</button></td></tr>').join('')+'</table>'+(tot>80?'<p class="muted">Menampilkan 80 dari '+tot+'. Gunakan pencarian.</p>':''):'<p class="muted">'+(q?'Produk tidak ditemukan.':'Semua stok katalog aman.')+'</p>'}
+function addD(id){const n=Math.floor(+$('q'+id).value)||0;if(n<=0){alert('Isi jumlah cetak lebih dari 0.');return}
+ const x=allV().find(x=>x.v.id===id);if(!x)return;const d=draft.find(i=>i.vid===id);if(d)d.qty+=n;else draft.push({vid:id,name:cn(x.p,x.v),qty:n});fillR()}
+function fillR(){const jobs=S.jobs||[],day=pday,made=jobs.filter(j=>ymd(j.date)===day),done=jobs.filter(j=>j.hist.some(h=>h.stage==='bahan'&&ymd(h.date)===day)),wait=jobs.filter(j=>j.stage==='cetak').sort((a,b)=>a.date<b.date?-1:1);
+ const tb=a=>a.length?'<div class="scroll"><table><tr><th>Produk</th><th>Jumlah</th><th>Vendor</th><th>Status</th></tr>'+a.map(j=>'<tr><td>'+esc(jn(j))+'</td><td>'+jq(j)+'</td><td>'+esc(j.vendor||'-')+'</td><td>'+SL[j.stage]+'</td></tr>').join('')+'</table></div>':'<p class="muted" style="margin:4px 0">Tidak ada.</p>';
+ const h3=t=>'<h3 style="margin:12px 0 4px;font-size:14px">'+t+'</h3>';
+ $('pr').innerHTML='<div class="card"><h2 style="margin:0 0 8px">Buat order cetak</h2>'+(draft.length?'<table><tr><th>Produk</th><th>Jumlah</th><th></th></tr>'+draft.map((d,k)=>'<tr><td>'+esc(d.name)+'</td><td><input type="number" min="1" value="'+d.qty+'" style="width:70px" onchange="draft['+k+'].qty=Math.max(1,Math.floor(+this.value)||1)"></td><td><button class="btn sec" onclick="draft.splice('+k+',1);fillR()">Hapus</button></td></tr>').join('')+'</table><div class="form" style="margin-top:10px"><input id="vend" placeholder="Nama vendor cetak"><button class="btn" onclick="saveOrd()">Simpan order ('+draft.reduce((a,d)=>a+d.qty,0)+' pcs)</button></div>':'<p class="muted">Klik "+ Order" pada produk di sebelah kiri.</p>')+'</div>'
+ +'<div class="card" style="margin-top:12px"><h2 style="margin:0 0 8px">Rekap per hari</h2><div class="bar" style="align-items:center"><input type="date" value="'+day+'" onchange="pday=this.value||ymd(new Date());fillR()"><button class="btn sec" onclick="pday=ymd(new Date());fillR()">Hari ini</button></div>'+h3('Order dibuat ('+tq(made)+' pcs)')+tb(made)+h3('Selesai dicetak, masuk rak bahan ('+tq(done)+' pcs)')+tb(done)+'</div>'
+ +'<div class="card" style="margin-top:12px"><h2 style="margin:0 0 8px">Menunggu di vendor ('+tq(wait)+' pcs)</h2>'+(wait.length?'<div class="scroll"><table><tr><th></th><th>Produk</th><th>Jumlah</th><th>Vendor</th><th>Order</th></tr>'+wait.map(j=>'<tr><td><input type="checkbox" id="pc'+j.id+'"></td><td>'+esc(jn(j))+'</td><td>'+jq(j)+'</td><td>'+esc(j.vendor||'-')+'</td><td>'+fmt(j.date)+'</td></tr>').join('')+'</table></div><div class="form" style="margin-top:10px"><button class="btn" onclick="markPrinted()">Tandai sudah dicetak (masuk rak bahan)</button><button class="btn sec" onclick="selAll()">Pilih semua</button></div>':'<p class="muted">Tidak ada order yang menunggu.</p>')+'</div>'}
+function saveOrd(){if(!draft.length)return;const vd=($('vend')||{}).value?$('vend').value.trim():'',now=new Date().toISOString(),base=invId().replace('INV','PRD');S.jobs=S.jobs||[];
+ draft.forEach((it,k)=>S.jobs.unshift({id:String(nid()),no:base+'-'+(k+1),grp:base,date:now,stage:'cetak',vendor:vd,items:[{vid:it.vid,name:it.name,qty:it.qty}],hist:[{stage:'cetak',date:now,by:vd||ME,note:'Order cetak dibuat'}]}));
+ draft=[];save();render()}
+function selAll(){jlist('cetak').forEach(j=>{const e=$('pc'+j.id);if(e)e.checked=true})}
+function markPrinted(){const l=jlist('cetak').filter(j=>$('pc'+j.id)&&$('pc'+j.id).checked);if(!l.length){alert('Centang dulu order yang sudah dicetak.');return}advMany(l.map(j=>[j.id,'cetak','','',{}]))}
+/* ----- Rak bahan, Cutting, Jahit, Finishing: satu tab per tahap ----- */
+function stageView(s){$('pbody').innerHTML='<div class="card"><div class="bar" style="align-items:center;flex-wrap:wrap"><h2 style="margin:0">'+SL[s]+'</h2><input id="pq" placeholder="Cari produk" value="'+esc(pq)+'" oninput="pq=this.value;fillS(\''+s+'\')" style="flex:1;min-width:160px"><span id="ps" class="muted"></span></div><div id="pl" class="scroll"></div></div>';fillS(s)}
+function fillS(s){const nx=STG[STG.indexOf(s)+1],q=pq.trim().toLowerCase(),rows=jlist(s).filter(j=>!q||jn(j).toLowerCase().includes(q)).sort((a,b)=>lastH(a).date<lastH(b).date?-1:1);
+ $('ps').textContent=rows.length+' baris · '+tq(rows)+' pcs';
+ $('pl').innerHTML=rows.length?'<table><tr><th>Produk</th><th>Jumlah</th><th>Asal</th><th>Masuk tahap</th>'+(s==='finishing'?'<th>Reject</th>':'')+'<th>Petugas</th><th>Catatan</th><th></th></tr>'+rows.map(j=>{const lh=lastH(j),dy=Math.floor((Date.now()-new Date(lh.date))/864e5);return'<tr><td><b>'+esc(jn(j))+'</b></td><td>'+jq(j)+'</td><td>'+esc(j.vendor||'-')+'</td><td>'+fmt(lh.date)+' <span class="muted">('+dy+' hari)</span></td>'+(s==='finishing'?'<td>'+j.items.map(it=>'<input type="number" min="0" max="'+it.qty+'" id="rj'+j.id+'_'+it.vid+'" placeholder="0" style="width:70px">').join(' ')+'</td>':'')+'<td><input id="by'+j.id+'" placeholder="'+SBY[nx]+'" style="min-width:120px"></td><td><input id="nt'+j.id+'" placeholder="Opsional" style="min-width:110px"></td><td style="white-space:nowrap"><button class="btn" onclick="adv(\''+j.id+'\')">'+(nx==='selesai'?'Selesai: masuk stok POS':'Lanjut: '+SL[nx])+'</button>'+(isAdm?' <button class="btn sec" onclick="delJ(\''+j.id+'\')">Batalkan</button>':'')+'</td></tr>'}).join('')+'</table>':'<p class="muted">Tidak ada barang di tahap ini.</p>'}
+function doneView(){const r=jlist('selesai').sort((a,b)=>lastH(a).date<lastH(b).date?1:-1).slice(0,50);
+ $('pbody').innerHTML='<div class="card"><h2 style="margin:0 0 8px">Selesai (sudah masuk stok POS)</h2>'+(r.length?'<div class="scroll"><table><tr><th>Produk</th><th>Masuk stok</th><th>Reject</th><th>Selesai</th><th>Petugas</th></tr>'+r.map(j=>'<tr><td>'+esc(jn(j))+'</td><td>'+j.items.reduce((a,i)=>a+i.qty-(i.rej||0),0)+'</td><td>'+j.items.reduce((a,i)=>a+(i.rej||0),0)+'</td><td>'+fmt(lastH(j).date)+'</td><td>'+esc(lastH(j).by||'-')+'</td></tr>').join('')+'</table></div>':'<p class="muted">Belum ada.</p>')+'</div>'}
+async function advMany(list){busyW++;setSync('Menyimpan...');let err='';
+ for(const a of list){try{await api('jobAdvance',...a)}catch(e){err=e.message;break}}
  busyW--;if(err)alert('Gagal memindahkan tahap: '+err);
  try{await load(false)}catch(e){setSync('Gagal menyinkronkan',1)}}
+function adv(id){const j=(S.jobs||[]).find(x=>x.id===id);if(!j)return;const rej={};
+ j.items.forEach(it=>{const e=$('rj'+id+'_'+it.vid);if(e&&+e.value>0)rej[it.vid]=+e.value});
+ advMany([[id,j.stage,($('by'+id)||{}).value||'',($('nt'+id)||{}).value||'',rej]])}
 function delJ(id){if(!confirm('Batalkan order produksi ini?'))return;S.jobs=S.jobs.filter(x=>x.id!==id);save();render()}
 /* ---------- CADANGAN ---------- */
 function vCadangan(){
