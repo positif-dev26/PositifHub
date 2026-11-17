@@ -4,14 +4,14 @@
 <title>Positif POS</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#ececec;--card:#fff;--text:#262626;--muted:#767676;--line:#d4d4d4;--acc:#cfcfcf;--acc-t:#111;--ok:#2f6f46;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f0f0f;--card:#1b1b1b;--text:#ededed;--muted:#9a9a9a;--line:#333;--acc:#bdbdbd;--acc-t:#111;--ok:#6fcf97;--bad:#ff8a80}}
-:root[data-theme="dark"]{--bg:#0f0f0f;--card:#1b1b1b;--text:#ededed;--muted:#9a9a9a;--line:#333;--acc:#bdbdbd;--acc-t:#111;--ok:#6fcf97;--bad:#ff8a80}
+:root{--bg:#ececec;--card:#fff;--text:#262626;--muted:#767676;--line:#d4d4d4;--acc:#cfcfcf;--acc-t:#111;--ok:#2f6f46;--bad:#b3261e;--warn:#a85a00;--warn-bg:#ffe3b3;--bad-solid:#c62828;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f0f0f;--card:#1b1b1b;--text:#ededed;--muted:#9a9a9a;--line:#333;--acc:#bdbdbd;--acc-t:#111;--ok:#6fcf97;--bad:#ff8a80;--warn:#ffb74d;--warn-bg:rgba(255,183,77,.2);--bad-solid:#d32f2f}}
+:root[data-theme="dark"]{--bg:#0f0f0f;--card:#1b1b1b;--text:#ededed;--muted:#9a9a9a;--line:#333;--acc:#bdbdbd;--acc-t:#111;--ok:#6fcf97;--bad:#ff8a80;--warn:#ffb74d;--warn-bg:rgba(255,183,77,.2);--bad-solid:#d32f2f}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Barlow,system-ui,sans-serif}
 h2,.num{font-family:"Barlow Condensed",Impact,sans-serif;letter-spacing:.01em}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:8px 16px;flex-wrap:wrap}
-.logo{height:34px;display:block}.badge.bad{color:var(--bad);border-color:var(--bad)}.badge.ok{color:var(--ok);border-color:var(--ok)}.badge.mid{background:var(--acc);color:var(--acc-t);border-color:var(--text)}
+.logo{height:34px;display:block}.badge.bad,.badge.mid,.badge.ok{display:inline-flex;align-items:center;gap:4px;vertical-align:middle}.badge svg{width:12px;height:12px;flex:none}.badge.ok{color:var(--ok);border-color:transparent;background:none;font-weight:500;opacity:.85}.badge.mid{background:var(--warn-bg);color:var(--warn);border-color:var(--warn);font-weight:600}.badge.bad{background:var(--bad-solid);color:#fff;border-color:var(--bad-solid);font-weight:700;padding:3px 10px}.warn{color:var(--warn)}tr.st-out td:first-child{box-shadow:inset 3px 0 0 var(--bad-solid)}tr.st-low td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo,:root:not([data-theme="light"]) .rlogo{filter:invert(1)}}
 :root[data-theme="dark"] .logo,:root[data-theme="dark"] .rlogo{filter:invert(1)}
 nav{display:flex;gap:4px;overflow-x:auto;flex:1}
@@ -241,13 +241,15 @@ function setBC(id,val){val=val.trim();if(val&&allV().some(x=>x.v.id!==id&&x.v.ba
 function setImg(id,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);findV(id).v.img=c.toDataURL('image/jpeg',.7);save();render()};im.src=r.result};r.readAsDataURL(f)}
 /* ---------- STOK PERSEDIAAN ---------- */
 let sf='all',sq='',sv='now',lt='all';
-const sbadge=v=>{const s=stt(v);return `<span class="badge ${s==='Habis'?'bad':s==='Menipis'?'mid':'ok'}">${s}</span>`};
+const SIC={Habis:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>',Menipis:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.2L11.3 10.5H.7z" fill="currentColor"/><path d="M6 4.6v2.7" stroke="var(--warn-bg)" stroke-width="1.4" stroke-linecap="round"/><circle cx="6" cy="8.9" r=".8" fill="var(--warn-bg)"/></svg>',Aman:'<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="3" fill="currentColor"/></svg>'};
+const sbadge=v=>{const s=stt(v);return `<span class="badge ${s==='Habis'?'bad':s==='Menipis'?'mid':'ok'}">${SIC[s]||''}${s}</span>`};
+const scls=v=>{const s=stt(v);return s==='Habis'?'bad':s==='Menipis'?'warn':''},srow=v=>{const s=stt(v);return s==='Habis'?'st-out':s==='Menipis'?'st-low':''};
 function vStok(){
  const tr=allV().filter(x=>!isJ(x.v)),lo=tr.filter(x=>x.v.stock>0&&x.v.stock<=S.low).length,ou=tr.filter(x=>x.v.stock<1).length;
  const chip=(k,t)=>`<button class="btn ${sf===k?'':'sec'}" onclick="sf='${k}';vStok()">${t}</button>`;
  $('view').innerHTML=`<div class="stats">
  <div class="card stat"><span>Total unit tersedia</span><div class="num">${tr.reduce((a,x)=>a+x.v.stock,0)}</div></div>
- <div class="card stat"><span>Varian stok menipis</span><div class="num ${lo?'bad':''}">${lo}</div></div>
+ <div class="card stat"><span>Varian stok menipis</span><div class="num ${lo?'warn':''}">${lo}</div></div>
  <div class="card stat"><span>Varian habis</span><div class="num ${ou?'bad':''}">${ou}</div></div>
  <div class="card stat"><span>Total varian</span><div class="num">${tr.length}</div></div></div>
  <div class="card"><div class="bar" style="flex-wrap:wrap;align-items:center"><button class="btn ${sv==='now'?'':'sec'}" onclick="sv='now';vStok()">Stok terkini</button><button class="btn ${sv==='log'?'':'sec'}" onclick="sv='log';vStok()">Riwayat perubahan</button>
@@ -258,7 +260,7 @@ function sbody(){
  const ql=sq.toLowerCase();let h;
  if(sv==='now'){
   const l=allV().filter(x=>!isJ(x.v)&&(x.p.name+' '+vl(x.v)+' '+bcv(x.v)).toLowerCase().includes(ql)&&(sf==='all'||(sf==='low'&&x.v.stock>0&&x.v.stock<=S.low)||(sf==='out'&&x.v.stock<1)||(sf==='ok'&&x.v.stock>S.low))).sort((a,b)=>sf==='all'?0:a.v.stock-b.v.stock);
-  h=l.length?`<table><tr><th>Foto</th><th>Produk / varian</th><th>Stok</th><th>Ubah stok</th></tr>${l.map(({p,v})=>`<tr><td><div class="thumb" style="cursor:default">${v.img?`<img src="${v.img}" alt="">`:''}</div></td><td><b>${esc(p.name)}</b><br><small class="muted">${esc(vl(v))}${', '+esc(bcv(v))}</small></td><td><span class="num" style="font-size:26px;font-weight:700">${v.stock}</span> ${sbadge(v)}</td><td><div class="form" style="margin:0;grid-template-columns:90px minmax(120px,1fr) repeat(3,auto)"><input type="number" min="0" id="a${v.id}" placeholder="Jumlah"><input id="t${v.id}" placeholder="Catatan (opsional)"><button class="btn sec" onclick="adj(${v.id},'add')">Tambah</button><button class="btn sec" onclick="adj(${v.id},'sub')">Kurangi</button><button class="btn sec" onclick="adj(${v.id},'set')">Ubah jadi</button></div></td></tr>`).join('')}</table><p class="muted">Produk jasa tidak dihitung stoknya.</p>`:'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>'}
+  h=l.length?`<table><tr><th>Foto</th><th>Produk / varian</th><th>Stok</th><th>Ubah stok</th></tr>${l.map(({p,v})=>`<tr class="${srow(v)}"><td><div class="thumb" style="cursor:default">${v.img?`<img src="${v.img}" alt="">`:''}</div></td><td><b>${esc(p.name)}</b><br><small class="muted">${esc(vl(v))}${', '+esc(bcv(v))}</small></td><td><span class="num ${scls(v)}" style="font-size:26px;font-weight:700">${v.stock}</span> ${sbadge(v)}</td><td><div class="form" style="margin:0;grid-template-columns:90px minmax(120px,1fr) repeat(3,auto)"><input type="number" min="0" id="a${v.id}" placeholder="Jumlah"><input id="t${v.id}" placeholder="Catatan (opsional)"><button class="btn sec" onclick="adj(${v.id},'add')">Tambah</button><button class="btn sec" onclick="adj(${v.id},'sub')">Kurangi</button><button class="btn sec" onclick="adj(${v.id},'set')">Ubah jadi</button></div></td></tr>`).join('')}</table><p class="muted">Produk jasa tidak dihitung stoknya.</p>`:'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>'}
  else{
   const l=S.log.filter(e=>(lt==='all'||e.type===lt)&&(e.name+' '+e.note).toLowerCase().includes(ql)).slice(0,300);
   h=l.length?`<table><tr><th>Waktu</th><th>Produk / varian</th><th>Jenis</th><th>Sebelum</th><th>Sesudah</th><th>Selisih</th><th>Catatan</th></tr>${l.map(e=>{const d=e.after-e.before;return `<tr><td>${fmt(e.date)}</td><td>${esc(e.name)}</td><td><span class="badge">${e.type}</span></td><td>${e.before}</td><td>${e.after}</td><td class="${d<0?'bad':'ok'}"><b>${d>0?'+':''}${d}</b></td><td>${esc(e.note)}</td></tr>`}).join('')}</table>`:'<p class="muted">Belum ada riwayat perubahan stok. Penambahan, pengubahan, dan penjualan akan tercatat di sini.</p>'}
@@ -326,7 +328,7 @@ function vLaporan(){
  <div class="card stat"><span>Total omzet semua</span><div class="num">${rp(sum(S.sales))}</div></div>
  <div class="card stat"><span>Sisa bayar pesanan custom</span><div class="num ${piutang?'bad':''}">${rp(piutang)}</div></div></div>
  <div class="pos" style="grid-template-columns:1fr 1fr"><div class="card"><h2 style="margin:0 0 8px">Produk terlaris</h2>${top.length?top.map(t=>`<div class="row"><span>${esc(t[0])}</span><b>${t[1]} terjual</b></div>`).join(''):'<p class="muted">Belum ada data penjualan.</p>'}</div>
- <div class="card"><h2 style="margin:0 0 8px">Stok menipis atau habis</h2>${low.length?low.map(x=>`<div class="row"><span>${esc(cn(x.p,x.v))}</span><b class="bad">${x.v.stock}</b></div>`).join(''):'<p class="muted">Semua stok aman.</p>'}</div></div>
+ <div class="card"><h2 style="margin:0 0 8px">Stok menipis atau habis</h2>${low.length?low.map(x=>`<div class="row"><span>${esc(cn(x.p,x.v))}</span><b class="${x.v.stock<1?'bad':'warn'}">${x.v.stock}</b></div>`).join(''):'<p class="muted">Semua stok aman.</p>'}</div></div>
  ${isAdm?'<p><button class="btn sec" onclick="resetAll()">Hapus semua data di server</button></p>':''}`;
 }
 /* ---------- SINKRON (GOOGLE SHEETS VIA APPS SCRIPT) ---------- */
