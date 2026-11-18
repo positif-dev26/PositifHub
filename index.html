@@ -11,7 +11,15 @@
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Barlow,system-ui,sans-serif}
 h2,.num{font-family:"Barlow Condensed",Impact,sans-serif;letter-spacing:.01em}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:8px 16px;flex-wrap:wrap}
-.logo{height:34px;display:block}.badge.bad{color:var(--bad);border-color:var(--bad)}.badge.ok{color:var(--ok);border-color:var(--ok)}.badge.mid{background:var(--acc);color:var(--acc-t);border-color:var(--text)}
+.logo{height:34px;display:block}.badge.ok,.badge.mid,.badge.bad{display:inline-flex;align-items:center;gap:6px;padding:5px 16px;border-radius:999px;font-weight:600;font-size:14px;line-height:1;white-space:nowrap;border:1px solid}
+.badge svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.badge.ok{color:#1f8a3b;border-color:rgba(31,138,59,.45);background:transparent;font-weight:500}
+.badge.mid{color:#b7791f;border:2px solid #d9962b;background:transparent;padding:4px 15px}
+.badge.bad{color:#fff;background:#b3302f;border-color:#b3302f;padding:6px 20px}
+tr.st-mid>td{background:rgba(217,150,43,.12)}tr.st-mid .num{color:#b7791f}
+tr.st-bad>td{background:rgba(179,48,47,.12)}tr.st-bad .num{color:#c0504f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .badge.ok{color:#2fc24f;border-color:rgba(47,194,79,.4)}:root:not([data-theme="light"]) .badge.mid{color:#e8a734;border-color:#c98a2e}:root:not([data-theme="light"]) tr.st-mid>td{background:rgba(217,150,43,.16)}:root:not([data-theme="light"]) tr.st-bad>td{background:rgba(179,48,47,.22)}:root:not([data-theme="light"]) tr.st-mid .num{color:#e8a734}:root:not([data-theme="light"]) tr.st-bad .num{color:#f08a8a}}
+:root[data-theme="dark"] .badge.ok{color:#2fc24f;border-color:rgba(47,194,79,.4)}:root[data-theme="dark"] .badge.mid{color:#e8a734;border-color:#c98a2e}:root[data-theme="dark"] tr.st-mid>td{background:rgba(217,150,43,.16)}:root[data-theme="dark"] tr.st-bad>td{background:rgba(179,48,47,.22)}:root[data-theme="dark"] tr.st-mid .num{color:#e8a734}:root[data-theme="dark"] tr.st-bad .num{color:#f08a8a}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo,:root:not([data-theme="light"]) .rlogo{filter:invert(1)}}
 :root[data-theme="dark"] .logo,:root[data-theme="dark"] .rlogo{filter:invert(1)}
 nav{display:flex;gap:4px;overflow-x:auto;flex:1}
@@ -266,7 +274,9 @@ function setBC(id,val){val=val.trim();if(val&&allV().some(x=>x.v.id!==id&&x.v.ba
 function setImg(id,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);findV(id).v.img=c.toDataURL('image/jpeg',.7);save();render()};im.src=r.result};r.readAsDataURL(f)}
 /* ---------- STOK PERSEDIAAN ---------- */
 let sf='all',sq='',sv='now',lt='all';
-const sbadge=v=>{const s=stt(v);return `<span class="badge ${s==='Habis'?'bad':s==='Menipis'?'mid':'ok'}">${s}</span>`};
+const SI={Aman:'<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',Menipis:'<svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>',Habis:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>'};
+const sbadge=v=>{const s=stt(v);return `<span class="badge ${s==='Habis'?'bad':s==='Menipis'?'mid':'ok'}">${SI[s]||''}${s}</span>`};
+const srow=v=>{const s=stt(v);return s==='Habis'?'st-bad':s==='Menipis'?'st-mid':''};
 function vStok(){
  const tr=allV().filter(x=>!isJ(x.v)),lo=tr.filter(x=>x.v.stock>0&&x.v.stock<=S.low).length,ou=tr.filter(x=>x.v.stock<1).length;
  const chip=(k,t)=>`<button class="btn ${sf===k?'':'sec'}" onclick="sf='${k}';vStok()">${t}</button>`;
@@ -283,7 +293,7 @@ function sbody(){
  const ql=sq.toLowerCase();let h;
  if(sv==='now'){
   const l=allV().filter(x=>!isJ(x.v)&&(x.p.name+' '+vl(x.v)+' '+bcv(x.v)).toLowerCase().includes(ql)&&(sf==='all'||(sf==='low'&&x.v.stock>0&&x.v.stock<=S.low)||(sf==='out'&&x.v.stock<1)||(sf==='ok'&&x.v.stock>S.low))).sort((a,b)=>sf==='all'?0:a.v.stock-b.v.stock);
-  h=l.length?`<table><tr><th>Foto</th><th>Produk / varian</th><th>Stok</th><th>Ubah stok</th></tr>${l.map(({p,v})=>`<tr><td><div class="thumb" style="cursor:default">${v.img?`<img src="${v.img}" alt="">`:''}</div></td><td><b>${esc(p.name)}</b><br><small class="muted">${esc(vl(v))}${', '+esc(bcv(v))}</small></td><td><span class="num" style="font-size:26px;font-weight:700">${v.stock}</span> ${sbadge(v)}</td><td><div class="form" style="margin:0;grid-template-columns:90px minmax(120px,1fr) repeat(3,auto)"><input type="number" min="0" id="a${v.id}" placeholder="Jumlah"><input id="t${v.id}" placeholder="Catatan (opsional)"><button class="btn sec" onclick="adj(${v.id},'add')">Tambah</button><button class="btn sec" onclick="adj(${v.id},'sub')">Kurangi</button><button class="btn sec" onclick="adj(${v.id},'set')">Ubah jadi</button></div></td></tr>`).join('')}</table><p class="muted">Produk jasa tidak dihitung stoknya.</p>`:'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>'}
+  h=l.length?`<table><tr><th>Foto</th><th>Produk / varian</th><th>Stok</th><th>Ubah stok</th></tr>${l.map(({p,v})=>`<tr class="${srow(v)}"><td><div class="thumb" style="cursor:default">${v.img?`<img src="${v.img}" alt="">`:''}</div></td><td><b>${esc(p.name)}</b><br><small class="muted">${esc(vl(v))}${', '+esc(bcv(v))}</small></td><td><span class="num" style="font-size:26px;font-weight:700">${v.stock}</span> ${sbadge(v)}</td><td><div class="form" style="margin:0;grid-template-columns:90px minmax(120px,1fr) repeat(3,auto)"><input type="number" min="0" id="a${v.id}" placeholder="Jumlah"><input id="t${v.id}" placeholder="Catatan (opsional)"><button class="btn sec" onclick="adj(${v.id},'add')">Tambah</button><button class="btn sec" onclick="adj(${v.id},'sub')">Kurangi</button><button class="btn sec" onclick="adj(${v.id},'set')">Ubah jadi</button></div></td></tr>`).join('')}</table><p class="muted">Produk jasa tidak dihitung stoknya.</p>`:'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>'}
  else{
   const l=S.log.filter(e=>(lt==='all'||e.type===lt)&&(e.name+' '+e.note).toLowerCase().includes(ql)).slice(0,300);
   h=l.length?`<table><tr><th>Waktu</th><th>Produk / varian</th><th>Jenis</th><th>Sebelum</th><th>Sesudah</th><th>Selisih</th><th>Catatan</th></tr>${l.map(e=>{const d=e.after-e.before;return `<tr><td>${fmt(e.date)}</td><td>${esc(e.name)}</td><td><span class="badge">${e.type}</span></td><td>${e.before}</td><td>${e.after}</td><td class="${d<0?'bad':'ok'}"><b>${d>0?'+':''}${d}</b></td><td>${esc(e.note)}</td></tr>`}).join('')}</table>`:'<p class="muted">Belum ada riwayat perubahan stok. Penambahan, pengubahan, dan penjualan akan tercatat di sini.</p>'}
