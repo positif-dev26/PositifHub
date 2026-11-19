@@ -1,605 +1,291 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Layout Stiker - POSITIF Layout Tool PRO v4</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        body { background-color: #121214; color: #f3f4f6; font-family: sans-serif; }
-        .canvas-container { margin: 0 auto !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #1a1a1f; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
-        
-        input[type="number"], select {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-            -webkit-text-fill-color: #000000 !important;
-            font-weight: 700 !important;
-        }
-        input[type="number"]:focus, select:focus {
-            border-color: #ef4444 !important;
-            outline: none;
-        }
-    
-        /* ===== Tema navy seperti app Resi ===== */
-        body { background-color: #0b132b !important; color: #e0e6ed !important; }
-        ::-webkit-scrollbar-track { background: #1c2541; }
-        ::-webkit-scrollbar-thumb { background: #3a506b; }
-        .bg-gray-900 { background-color: #1c2541 !important; }
-        .bg-gray-950 { background-color: #0b132b !important; }
-        [class*="bg-gray-800"] { background-color: rgba(35, 50, 86, 0.55) !important; }
-        [class*="border-gray-"] { border-color: #3a506b !important; }
-        .border-gray-700, .border-gray-300 { border-color: #3a506b !important; }
-        .text-gray-400 { color: #8d99ae !important; }
-        .text-gray-300 { color: #d1d5db !important; }
-        .text-indigo-400 { color: #48cae4 !important; }
-        .bg-indigo-600 { background-color: #2b6cb0 !important; }
-        .hover\:bg-indigo-500:hover { background-color: #3b82c4 !important; }
-        .bg-green-600 { background-color: #2a9d8f !important; }
-        .hover\:bg-green-500:hover { background-color: #34b3a3 !important; }
-        .bg-red-600 { background-color: #c8464b !important; }
-        .hover\:bg-red-500:hover { background-color: #d95a5f !important; }
-        .border-red-900\/50 { border-color: rgba(255, 107, 107, 0.35) !important; }
-        .hover\:border-red-500:hover { border-color: #ff6b6b !important; }
-        .hover\:bg-gray-800:hover { background-color: rgba(35, 50, 86, 0.8) !important; }
-        .accent-red-500 { accent-color: #48cae4 !important; }
-        input[type="number"], select {
-            background-color: #0b132b !important;
-            color: #e0e6ed !important;
-            -webkit-text-fill-color: #e0e6ed !important;
-            border-color: #3a506b !important;
-        }
-        input[type="number"]:focus, select:focus { border-color: #48cae4 !important; }
-        select option { background: #1c2541; color: #e0e6ed; }
-        /* Tombol hapus & link lain tetap terbaca */
-        .text-red-400 { color: #ff6b6b !important; }
-
-        /* Logo kembali ke halaman utama */
-        .global-nav-bar {
-            background-color: #1c2541;
-            border-bottom: 1px solid #3a506b;
-            padding: 0 24px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex: none;
-            position: relative;
-            z-index: 1000;
-        }
-        a.nav-brand { display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit; cursor: pointer; border-radius: 8px; }
-        a.nav-brand:focus-visible { outline: 2px solid #ffffff80; outline-offset: 4px; }
-        .nav-logo-svg { height: 26px; width: auto; fill: #ffffff; display: block; }
-        .nav-title { font-size: 1.1rem; font-weight: 700; color: #ffffff; }
-        .nav-badge { font-size: 13px; font-weight: 700; background: #2a9d8f; color: #ffffff; padding: 2px 8px; border-radius: 6px; vertical-align: middle; margin-left: 8px; line-height: 1.3; }
-    </style>
-</head>
-<body class="h-screen flex flex-col overflow-hidden select-none">
-    <div class="global-nav-bar">
-        <a class="nav-brand" href="index.html" title="Kembali ke Positif Hub" aria-label="Kembali ke halaman utama">
-            <!-- Logo POSITIF Vektor SVG Asli CorelDRAW -->
-            <svg class="nav-logo-svg" viewBox="0 0 2050.77 562" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1044.98 529.11l27.21 -80.2c-5.78,8.36 -12.33,16.54 -19.71,24.51 -11.95,13.09 -25.68,24.05 -41.03,32.8 -15.35,8.75 -33.7,15.72 -55.21,20.89 -21.36,5.16 -45.17,7.69 -71.18,7.69 -66.62,0 -110.15,-11.5 -130.69,-34.59 -12.55,-14.13 -18.21,-32.93 -16.98,-56.45 -1.57,2.33 -3.19,4.62 -4.86,6.88 -12.22,16.34 -27.53,31.89 -45.27,43.66 -18.42,12.22 -41.94,23.47 -65.27,29.63 -24.75,6.54 -56.13,9.6 -83.23,9.6 -26.69,0 -58.61,-3.06 -79.36,-9.6 -17.5,-5.51 -35.05,-17.41 -45.17,-29.63 -10.09,-12.19 -14.38,-27.32 -15.51,-43.66 -1.13,-16.35 1.72,-34.59 8.48,-54.53l36.06 -106.3c-1.5,1.39 -3.03,2.76 -4.58,4.11 -15.39,13.39 -34.23,23.42 -56.55,30.16 -22.14,6.65 -47.77,10.02 -76.83,10.02l-58.28 0 -66.15 195 -141.03 0 167 -492.3 189.43 0c25.04,0 46.05,2.43 63.15,7.38 17.09,4.96 30.93,12.98 41.46,24.16 9.07,9.37 14.49,21.84 16.44,37.42 12.48,-15.27 27.65,-28.38 45.53,-39.32 36.83,-22.47 84.72,-34.07 143.63,-34.7 60.15,0.63 100.86,12.24 122.44,34.7 12.8,13.4 19.35,30.05 19.65,49.94 14.28,-21.54 32.69,-38.89 55.19,-52.06 36.71,-21.3 80.94,-31.95 132.54,-31.95l25.31 0c13.22,0 29.54,2.32 48.97,6.96 19.28,4.65 35.3,12.35 47.9,23.21 6.28,5.35 11.2,11.77 14.76,19.24l-23.81 70.43 161.93 0 -127.84 376.89 -138.54 0zm-491.03 -147.33c-1.36,4.01 -14.77,43.58 2.21,52.94 39.95,22.05 62.06,-43.13 64.13,-49.24l0.86 -2.54c70.7,-218.99 78.63,-217.54 76.64,-237.4 -2.48,-24.64 -54.67,-26.6 -71.65,23.42l-3.72 10.97 -0.75 2.22 -0.64 1.9 -67.08 197.74zm558.31 -50.99l51.71 -152.45 -141.3 0 9.25 -29.73c1.58,-5.48 0.2,-10.44 -4.31,-14.76 -4.51,-4.33 -10.44,-6.54 -17.81,-6.54 -9.46,0 -18.28,2.21 -26.45,6.64 -8.18,4.44 -13.45,10.13 -15.85,17.2 -4.76,14.03 3.58,29.21 24.81,45.76l68.76 53.16c11.26,8.65 20.49,17.5 27.89,26.47 7.39,8.96 12.73,17.83 15.87,26.58 3.15,8.76 5.33,16.67 6.84,23.73 0.24,1.3 0.43,2.62 0.59,3.95zm-334 14.19l127.94 0 -14.99 44.19c-10.77,31.75 -4.77,47.67 18.04,47.67 10.57,0 20.13,-3.17 28.19,-9.28 8.23,-6.22 14.04,-14.34 17.48,-24.47 4.47,-13.17 5.9,-24.35 4.25,-33.43 -1.65,-9.07 -5.99,-17.61 -12.83,-25.73 -6.81,-8.24 -18.83,-19.51 -36.09,-33.87l-47.08 -39.97c-21.59,-18.02 -34.83,-37.39 -39.8,-58.12l-45.11 133zm-460.82 -218.42l-40.32 118.87 8.07 0c7.65,0 13.39,-0.11 17.53,-0.43 4,-0.31 8.84,-1.06 14.48,-2.1 5.68,-1.17 10.35,-3.07 13.72,-5.59 3.5,-2.53 7.36,-6.12 11.51,-10.55 4.28,-4.43 8.02,-10.12 11.36,-17.09 3.37,-7.06 6.65,-15.5 10.01,-25.41 7.33,-21.61 8.66,-36.59 4.15,-45.03 -4.65,-8.44 -16.15,-12.66 -34.65,-12.66l-15.86 0zm1067.17 402.56l127.84 -376.89c46.17,0.02 92.34,0.07 138.5,0.1l-127.81 376.79 -138.53 0zm304.73 -397.27c-66.29,-0.01 -132.97,-0.12 -198.99,-0.12l-134.8 397.39 -143.4 0 134.8 -397.39 -167.23 0 32.08 -94.91 796.56 0 -32.59 96.08 -142.57 0 -26.43 77.93 135.32 0 -32.15 94.81 -135.33 0 -75.81 223.48 -144.23 0 134.76 -397.27z"/>
-                </svg>
-            <div class="nav-title">Layout Stiker <span class="nav-badge">v4</span></div>
-        </a>
-    </div>
-    <div class="flex flex-1 min-h-0 overflow-hidden">
-
-
-    <div class="w-80 bg-gray-900 border-r border-gray-800 flex flex-col h-full text-xs">
-        <div class="p-4 border-b border-gray-800">
-            <p class="text-[10px] text-gray-400 mt-0.5">Kertas: 32x48 cm | Area Cetak Maks: 30x46 cm</p>
-        </div>
-
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div>
-                <label class="block font-semibold uppercase tracking-wider text-gray-400 mb-1">1. Upload File Gambar</label>
-                <label class="flex flex-col items-center justify-center w-full h-16 border-2 border-dashed border-gray-700 rounded-lg cursor-pointer hover:border-red-500 hover:bg-gray-800 transition">
-                    <div class="flex flex-col items-center justify-center text-center px-2">
-                        <p class="text-[11px] text-gray-400 font-medium">Klik / Seret Gambar Ke Sini</p>
-                    </div>
-                    <input type="file" id="fileInput" multiple accept="image/png, image/jpeg" class="hidden" />
-                </label>
-            </div>
-
-            <div class="bg-gray-800/80 p-2.5 rounded-lg border border-red-900/50 space-y-2">
-                <div class="flex items-center justify-between">
-                    <span class="font-bold text-red-400 uppercase tracking-wider text-[10px]">✨ Auto-Crop Space Kosong</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="enableAutoCrop" checked class="sr-only peer">
-                        <div class="w-7 h-4 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-600"></div>
-                    </label>
-                </div>
-                <p class="text-[10px] text-gray-400">Memotong otomatis area background gelap/transparan yang tidak terpakai pada file logo.</p>
-                <div>
-                    <span class="text-gray-400 block mb-0.5">Sisa Jarak Margin Crop (<span class="unit-label">cm</span>)</span>
-                    <input type="number" id="cropMargin" value="0.5" step="0.1" class="w-full border border-gray-300 rounded px-2 py-1">
-                </div>
-            </div>
-
-            <div class="space-y-2 bg-gray-800/40 p-2 rounded-lg border border-gray-800">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-400">Unit:</span>
-                    <div class="flex gap-3">
-                        <label class="flex items-center text-gray-300"><input type="radio" name="unit" value="cm" checked class="mr-1 accent-red-500"> CM</label>
-                        <label class="flex items-center text-gray-300"><input type="radio" name="unit" value="mm" class="mr-1 accent-red-500"> MM</label>
-                    </div>
-                </div>
-                <div>
-                    <span class="text-gray-400 block mb-0.5">Jarak / Spacing Antar Stiker (<span class="unit-label">cm</span>)</span>
-                    <input type="number" id="spacing" value="0" step="0.01" class="w-full border border-gray-300 rounded px-2 py-1">
-                </div>
-            </div>
-
-            <div class="bg-gray-800/60 p-2 rounded-lg border border-gray-700">
-                <label class="block font-semibold uppercase tracking-wider text-gray-400 mb-1">Pilih Metode Susunan Grid</label>
-                <select id="gridMode" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] font-bold">
-                    <option value="autoSize">Berdasarkan Ukuran Stiker (Otomatis Slot)</option>
-                    <option value="customGrid">Berdasarkan Jumlah Kolom & Baris (Otomatis Ukuran)</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block font-semibold uppercase tracking-wider text-gray-400 mb-1.5">2. Pengaturan Dimensi & Grid</label>
-                <div class="space-y-3 bg-gray-800/40 p-2.5 rounded-lg border border-gray-800">
-                    
-                    <div id="sectionSizeInput" class="space-y-2">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide block border-b border-gray-700 pb-0.5">Dimensi Per Stiker</span>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <span class="text-gray-400 block mb-0.5">Lebar</span>
-                                <input type="number" id="stkWidth" step="any" value="6" class="w-full border border-gray-300 rounded px-2 py-1">
-                            </div>
-                            <div>
-                                <span class="text-gray-400 block mb-0.5">Tinggi</span>
-                                <input type="number" id="stkHeight" step="any" value="4" class="w-full border border-gray-300 rounded px-2 py-1">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="sectionGridInput" class="space-y-2 hidden">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide block border-b border-gray-700 pb-0.5">Jumlah Kolom & Baris</span>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <span class="text-gray-400 block mb-0.5">Kolom (Kanan)</span>
-                                <input type="number" id="manualCols" min="1" value="5" class="w-full border border-gray-300 rounded px-2 py-1">
-                            </div>
-                            <div>
-                                <span class="text-gray-400 block mb-0.5">Baris (Bawah)</span>
-                                <input type="number" id="manualRows" min="1" value="11" class="w-full border border-gray-300 rounded px-2 py-1">
-                            </div>
-                        </div>
-                    </div>
-
-                    <label class="flex items-center text-gray-400 pt-0.5">
-                        <input type="checkbox" id="keepRatio" checked class="mr-1.5 accent-red-500"> Kunci Rasio Gambar Master
-                    </label>
-                </div>
-            </div>
-
-            <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-1.5">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide block border-b border-gray-800 pb-0.5">Hasil Perhitungan Grid</span>
-                <div class="flex justify-between text-[11px]">
-                    <span class="text-gray-400">Susunan Grid:</span>
-                    <span class="font-bold text-indigo-400"><span id="lblCols">-</span> Kolom x <span id="lblRows">-</span> Baris</span>
-                </div>
-                <div class="flex justify-between text-[11px]">
-                    <span class="text-gray-400">Ukuran Akhir Potong:</span>
-                    <span class="font-bold text-green-400"><span id="lblWidth">-</span> x <span id="lblHeight">-</span> <span class="unit-label">cm</span></span>
-                </div>
-                <div class="pt-1 border-t border-gray-800 flex justify-between text-[11px]">
-                    <span class="text-gray-300 font-medium text-red-400">Total Dimensi Gambar Terbawa:</span>
-                    <span id="lblTotalPrintDimension" class="font-bold text-yellow-400">- x - cm</span>
-                </div>
-            </div>
-
-            <button id="btnApplyAutoGrid" class="w-full py-2.5 bg-indigo-600 text-white rounded font-bold hover:bg-indigo-500 transition shadow tracking-wide uppercase text-[10px]">⚡ PROSES CETAK GRID KE KERTAS</button>
-
-            <div class="bg-gray-950 p-2 rounded-lg border border-gray-800 flex justify-between text-[11px]">
-                <span class="text-gray-400">Total Stiker Masuk:</span>
-                <span id="statTotal" class="font-bold text-white">0 pcs</span>
-            </div>
-        </div>
-
-        <div class="p-3 bg-gray-950 border-t border-gray-800 space-y-2">
-            <button id="btnDownloadPNG" class="w-full py-2 bg-green-600 text-white font-bold rounded hover:bg-green-500 text-[11px] tracking-wider uppercase transition shadow">Download PNG HD</button>
-            <button id="btnDownloadPDF" class="w-full py-2 bg-red-600 text-white font-bold rounded hover:bg-red-500 text-[11px] tracking-wider uppercase transition shadow">Download PDF Siap Cetak</button>
-        </div>
-    </div>
-
-    <div class="flex-1 flex flex-col h-full bg-gray-950 relative">
-        <div class="h-12 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 text-xs">
-            <div class="font-semibold text-gray-400 tracking-wider">LEMBAR KERJA: KERTAS 32X48 CM (AREA AMAN CETAK 30X46 CM)</div>
-            <div class="flex items-center gap-3">
-                <button id="btnCenterGroup" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded font-bold shadow transition">Center Semua Objek (Grup)</button>
-                <button id="clearCanvas" class="text-red-400 hover:text-red-300 font-medium ml-2">Hapus Semua</button>
-            </div>
-        </div>
-
-        <div class="flex-1 overflow-auto p-8 flex items-start justify-center bg-gray-950" id="canvasWrapper">
-            <div class="border-2 border-dashed border-gray-700 bg-white p-[20px]" style="background-color: #f9fafb;">
-                <div class="shadow-2xl border border-gray-300 bg-white">
-                    <canvas id="printCanvas"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="w-80 bg-gray-900 border-l border-gray-800 flex flex-col h-full text-xs">
-        <div class="p-4 border-b border-gray-800">
-            <h3 class="font-bold text-white tracking-wide">👁 Live Preview Cetak</h3>
-            <p class="text-[10px] text-gray-400 mt-0.5">Render lembar cetak otomatis</p>
-        </div>
-        <div class="flex-1 p-4 overflow-auto bg-gray-950 flex items-center justify-center">
-            <img id="livePreviewImg" src="" alt="Real-time Preview" class="max-w-full h-auto shadow-lg border border-gray-800 bg-white" />
-        </div>
-    </div>
-
-    </div>
-
-    <script>
-        const CM_TO_PX = 20;
-        const CANVAS_WIDTH = 30 * CM_TO_PX;  
-        const CANVAS_HEIGHT = 46 * CM_TO_PX; 
-        
-        let masterElement = null; 
-        let originalImgRatio = null; 
-
-        const canvas = new fabric.Canvas('printCanvas', {
-            width: CANVAS_WIDTH,
-            height: CANVAS_HEIGHT,
-            backgroundColor: '#ffffff',
-            preserveObjectStacking: true
-        });
-
-        function getSafeValue(id, fallback) {
-            let elem = document.getElementById(id);
-            if (!elem) return fallback;
-            let cleanVal = elem.value.replace(',', '.');
-            let val = parseFloat(cleanVal);
-            return isNaN(val) ? fallback : val;
-        }
-
-        const unitRadios = document.getElementsByName('unit');
-        const unitLabels = document.querySelectorAll('.unit-label');
-        function getUnitMultiplier() {
-            let selectedUnit = 'cm';
-            unitRadios.forEach(r => { if(r.checked) selectedUnit = r.value; });
-            unitLabels.forEach(l => l.innerText = selectedUnit);
-            return selectedUnit === 'mm' ? 10 : 1; 
-        }
-
-        document.getElementById('gridMode').addEventListener('change', function() {
-            if (this.value === 'autoSize') {
-                document.getElementById('sectionSizeInput').classList.remove('hidden');
-                document.getElementById('sectionGridInput').classList.add('hidden');
-            } else {
-                document.getElementById('sectionSizeInput').classList.add('hidden');
-                document.getElementById('sectionGridInput').classList.remove('hidden');
-            }
-            calculateLogic();
-        });
-
-        // ENGINE SMART AUTO CROP (Mendeteksi batas piksel gambar bukan hitam / transparan)
-        function autoCropImageElement(imgElement, marginCm, callback) {
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = imgElement.width;
-            tempCanvas.height = imgElement.height;
-            tempCtx.drawImage(imgElement, 0, 0);
-
-            let imgData;
-            try {
-                imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-            } catch (e) {
-                return callback(imgElement); // Fallback jika CORS error
-            }
-
-            const { data, width, height } = imgData;
-            let minX = width, minY = height, maxX = 0, maxY = 0;
-            let hasDesign = false;
-
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const idx = (y * width + x) * 4;
-                    const r = data[idx];
-                    const g = data[idx+1];
-                    const b = data[idx+2];
-                    const alpha = data[idx+3];
-
-                    // Kriteria piksel konten: Tidak transparan penuh DAN bukan hitam pekat (toleransi background gelap logo)
-                    const isTransparent = alpha < 10;
-                    const isPureBlack = r < 25 && g < 25 && b < 25;
-
-                    if (!isTransparent && !isPureBlack) {
-                        hasDesign = true;
-                        if (x < minX) minX = x;
-                        if (x > maxX) maxX = x;
-                        if (y < minY) minY = y;
-                        if (y > maxY) maxY = y;
-                    }
-                }
-            }
-
-            if (!hasDesign) return callback(imgElement); // Jika tidak terdeteksi, pakai gambar asli
-
-            // Tambahkan padding margin aman (konversi dari CM ke Piksel Gambar)
-            const pxlMargin = Math.round((marginCm * CM_TO_PX) * (width / CANVAS_WIDTH));
-            minX = Math.max(0, minX - pxlMargin);
-            minY = Math.max(0, minY - pxlMargin);
-            maxX = Math.min(width - 1, maxX + pxlMargin);
-            maxY = Math.min(height - 1, maxY + pxlMargin);
-
-            const cropW = maxX - minX + 1;
-            const cropH = maxY - minY + 1;
-
-            const croppedCanvas = document.createElement('canvas');
-            croppedCanvas.width = cropW;
-            croppedCanvas.height = cropH;
-            const croppedCtx = croppedCanvas.getContext('2d');
-            croppedCtx.drawImage(imgElement, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-
-            const croppedImg = new Image();
-            croppedImg.onload = function() { callback(croppedImg); };
-            croppedImg.src = croppedCanvas.toDataURL('image/png');
-        }
-
-        // ENGINE KALKULATOR UTAMA DUA ARAH
-        function calculateLogic() {
-            const div = getUnitMultiplier();
-            const mode = document.getElementById('gridMode').value;
-            let spacing = (getSafeValue('spacing', 0) / div) * CM_TO_PX;
-            
-            let finalCols = 0, finalRows = 0;
-            let finalW_Px = 0, finalH_Px = 0;
-            let ratio = originalImgRatio || 1.5;
-
-            if (mode === 'autoSize') {
-                let wInput = getSafeValue('stkWidth', 6);
-                let hInput = getSafeValue('stkHeight', 4);
-                
-                finalW_Px = (wInput / div) * CM_TO_PX;
-                finalH_Px = (hInput / div) * CM_TO_PX;
-
-                if (document.getElementById('keepRatio').checked && originalImgRatio) {
-                    finalH_Px = finalW_Px / ratio;
-                    document.getElementById('stkHeight').value = (finalH_Px / CM_TO_PX * div).toFixed(2);
-                }
-
-                if (finalW_Px > 0 && finalH_Px > 0) {
-                    finalCols = Math.floor((CANVAS_WIDTH + spacing) / (finalW_Px + spacing));
-                    finalRows = Math.floor((CANVAS_HEIGHT + spacing) / (finalH_Px + spacing));
-                }
-            } else {
-                finalCols = Math.max(1, parseInt(getSafeValue('manualCols', 5)));
-                finalRows = Math.max(1, parseInt(getSafeValue('manualRows', 11)));
-
-                finalW_Px = (CANVAS_WIDTH - ((finalCols - 1) * spacing)) / finalCols;
-                
-                if (document.getElementById('keepRatio').checked && originalImgRatio) {
-                    finalH_Px = finalW_Px / ratio;
-                } else {
-                    finalH_Px = (CANVAS_HEIGHT - ((finalRows - 1) * spacing)) / finalRows;
-                }
-
-                document.getElementById('stkWidth').value = (finalW_Px / CM_TO_PX * div).toFixed(2);
-                document.getElementById('stkHeight').value = (finalH_Px / CM_TO_PX * div).toFixed(2);
-            }
-
-            finalCols = Math.max(0, finalCols);
-            finalRows = Math.max(0, finalRows);
-
-            document.getElementById('lblCols').innerText = finalCols;
-            document.getElementById('lblRows').innerText = finalRows;
-            document.getElementById('lblWidth').innerText = (finalW_Px / CM_TO_PX * div).toFixed(1);
-            document.getElementById('lblHeight').innerText = (finalH_Px / CM_TO_PX * div).toFixed(1);
-
-            let totalPrintW_Cm = 0;
-            let totalPrintH_Cm = 0;
-            if (finalCols > 0 && finalRows > 0) {
-                totalPrintW_Cm = ((finalCols * finalW_Px) + ((finalCols - 1) * spacing)) / CM_TO_PX;
-                totalPrintH_Cm = ((finalRows * finalH_Px) + ((finalRows - 1) * spacing)) / CM_TO_PX;
-            }
-            document.getElementById('lblTotalPrintDimension').innerText = `${totalPrintW_Cm.toFixed(1)} x ${totalPrintH_Cm.toFixed(1)} cm`;
-
-            return { cols: finalCols, rows: finalRows, targetW: finalW_Px, targetH: finalH_Px, spacing };
-        }
-
-        ['stkWidth', 'stkHeight', 'manualCols', 'manualRows', 'spacing', 'cropMargin'].forEach(id => {
-            document.getElementById(id).addEventListener('input', calculateLogic);
-        });
-        document.getElementById('keepRatio').addEventListener('change', calculateLogic);
-        unitRadios.forEach(r => r.addEventListener('change', () => { getUnitMultiplier(); calculateLogic(); updateLivePreview(); }));
-
-        // PROSES UPLOAD FILE GAMBAR & AUTO CROP
-        const fileInput = document.getElementById('fileInput');
-        fileInput.addEventListener('change', function(e) {
-            const files = e.target.files;
-            if (!files.length) return;
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(fEvent) {
-                    let imgObj = new Image();
-                    imgObj.onload = function() {
-                        const runUploadProcess = (processedImg) => {
-                            masterElement = processedImg; 
-                            originalImgRatio = processedImg.width / processedImg.height;
-                            
-                            document.getElementById('stkWidth').value = 6;
-                            calculateLogic();
-
-                            let fabricImg = new fabric.Image(processedImg, { originX: 'left', originY: 'top', cornerColor: '#ef4444', cornerSize: 10 });
-                            let meta = calculateLogic();
-                            fabricImg.set({ scaleX: meta.targetW / processedImg.width, scaleY: meta.targetH / processedImg.height });
-                            canvas.add(fabricImg);
-                            canvas.setActiveObject(fabricImg);
-                            canvas.centerObject(fabricImg); 
-                            canvas.renderAll();
-                            updateLivePreview();
-                        };
-
-                        // Cek switch tombol auto crop
-                        if (document.getElementById('enableAutoCrop').checked) {
-                            const marginVal = getSafeValue('cropMargin', 0.5);
-                            autoCropImageElement(imgObj, marginVal, runUploadProcess);
-                        } else {
-                            runUploadProcess(imgObj);
-                        }
-                    };
-                    imgObj.src = fEvent.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-            fileInput.value = ''; 
-        });
-
-        // ENGINE GENERATOR GRID OTOMATIS
-        function generateAutoGridLayout() {
-            let targetImg = masterElement || (canvas.getObjects().find(obj => obj.type === 'image') ? canvas.getObjects().find(obj => obj.type === 'image')._element : null);
-            if (!targetImg) return alert("Silakan upload file gambar stiker terlebih dahulu!");
-
-            let gridMeta = calculateLogic();
-            if (gridMeta.cols === 0 || gridMeta.rows === 0) return alert("Jumlah pembagian atau dimensi terlalu besar!");
-
-            canvas.clear();
-            canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas));
-
-            let totalGridWidth = (gridMeta.cols * gridMeta.targetW) + ((gridMeta.cols - 1) * gridMeta.spacing);
-            let totalGridHeight = (gridMeta.rows * gridMeta.targetH) + ((gridMeta.rows - 1) * gridMeta.spacing);
-
-            let offsetX = (CANVAS_WIDTH - totalGridWidth) / 2;
-            let offsetY = (CANVAS_HEIGHT - totalGridHeight) / 2;
-
-            for (let r = 0; r < gridMeta.rows; r++) {
-                for (let c = 0; c < gridMeta.cols; c++) {
-                    let gridImg = new fabric.Image(targetImg, {
-                        left: offsetX + c * (gridMeta.targetW + gridMeta.spacing),
-                        top: offsetY + r * (gridMeta.targetH + gridMeta.spacing),
-                        originX: 'left', originY: 'top', cornerColor: '#ef4444', cornerSize: 10
-                    });
-                    gridImg.set({ scaleX: gridMeta.targetW / targetImg.width, scaleY: gridMeta.targetH / targetImg.height });
-                    gridImg.setCoords();
-                    canvas.add(gridImg);
-                }
-            }
-            canvas.renderAll();
-            updateLivePreview();
-        }
-        document.getElementById('btnApplyAutoGrid').addEventListener('click', generateAutoGridLayout);
-
-        // CENTER GROUP
-        document.getElementById('btnCenterGroup').addEventListener('click', () => {
-            let items = canvas.getObjects().filter(obj => obj.type === 'image');
-            if (items.length === 0) return alert("Kanvas kosong!");
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            items.forEach(obj => {
-                let b = obj.getBoundingRect();
-                minX = Math.min(minX, b.left); minY = Math.min(minY, b.top);
-                maxX = Math.max(maxX, b.left + b.width); maxY = Math.max(maxY, b.top + b.height);
-            });
-            let bound = { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
-            let deltaX = (CANVAS_WIDTH - bound.width) / 2 - bound.left;
-            let deltaY = (CANVAS_HEIGHT - bound.height) / 2 - bound.top;
-            items.forEach(obj => { obj.set({ left: obj.left + deltaX, top: obj.top + deltaY }); obj.setCoords(); });
-            canvas.renderAll();
-            updateLivePreview();
-        });
-
-        // SIKU MERAH DALAM GAMBAR
-        function drawCropMarks(ctx, scale = 1) {
-            let objects = canvas.getObjects().filter(obj => obj.type === 'image');
-            let thickness = 0.6 * scale; 
-            let length = 1.6 * scale;    
-
-            ctx.save(); ctx.strokeStyle = '#ff0000'; ctx.lineWidth = thickness; ctx.lineCap = "square";
-            objects.forEach(obj => {
-                let bound = obj.getBoundingRect(true);
-                let l = bound.left * scale; let t = bound.top * scale;
-                let r = (bound.left + bound.width) * scale; let b = (bound.top + bound.height) * scale;
-
-                ctx.beginPath(); ctx.moveTo(l, t + length); ctx.lineTo(l, t); ctx.lineTo(l + length, t); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(r - length, t); ctx.lineTo(r, t); ctx.lineTo(r, t + length); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(l, b - length); ctx.lineTo(l, b); ctx.lineTo(l + length, b); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(r - length, b); ctx.lineTo(r, b); ctx.lineTo(r, b - length); ctx.stroke();
-            });
-            ctx.restore();
-        }
-
-        canvas.on('after:render', function(opt) {
-            let ctx = opt.ctx || canvas.getContext();
-            ctx.save(); drawCropMarks(ctx, 1); ctx.restore();
-        });
-
-        function updateLivePreview() {
-            let dataUrl = canvas.toDataURL({ format: 'png' });
-            let img = new Image();
-            img.onload = function() {
-                let previewCanvas = document.createElement('canvas'); previewCanvas.width = canvas.width; previewCanvas.height = canvas.height;
-                let ctx = previewCanvas.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
-                ctx.drawImage(img, 0, 0); drawCropMarks(ctx, 1);
-                document.getElementById('livePreviewImg').src = previewCanvas.toDataURL('image/png');
-                updateStats();
-            };
-            img.src = dataUrl;
-        }
-
-        canvas.on('object:modified', updateLivePreview); canvas.on('object:added', updateLivePreview); canvas.on('object:removed', updateLivePreview);
-
-        function generateProductionPNGData(){
-            let printDPI = 300;
-            let printWidth = Math.round((32 / 2.54) * printDPI); let printHeight = Math.round((48 / 2.54) * printDPI); 
-            let exportCanvas = document.createElement('canvas'); exportCanvas.width = printWidth; exportCanvas.height = printHeight;
-            let ctx = exportCanvas.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, printWidth, printHeight);
-            let marginPx = Math.round((1 / 2.54) * printDPI); let printScale = Math.round((30 / 2.54) * printDPI) / canvas.width; 
-            canvas.getObjects().filter(obj => obj.type === 'image').forEach(obj => { if (obj._element) ctx.drawImage(obj._element, (obj.left * printScale) + marginPx, (obj.top * printScale) + marginPx, (obj.width * obj.scaleX) * printScale, (obj.height * obj.scaleY) * printScale); });
-            
-            let thickness = 0.6 * printScale; let length = 1.6 * printScale;
-            ctx.save(); ctx.strokeStyle = '#ff0000'; ctx.lineWidth = thickness; ctx.lineCap = "square";
-            canvas.getObjects().filter(obj => obj.type === 'image').forEach(obj => {
-                let bound = obj.getBoundingRect(true);
-                let l = bound.left * printScale + marginPx; let t = bound.top * printScale + marginPx;
-                let r = (bound.left + bound.width) * printScale + marginPx; let b = (bound.top + bound.height) * printScale + marginPx;
-                ctx.beginPath(); ctx.moveTo(l, t + length); ctx.lineTo(l, t); ctx.lineTo(l + length, t); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(r - length, t); ctx.lineTo(r, t); ctx.lineTo(r, t + length); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(l, b - length); ctx.lineTo(l, b); ctx.lineTo(l + length, b); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(r - length, b); ctx.lineTo(r, b); ctx.lineTo(r, b - length); ctx.stroke();
-            });
-            ctx.restore();
-            return exportCanvas.toDataURL('image/png');
-        }
-
-        document.getElementById('btnDownloadPNG').addEventListener('click', () => {
-            if (canvas.getObjects().filter(obj => obj.type === 'image').length === 0) return alert("Kanvas kosong!");
-            const link = document.createElement('a');
-            link.download = `POSITIF_Layout_32x48cm_${Date.now()}.png`; link.href = generateProductionPNGData(); link.click();
-        });
-
-        document.getElementById('btnDownloadPDF').addEventListener('click', () => {
-            if (canvas.getObjects().filter(obj => obj.type === 'image').length === 0) return alert("Kanvas kosong!");
-            const imgData = generateProductionPNGData();
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [320, 480] });
-            pdf.addImage(imgData, 'PNG', 0, 0, 320, 480, undefined, 'FAST');
-            pdf.save(`POSITIF_Layout_32x48cm_${Date.now()}.pdf`);
-        });
-
-        function updateStats() {
-            let objects = canvas.getObjects().filter(obj => obj.type === 'image');
-            document.getElementById('statTotal').innerText = `${objects.length} pcs`;
-        }
-
-        document.getElementById('clearCanvas').addEventListener('click', () => {
-            if (confirm("Kosongkan lembar kerja?")) {
-                canvas.clear(); canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas)); masterElement = null; originalImgRatio = null; updateLivePreview(); calculateLogic();
-            }
-        });
-        
-        calculateLogic();
-    </script>
-</body>
-</html>
+<!doctype html>
+<html lang="id" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Layout Stiker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060606">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Layout Stiker">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060606;--card:#0f0f0f;--text:#f4f4f2;--muted:#8f8f8a;--line:rgba(255,255,255,.1);--acc:#d4ff3f;--acc-t:#0a0a0a;--ok:#4ddf9a;--bad:#ff6b6b;--mid:#ffd24a;--glow:rgba(212,255,63,.38);box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(900px 520px at 88% -8%,rgba(212,255,63,.07),transparent 60%),radial-gradient(760px 520px at -8% 112%,rgba(111,184,255,.05),transparent 60%),var(--bg);color:var(--text);font:500 15px Barlow,system-ui,sans-serif;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(10,10,10,.88);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);flex:none;padding-top:max(8px,env(safe-area-inset-top));position:relative;z-index:5}
+.logo{height:46px;display:block;filter:invert(1);cursor:pointer}
+h1{margin:0;font:700 24px "Barlow Condensed",Impact,sans-serif;letter-spacing:.03em;white-space:nowrap}
+.sp{flex:1}
+.ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ib{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;height:40px;padding:0 10px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:14px;cursor:pointer;font:600 14px Barlow,sans-serif;position:relative}
+.ib:hover{border-color:rgba(212,255,63,.55)}.ib:disabled{opacity:.35;cursor:default}
+.ib.pri{background:var(--acc);color:var(--acc-t);border-color:var(--acc);box-shadow:0 0 24px -6px rgba(212,255,63,.7)}
+.ib.sm{min-width:32px;height:32px;padding:0 6px;border-radius:10px}.ib.on{border-color:var(--acc);color:var(--acc);background:rgba(212,255,63,.1)}
+.pg{display:flex;align-items:center;gap:6px;font-weight:600;white-space:nowrap}
+.chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:1px solid rgba(212,255,63,.3);background:rgba(212,255,63,.08);border-radius:999px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip .ico{width:17px;height:17px;color:var(--acc)}
+#wbtn{position:relative}#wbtn.has{color:var(--mid);border-color:rgba(255,210,74,.5)}#wbtn.bad{color:var(--bad);border-color:rgba(255,107,107,.5)}
+#wbtn b{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:9px;background:var(--mid);color:#000;font-size:11px;display:grid;place-items:center;padding:0 4px}
+#wpop{display:none;position:absolute;top:100%;right:14px;margin-top:6px;width:min(340px,92vw);max-height:60vh;overflow:auto;background:#111;border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 12px 30px rgba(0,0,0,.6)}#wpop.on{display:block}
+#wpop div{padding:5px 2px;font-size:14px;font-weight:600;color:var(--mid)}#wpop div.b{color:var(--bad)}
+.wrap{flex:1;min-height:0;display:flex;gap:12px;padding:12px}
+.rail{flex:none;align-self:flex-start;display:flex;flex-direction:column;gap:8px;padding:8px 6px;border:1px solid rgba(212,255,63,.22);border-radius:20px;background:rgba(15,15,15,.7)}
+.rail .ib{width:46px;height:46px;padding:0;border-radius:14px}.rail .ib.on{background:var(--acc);color:var(--acc-t);box-shadow:0 0 24px -6px rgba(212,255,63,.7)}
+.panel{width:340px;flex:none;min-height:0;display:flex;flex-direction:column}
+.pn{display:none;flex-direction:column;gap:10px;min-height:0;flex:1}.pn.on{display:flex}
+.sb{border:1px solid var(--glow);border-radius:22px;padding:12px;background:linear-gradient(165deg,rgba(212,255,63,.05),rgba(255,255,255,.01) 42%),var(--card);box-shadow:0 0 0 1px rgba(212,255,63,.05),0 0 26px -10px rgba(212,255,63,.5)}
+.fi{display:flex;align-items:center;gap:6px;height:36px;padding:0 8px;background:var(--bg);border:1px solid var(--line);border-radius:12px;color:var(--muted);min-width:0;flex:1}
+.fi:focus-within{border-color:var(--acc);color:var(--acc)}
+.fi .ico{width:16px;height:16px}
+.fi input{flex:1;min-width:0;width:100%;height:100%;padding:0;border:0;background:transparent;color:var(--text);font:600 15px Barlow,sans-serif;outline:none}
+.rw{display:flex;align-items:center;gap:8px}.rw+.rw{margin-top:8px}
+.gi{width:34px;display:grid;place-items:center;color:var(--acc);flex:none}
+.seg{display:flex;gap:4px;padding:3px;border:1px solid var(--line);border-radius:14px;background:var(--bg);flex:1}
+.seg button{flex:1;height:34px;border:0;border-radius:11px;background:transparent;color:var(--muted);cursor:pointer;font:700 14px Barlow,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.seg button.on{background:var(--acc);color:var(--acc-t);box-shadow:0 0 16px -6px rgba(212,255,63,.8)}
+#dl{display:flex;flex-direction:column;gap:8px;margin-top:10px;overflow:auto;min-height:0;flex:1;padding:2px}
+.dc{border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-columns:46px 1fr auto;gap:6px 8px;align-items:center;cursor:pointer;background:rgba(255,255,255,.02);flex:none}
+.dc.act{border-color:rgba(212,255,63,.7);box-shadow:0 0 22px -10px rgba(212,255,63,.7)}
+.dc img{width:46px;height:46px;object-fit:contain;border-radius:8px;background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/10px 10px}
+.dn{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;background:rgba(212,255,63,.13);border:1px solid rgba(212,255,63,.42);border-radius:10px;padding:5px 9px;display:flex;align-items:center;gap:8px}
+.dn span.n{overflow:hidden;text-overflow:ellipsis}
+.dpi{font-size:12px;font-weight:700;margin-left:auto;flex:none}.dpi.ok{color:var(--ok)}.dpi.mid{color:var(--mid)}.dpi.bad{color:var(--bad)}
+.cn{font-size:12px;color:var(--acc);flex:none;font-weight:700}
+.dg{grid-column:1/-1;display:grid;grid-template-columns:1fr auto 1fr 1fr;gap:6px;align-items:center}
+.pc{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;flex:none;align-items:center}.pc>.ico{color:var(--acc)}
+.chp{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 6px 3px 11px;font-weight:600;cursor:pointer;background:var(--bg);font-size:13px}
+.chp:hover{border-color:var(--acc)}.chp i{font-style:normal;color:var(--muted);padding:0 3px}.chp i:hover{color:var(--bad)}
+#stage{flex:1;min-height:0;display:grid;place-items:center;overflow:hidden;position:relative;border:1px solid var(--glow);border-radius:22px;background:rgba(255,255,255,.015);box-shadow:0 0 30px -14px rgba(212,255,63,.5)}
+main{flex:1;min-width:0;min-height:0;display:flex}
+#cv{box-shadow:0 25px 50px -12px rgba(0,0,0,.8);border-radius:2px;display:block}
+#busy{position:absolute;top:12px;right:14px;color:var(--acc);opacity:0;transition:opacity .15s}#busy.on{opacity:1}
+#empty{position:absolute;color:var(--muted);pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px}#empty .ico{width:44px;height:44px;opacity:.6}
+.drop{height:40px;padding:0 14px;border-radius:14px;border:1px dashed rgba(212,255,63,.5);background:rgba(212,255,63,.06);color:var(--acc);display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font-weight:700}.drop:hover,.drop.on{background:rgba(212,255,63,.16)}
+@media(max-width:860px){
+ .wrap{flex-direction:column;padding:8px;gap:8px}main{order:1}.rail{order:2;flex-direction:row;align-self:stretch;justify-content:center;padding:5px}.rail .ib{width:52px;height:40px}.panel{order:3;width:auto;height:min(38vh,300px);overflow:auto}
+ h1{font-size:20px}.logo{height:26px}header{flex-wrap:wrap;gap:6px 8px;padding-left:10px;padding-right:10px}.chip{height:30px;padding:0 9px}
+}
+@media(max-width:520px){h1{display:none}.chip em{display:none}.chip{padding:0 9px}.logo{height:30px}}
+
+.chip em{font-style:normal;font-weight:600;color:var(--muted);font-size:13px}
+.cap{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}.cap .ico{width:15px;height:15px;color:var(--acc)}
+.fi .lb{font-size:13px;font-weight:600;white-space:nowrap}.fi input{text-align:right}
+.stp{display:flex;flex-direction:column;flex:none;margin-right:-4px}.stp button{width:22px;height:16px;padding:0;border:0;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center}.stp button:hover{color:var(--acc)}.stp .ico{width:14px;height:14px}
+.seg button{flex-direction:column;height:50px;gap:2px;font-size:12px}.seg button .ico{width:18px;height:18px}
+.drop{height:56px;width:100%;font-size:15px;border-style:dashed;border-width:2px;flex:none}
+.tgb{flex:1;height:46px;flex-direction:column;gap:2px;font-size:12px}
+.pn{overflow:auto}a.ib{text-decoration:none}
+.rail{width:68px;align-items:stretch}.rail .ib{width:auto;height:56px;flex-direction:column;gap:3px;font-size:11px;font-weight:700}.rail .ib span{line-height:1}.rail .sep{height:1px;background:var(--line);margin:2px 6px}
+.dg .fi .lb{font-size:12px}.dg .fi{padding:0 6px}
+@media(max-width:860px){.rail{width:auto}.rail .ib{width:78px;height:46px}.logo{height:34px}}
+</style></head><body>
+<header>
+ <a href="index.html#beranda" title="Kembali ke POS" aria-label="Kembali ke POS"><img class="logo" id="lg" alt="Positif Clothing" src="data:image/png;base64,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"></a>
+ <h1>Layout Stiker</h1>
+ <div class="chips"><span class="chip" title="Total stiker"><span id="i1"></span><b id="c1">0</b><em>pcs</em></span><span class="chip" title="Jumlah lembar"><span id="i2"></span><b id="c2">0</b><em>lembar</em></span><span class="chip" title="Area cetak terpakai"><span id="i3"></span><b id="c3">0%</b><em>terpakai</em></span><span class="chip" title="Ukuran stiker per pcs (desain aktif)"><span id="i4"></span><b id="c4">-</b></span><button class="ib sm" id="wbtn" title="Peringatan" aria-label="Peringatan" style="display:none"></button></div>
+ <span class="sp"></span>
+ <span class="pg"><button class="ib sm" id="pv" title="Lembar sebelumnya" aria-label="Lembar sebelumnya"></button><span id="pn">-</span><button class="ib sm" id="nx" title="Lembar berikutnya" aria-label="Lembar berikutnya"></button></span>
+ <button class="ib" id="bpng" title="Unduh PNG lembar ini (300 DPI)" aria-label="Unduh PNG"></button>
+ <button class="ib pri" id="bpdf" title="Unduh PDF siap cetak (semua lembar)" aria-label="Unduh PDF"></button>
+ <div id="wpop"></div>
+</header>
+<div class="wrap">
+<nav class="rail" id="rail"></nav>
+<section class="panel" id="panel">
+ <div class="pn on sb" data-pn="d">
+  <label class="drop" id="drop" title="Pilih atau seret gambar stiker (PNG, JPG, WEBP)"><span id="dropi"></span><span>Pilih / seret gambar</span><input type="file" id="file" multiple accept="image/png,image/jpeg,image/webp" hidden></label>
+  <div class="cap"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg>Auto-crop ruang kosong</div>
+  <div class="rw"><div class="seg" data-seg="crop"><button data-v="ab" title="Buang area transparan dan hitam pekat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg><span>Buang hitam</span></button><button data-v="a" title="Buang hanya area transparan (untuk desain berwarna hitam)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg><span>Transparan</span></button><button data-v="off" title="Tanpa auto-crop"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg><span>Mati</span></button></div>
+   <label class="fi" style="flex:none;width:150px" title="Sisa margin setelah crop"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg><span class="lb">Margin</span><input type="text" inputmode="decimal" data-s="cropM" data-u="1"></label></div>
+  <div id="dl"></div>
+  <div class="pc" id="prs"></div>
+ </div>
+ <div class="pn sb" data-pn="k">
+  <div class="cap"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/></svg>Jenis kertas</div>
+  <div class="rw"><div class="seg" data-seg="paper"><button data-v="b" title="Bahan 32×48 cm, area cetak 30×46 cm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/></svg><span>32×48</span></button><button data-v="a4" title="A4, area cetak 19×27,7 cm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/></svg><span>A4</span></button><button data-v="c" title="Ukuran kustom"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg><span>Kustom</span></button></div></div>
+  <div class="cap"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/></svg>Ukuran kertas</div>
+  <div class="rw"><label class="fi" title="Lebar kertas"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="lb">Lebar</span><input type="text" inputmode="decimal" data-s="pw" data-u="1"></label><label class="fi" title="Tinggi kertas"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/></svg><span class="lb">Tinggi</span><input type="text" inputmode="decimal" data-s="ph" data-u="1"></label></div>
+  <div class="cap"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>Area cetak</div>
+  <div class="rw"><label class="fi" title="Lebar area cetak"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="lb">Lebar</span><input type="text" inputmode="decimal" data-s="aw" data-u="1"></label><label class="fi" title="Tinggi area cetak"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/></svg><span class="lb">Tinggi</span><input type="text" inputmode="decimal" data-s="ah" data-u="1"></label></div>
+  <div class="cap"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>Satuan</div>
+  <div class="rw"><div class="seg" data-seg="unit"><button data-v="cm"><span>cm</span></button><button data-v="mm"><span>mm</span></button></div></div>
+ </div>
+ <div class="pn sb" data-pn="s">
+  <div class="cap"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Metode susunan</div>
+  <div class="rw"><div class="seg" data-seg="mode"><button data-v="auto" title="Otomatis: banyak desain, ukuran dan jumlah per desain"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg><span>Otomatis</span></button><button data-v="grid" title="Grid kolom × baris (desain pertama, ukuran mengikuti)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg><span>Grid</span></button></div></div>
+  <div class="rw" id="gridf"><label class="fi" title="Jumlah kolom"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/></svg><span class="lb">Kolom</span><input type="text" inputmode="numeric" data-s="cols"></label><label class="fi" title="Jumlah baris"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg><span class="lb">Baris</span><input type="text" inputmode="numeric" data-s="rows"></label></div>
+  <div class="cap"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="6" height="14" x="2" y="5" rx="1"/><rect width="6" height="14" x="16" y="5" rx="1"/><path d="M11 12h2"/></svg>Jarak &amp; margin</div>
+  <div class="rw"><label class="fi" title="Jarak antar stiker"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="6" height="14" x="2" y="5" rx="1"/><rect width="6" height="14" x="16" y="5" rx="1"/><path d="M11 12h2"/></svg><span class="lb">Jarak</span><input type="text" inputmode="decimal" data-s="spacing" data-u="1"></label><label class="fi" title="Bleed: gambar dibuat lebih besar dari garis potong"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3a2 2 0 0 0-2 2"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 3h1"/><path d="M9 21h1"/><path d="M14 3h1"/><path d="M14 21h1"/><path d="M3 9v1"/><path d="M21 9v1"/><path d="M3 14v1"/><path d="M21 14v1"/><rect width="8" height="8" x="8" y="8"/></svg><span class="lb">Bleed</span><input type="text" inputmode="decimal" data-s="bleed" data-u="1"></label></div>
+  <div class="rw"><label class="fi" title="Jarak aman dari tepi area cetak"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" stroke-dasharray="3 3"/><rect width="10" height="10" x="7" y="7" rx="1"/></svg><span class="lb">Tepi</span><input type="text" inputmode="decimal" data-s="edge" data-u="1"></label></div>
+  <div class="cap"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8V3h5"/><path d="M21 8V3h-5"/><path d="M3 16v5h5"/><path d="M21 16v5h-5"/></svg>Tanda potong</div>
+  <div class="rw"><div class="seg" data-seg="marks"><button data-v="in" title="Tanda siku di dalam gambar, menghadap ke dalam (stiker boleh mepet)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8V3h5"/><path d="M21 8V3h-5"/><path d="M3 16v5h5"/><path d="M21 16v5h-5"/></svg><span>Siku dalam</span></button><button data-v="reg" title="Tanda registrasi 4 sudut di luar susunan (mesin potong)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v6"/><path d="M12 15v6"/><path d="M3 12h6"/><path d="M15 12h6"/></svg><span>Registrasi</span></button><button data-v="none" title="Tanpa tanda potong"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg><span>Tanpa</span></button></div></div>
+  <div class="rw"><label class="fi" title="Panjang kaki tanda siku"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v6"/><path d="M3 3h6"/><path d="M8 3h13" stroke-dasharray="2 3"/></svg><span class="lb">Panjang siku</span><input type="text" inputmode="decimal" data-s="markL" data-u="1"></label></div>
+  <div class="rw"><button class="ib tgb" data-tg="rot" title="Putar 90° otomatis agar muat lebih banyak"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg><span>Putar 90°</span></button><button class="ib tgb" data-tg="center" title="Tengahkan susunan di lembar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M3 12h18"/><rect width="8" height="8" x="8" y="8" rx="1"/></svg><span>Tengahkan</span></button></div>
+ </div>
+</section>
+<main><div id="stage"><canvas id="cv"></canvas><div id="empty"><span id="emi"></span></div><div id="busy"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.2-8.56"/></svg></div></div></main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const ICO={up:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',lock:'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',unlock:'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',l:'<path d="m15 18-6-6 6-6"/>',r:'<path d="m9 18 6-6-6-6"/>',pdf:'<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><path d="M14 2v6h6"/>',img:'<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',bm:'<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
+ box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',pct:'<line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',warn:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+ w:'<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',h:'<path d="m21 8-4-4-4 4"/><path d="M17 4v16"/><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/>',file:'<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/>',scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>',ruler:'<path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/>',sl:'<path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+ lay:'<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',cols:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/>',rows:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/>',
+ gap:'<rect width="6" height="14" x="2" y="5" rx="1"/><rect width="6" height="14" x="16" y="5" rx="1"/><path d="M11 12h2"/>',bleed:'<path d="M5 3a2 2 0 0 0-2 2"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 3h1"/><path d="M9 21h1"/><path d="M14 3h1"/><path d="M14 21h1"/><path d="M3 9v1"/><path d="M21 9v1"/><path d="M3 14v1"/><path d="M21 14v1"/><rect width="8" height="8" x="8" y="8"/>',edge:'<rect width="18" height="18" x="3" y="3" rx="2" stroke-dasharray="3 3"/><rect width="10" height="10" x="7" y="7" rx="1"/>',corner:'<path d="M3 8V3h5"/><path d="M21 8V3h-5"/><path d="M3 16v5h5"/><path d="M21 16v5h-5"/>',reg:'<circle cx="12" cy="12" r="9"/><path d="M12 3v6"/><path d="M12 15v6"/><path d="M3 12h6"/><path d="M15 12h6"/>',off:'<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',len:'<path d="M3 3v6"/><path d="M3 3h6"/><path d="M8 3h13" stroke-dasharray="2 3"/>',rot:'<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',ctr:'<path d="M12 3v18"/><path d="M3 12h18"/><rect width="8" height="8" x="8" y="8" rx="1"/>',
+ ab:'<circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/>',a:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/>',cm:'<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>',spin:'<path d="M21 12a9 9 0 1 1-6.2-8.56"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',cup:'<path d="m18 15-6-6-6 6"/>',cdn:'<path d="m6 9 6 6 6-6"/>',plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',imgp:'<path d="M16 5h6"/><path d="M19 2v6"/><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/><circle cx="9" cy="9" r="2"/>'};
+const IC=n=>'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">'+ICO[n]+'</svg>';
+const RAIL=[['d','imgp','Desain'],['k','file','Kertas'],['s','lay','Susunan']];
+$('rail').innerHTML=RAIL.map(r=>'<button class="ib'+(r[0]==='d'?' on':'')+'" data-tab="'+r[0]+'" title="'+r[2]+'" aria-label="'+r[2]+'">'+IC(r[1])+'<span>'+r[2]+'</span></button>').join('')+'<div class="sep"></div><a class="ib" href="index.html#beranda" title="Keluar ke Dashboard POS" aria-label="Keluar">'+IC('out')+'<span>Keluar</span></a>';
+$('rail').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.pn').forEach(p=>p.classList.toggle('on',p.dataset.pn===b.dataset.tab));redraw()};
+$('pv').innerHTML=IC('l');$('nx').innerHTML=IC('r');$('bpng').innerHTML=IC('img');$('bpdf').innerHTML=IC('pdf');$('dropi').innerHTML=IC('up');$('i1').innerHTML=IC('box');$('i2').innerHTML=IC('layers');$('i3').innerHTML=IC('pct');$('i4').innerHTML=IC('ruler');$('wbtn').innerHTML=IC('warn');$('emi').innerHTML=IC('imgp');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* ---------- state ---------- */
+const PAPERS={b:{pw:32,ph:48,aw:30,ah:46},a4:{pw:21,ph:29.7,aw:19,ah:27.7}};
+const REGPAD=.6,REGO=.4,REGA=.6,MT=.02;
+let ST={paper:'b',pw:32,ph:48,aw:30,ah:46,unit:'cm',spacing:0,bleed:0,edge:0,rot:true,center:true,marks:'in',markL:.25,mode:'auto',cols:5,rows:11,crop:'ab',cropM:.5};
+let presets=[{n:'Label 6×4',w:6,h:4}],DS=[],SH=[],cur=0,seq=1,act=null,G=null;
+try{const j=JSON.parse(localStorage.getItem('stk_st2')||'null');if(j){Object.assign(ST,j);if(ST.markL===.25)ST.markL=.1}const p=JSON.parse(localStorage.getItem('stk_pr')||'null');if(Array.isArray(p))presets=p}catch(e){}
+const store=()=>{try{localStorage.setItem('stk_st2',JSON.stringify(ST));localStorage.setItem('stk_pr',JSON.stringify(presets))}catch(e){}};
+const U=()=>ST.unit==='mm'?10:1,fv=v=>+(+v*U()).toFixed(2),pv=s=>{const n=parseFloat(String(s).replace(',','.'));return isNaN(n)?NaN:n/U()};
+const effSp=()=>ST.spacing;
+/* ---------- sinkron kontrol ---------- */
+function sync(){document.querySelectorAll('input[data-s]').forEach(e=>{const k=e.dataset.s,v=ST[k];if(document.activeElement===e)return;e.value=e.dataset.u?fv(v):v});
+ document.querySelectorAll('[data-seg]').forEach(s=>s.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===String(ST[s.dataset.seg]))));
+ document.querySelectorAll('[data-tg]').forEach(b=>b.classList.toggle('on',!!ST[b.dataset.tg]));
+ $('gridf').style.display=ST.mode==='grid'?'':'none'}
+document.querySelectorAll('input[data-s]').forEach(e=>{const fn=()=>{const k=e.dataset.s,n=e.dataset.u?pv(e.value):parseFloat(String(e.value).replace(',','.'));if(isNaN(n)||n<0)return;const v=e.dataset.u?n:Math.max(1,Math.floor(n));ST[k]=v;if(['pw','ph','aw','ah'].includes(k)){ST.paper='c';sync()}store();later()};e.addEventListener('input',fn);e.addEventListener('change',()=>{sync()})});
+document.querySelectorAll('[data-seg]').forEach(s=>s.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const k=s.dataset.seg;ST[k]=b.dataset.v;if(k==='paper'&&PAPERS[ST.paper])Object.assign(ST,PAPERS[ST.paper]);sync();if(k==='unit')drawList();store();later()}));
+document.querySelectorAll('[data-tg]').forEach(b=>b.addEventListener('click',()=>{ST[b.dataset.tg]=!ST[b.dataset.tg];sync();store();later()}));
+
+const STEP={cols:1,rows:1,pw:.5,ph:.5,aw:.5,ah:.5,markL:.05};
+function setS(k,v){ST[k]=v;if(['pw','ph','aw','ah'].includes(k))ST.paper='c';document.querySelectorAll('input[data-s="'+k+'"]').forEach(e=>e.value=e.dataset.u?fv(v):v);sync();store();later()}
+document.querySelectorAll('input[data-s]').forEach(e=>{const k=e.dataset.s,w=document.createElement('span');w.className='stp';w.innerHTML='<button type="button" tabindex="-1" data-d="1" aria-label="Tambah">'+IC('cup')+'</button><button type="button" tabindex="-1" data-d="-1" aria-label="Kurangi">'+IC('cdn')+'</button>';e.parentNode.appendChild(w);
+ w.onclick=ev=>{const b=ev.target.closest('button');if(!b)return;const int=k==='cols'||k==='rows',st=STEP[k]||.1;let v=+(ST[k]+(+b.dataset.d)*st).toFixed(3);v=Math.max(int?1:0,v);setS(k,v)}});
+
+/* ---------- upload & crop ---------- */
+function cropBmp(im){const W=im.naturalWidth,H=im.naturalHeight;let box={x:0,y:0,w:W,h:H};
+ if(ST.crop!=='off'){const sc=Math.min(1,900/Math.max(W,H)),tw=Math.max(1,Math.round(W*sc)),th=Math.max(1,Math.round(H*sc)),c=document.createElement('canvas');c.width=tw;c.height=th;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,tw,th);let d=null;try{d=x.getImageData(0,0,tw,th).data}catch(e){}
+  if(d){let x0=tw,y0=th,x1=-1,y1=-1;const bk=ST.crop==='ab';for(let y=0;y<th;y++)for(let xx=0;xx<tw;xx++){const i=(y*tw+xx)*4;if(d[i+3]<10)continue;if(bk&&d[i]<25&&d[i+1]<25&&d[i+2]<25)continue;if(xx<x0)x0=xx;if(xx>x1)x1=xx;if(y<y0)y0=y;if(y>y1)y1=y}
+   if(x1>=0){const m=Math.round(ST.cropM*W/30);const X0=Math.max(0,Math.floor(x0/sc)-m),Y0=Math.max(0,Math.floor(y0/sc)-m),X1=Math.min(W,Math.ceil((x1+1)/sc)+m),Y1=Math.min(H,Math.ceil((y1+1)/sc)+m);box={x:X0,y:Y0,w:X1-X0,h:Y1-Y0}}}}
+ const o=document.createElement('canvas');o.width=box.w;o.height=box.h;o.getContext('2d').drawImage(im,box.x,box.y,box.w,box.h,0,0,box.w,box.h);return o}
+function thumb(c){const t=document.createElement('canvas'),r=Math.min(1,104/Math.max(c.width,c.height));t.width=Math.max(1,Math.round(c.width*r));t.height=Math.max(1,Math.round(c.height*r));t.getContext('2d').drawImage(c,0,0,t.width,t.height);return t.toDataURL()}
+function addFiles(files){[...files].filter(f=>/^image\//.test(f.type)).forEach(f=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const bmp=cropBmp(im);URL.revokeObjectURL(u);const w=6,h=w*bmp.height/bmp.width;const d={id:seq++,name:f.name.replace(/\.[^.]+$/,''),bmp,pw:bmp.width,ph:bmp.height,w,h,lock:true,qty:'',th:thumb(bmp)};DS.push(d);act=d.id;drawList();later()};im.onerror=()=>URL.revokeObjectURL(u);im.src=u})}
+$('file').onchange=e=>{addFiles(e.target.files);e.target.value=''};
+['dragover','dragenter'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();$('drop').classList.add('on')}));['dragleave','drop'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();$('drop').classList.remove('on')}));
+document.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files)addFiles(e.dataTransfer.files)});
+
+/* ---------- kartu desain ---------- */
+const dpiOf=d=>{const fw=d.w+2*ST.bleed;return d.pw/(fw/2.54)};
+function dpiBadge(d){const v=dpiOf(d),c=v>=300?'ok':v>=200?'mid':'bad';return'<span class="dpi '+c+'" title="Resolusi efektif pada ukuran cetak">'+Math.round(v)+(v<200?' ⚠':'')+'</span>'}
+function drawList(){$('dl').innerHTML=DS.map(d=>'<div class="dc'+(d.id===act?' act':'')+'" data-id="'+d.id+'"><img alt="" src="'+d.th+'"><div class="dn" title="'+esc(d.name)+'"><span class="n">'+esc(d.name)+'</span><span class="cn" id="cn'+d.id+'"></span><span id="dpi'+d.id+'" style="margin-left:auto">'+dpiBadge(d)+'</span></div><span class="rw" style="gap:4px"><button class="ib sm" data-a="bm" title="Simpan ukuran sebagai preset" aria-label="Simpan preset">'+IC('bm')+'</button><button class="ib sm" data-a="del" title="Hapus desain" aria-label="Hapus desain">'+IC('trash')+'</button></span>'
+ +'<div class="dg"><label class="fi" title="Lebar ('+ST.unit+')">'+IC('w')+'<span class="lb">L</span><input type="text" inputmode="decimal" data-k="w" value="'+fv(d.w)+'"></label><button class="ib sm'+(d.lock?' on':'')+'" data-a="lock" title="Kunci rasio gambar" aria-label="Kunci rasio">'+IC(d.lock?'lock':'unlock')+'</button><label class="fi" title="Tinggi ('+ST.unit+')">'+IC('h')+'<span class="lb">T</span><input type="text" inputmode="decimal" data-k="h" value="'+fv(d.h)+'"></label><label class="fi" title="Jumlah pcs (kosong = isi penuh lembar)">'+IC('box')+'<span class="lb">Jml</span><input type="text" inputmode="numeric" data-k="q" placeholder="∞" value="'+esc(d.qty)+'"></label></div></div>').join('');
+ $('prs').innerHTML=(presets.length?IC('bm'):'')+presets.map((p,i)=>'<span class="chp" data-p="'+i+'" title="Pakai ukuran ini untuk desain aktif">'+esc(p.n)+'<i data-x="'+i+'" title="Hapus preset">✕</i></span>').join('');
+ $('empty').style.display=DS.length?'none':'flex';fillCounts()}
+function updChip(){const ad=DS.find(x=>x.id===act)||DS[0];$('c4').textContent=ad?fv(ad.w)+' × '+fv(ad.h)+' '+ST.unit:'-'}
+function fillCounts(){DS.forEach(d=>{const e=$('cn'+d.id);if(!e)return;const n=SH.reduce((a,s)=>a+s.items.filter(i=>i.d===d).length,0),q=parseInt(d.qty)||0;e.textContent=n+(q?'/'+q:'')})}
+$('dl').addEventListener('click',e=>{const c=e.target.closest('.dc');if(!c)return;const d=DS.find(x=>x.id==c.dataset.id);if(!d)return;const a=e.target.closest('[data-a]');
+ if(a){const k=a.dataset.a;if(k==='del'){DS=DS.filter(x=>x!==d);if(act===d.id)act=DS.length?DS[DS.length-1].id:null;drawList();later();return}
+  if(k==='lock'){d.lock=!d.lock;if(d.lock){d.h=d.w*d.ph/d.pw}drawList();later();return}
+  if(k==='bm'){const n=prompt('Nama preset ukuran:',(d.name||'Stiker').slice(0,24));if(n){presets.push({n:n.trim(),w:d.w,h:d.h});store();drawList()}return}}
+ if(act!==d.id){act=d.id;document.querySelectorAll('.dc').forEach(x=>x.classList.toggle('act',x===c));updChip()}});
+$('dl').addEventListener('input',e=>{const i=e.target;if(!i.dataset.k)return;const c=i.closest('.dc'),d=DS.find(x=>x.id==c.dataset.id);if(!d)return;act=d.id;const k=i.dataset.k;
+ if(k==='q'){d.qty=i.value.replace(/\D/g,'');if(i.value!==d.qty)i.value=d.qty}
+ else{const n=pv(i.value);if(!(n>0))return;if(k==='w'){d.w=n;if(d.lock){d.h=n*d.ph/d.pw;c.querySelector('[data-k=h]').value=fv(d.h)}}else{d.h=n;if(d.lock){d.w=n*d.pw/d.ph;c.querySelector('[data-k=w]').value=fv(d.w)}}$('dpi'+d.id).innerHTML=dpiBadge(d)}
+ later()});
+$('prs').addEventListener('click',e=>{const x=e.target.closest('[data-x]');if(x){presets.splice(+x.dataset.x,1);store();drawList();return}const p=e.target.closest('[data-p]');if(!p)return;const d=DS.find(x=>x.id===act);if(!d)return;const pr=presets[+p.dataset.p];d.w=pr.w;d.h=pr.h;d.lock=false;drawList();later()});
+
+/* ---------- engine susunan (MaxRects + grid) ---------- */
+const E=1e-6;
+function newSheet(g){return{free:[{x:0,y:0,w:g.UW+g.s,h:g.UH+g.s}],items:[]}}
+function split(sh,p){const out=[];for(const f of sh.free){if(p.x>=f.x+f.w-E||p.x+p.w<=f.x+E||p.y>=f.y+f.h-E||p.y+p.h<=f.y+E){out.push(f);continue}
+ if(p.x>f.x+E)out.push({x:f.x,y:f.y,w:p.x-f.x,h:f.h});if(p.x+p.w<f.x+f.w-E)out.push({x:p.x+p.w,y:f.y,w:f.x+f.w-p.x-p.w,h:f.h});
+ if(p.y>f.y+E)out.push({x:f.x,y:f.y,w:f.w,h:p.y-f.y});if(p.y+p.h<f.y+f.h-E)out.push({x:f.x,y:p.y+p.h,w:f.w,h:f.y+f.h-p.y-p.h})}
+ sh.free=out.filter((a,i)=>!out.some((b,j)=>j!==i&&a.x>=b.x-E&&a.y>=b.y-E&&a.x+a.w<=b.x+b.w+E&&a.y+a.h<=b.y+b.h+E&&(j<i||Math.abs(a.w-b.w)>E||Math.abs(a.h-b.h)>E||Math.abs(a.x-b.x)>E||Math.abs(a.y-b.y)>E)))}
+function place(sh,it,rot,s){let best=null;const rs=rot&&Math.abs(it.fw-it.fh)>E?[0,1]:[0];
+ for(const f of sh.free)for(const r of rs){const w=(r?it.fh:it.fw)+s,h=(r?it.fw:it.fh)+s;if(w<=f.w+E&&h<=f.h+E){const a=Math.min(f.w-w,f.h-h),b=Math.max(f.w-w,f.h-h);if(!best||a<best.a-E||(Math.abs(a-best.a)<E&&b<best.b-E))best={x:f.x,y:f.y,w,h,r,a,b}}}
+ if(!best)return false;sh.items.push({d:it.d,x:best.x,y:best.y,w:best.w-s,h:best.h-s,r:best.r,fw:it.fw,fh:it.fh});split(sh,best);return true}
+function packMR(g,list,fills,rot){const sheets=[],errs=[];list=list.slice().sort((a,b)=>b.fw*b.fh-a.fw*a.fh);
+ for(const it of list){let ok=false;for(const sh of sheets)if(place(sh,it,rot,g.s)){ok=true;break}
+  if(!ok){const sh=newSheet(g);if(place(sh,it,rot,g.s))sheets.push(sh);else if(!errs.includes(it.d))errs.push(it.d)}}
+ if(fills.length){if(!sheets.length)sheets.push(newSheet(g));const sh=sheets[sheets.length-1];let prog=true,n=0;while(prog&&n<4000){prog=false;for(const f of fills)if(place(sh,f,rot,g.s)){prog=true;n++}}}
+ return{sheets,errs}}
+function packGrid(g,it,qty,o){const fw=o?it.fh:it.fw,fh=o?it.fw:it.fh,cols=Math.floor((g.UW+g.s+E)/(fw+g.s)),rows=Math.floor((g.UH+g.s+E)/(fh+g.s)),cap=cols*rows;if(cap<1)return null;
+ const n=qty>0?qty:cap,sheets=[];for(let i=0;i<n;i++){if(i%cap===0)sheets.push({items:[]});const k=i%cap;sheets[sheets.length-1].items.push({d:it.d,x:(k%cols)*(fw+g.s),y:Math.floor(k/cols)*(fh+g.s),w:fw,h:fh,r:o,fw:it.fw,fh:it.fh})}return{sheets,errs:[],grid:1}}
+const cnt=r=>r.sheets.reduce((a,s)=>a+s.items.length,0),rotN=r=>r.sheets.reduce((a,s)=>a+s.items.filter(i=>i.r).length,0);
+function layout(){const s=effSp(),b=ST.bleed,pad=ST.marks==='reg'?REGPAD:0,e=ST.edge+pad,UW=ST.aw-2*e,UH=ST.ah-2*e,g={s,b,UW,UH,e,pad};G=g;
+ const out={sheets:[],errs:[],msgs:[]};if(UW<=0||UH<=0){out.msgs.push('Area cetak terlalu kecil.');return out}
+ if(!DS.length)return out;
+ if(ST.mode==='grid'){const d=DS[0],cols=ST.cols,rows=ST.rows,fw=(UW-(cols-1)*s)/cols;let fh=d.lock?fw*d.ph/d.pw:(UH-(rows-1)*s)/rows;if(fw<=0||fh<=0){out.msgs.push('Kolom/baris terlalu banyak.');return out}
+  d.w=fw-2*b;d.h=fh-2*b;const sh={items:[]};for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){if(r*(fh+s)+fh>UH+E)continue;sh.items.push({d,x:c*(fw+s),y:r*(fh+s),w:fw,h:fh,r:0,fw,fh})}
+  if(d.lock&&sh.items.length<cols*rows)out.msgs.push('Baris yang tidak muat dihilangkan ('+sh.items.length+' dari '+cols*rows+' stiker).');
+  out.sheets=[sh];document.querySelectorAll('.dc').forEach(c=>{if(c.dataset.id==d.id){const w=c.querySelector('[data-k=w]'),h=c.querySelector('[data-k=h]');if(w&&document.activeElement!==w)w.value=fv(d.w);if(h&&document.activeElement!==h)h.value=fv(d.h);const q=$('dpi'+d.id);if(q)q.innerHTML=dpiBadge(d)}});
+ }else{
+  const list=[],fills=[];DS.forEach(d=>{const it={d,fw:d.w+2*b,fh:d.h+2*b},q=parseInt(d.qty)||0;if(q>0)for(let i=0;i<q;i++)list.push(it);else fills.push(it)});
+  const cands=[];
+  if(DS.length===1){const it=fills.length?fills[0]:list[0],q=fills.length?0:list.length;
+   [0,1].forEach(o=>{if(o&&!ST.rot)return;const r=packGrid(g,it,q,o);if(r)cands.push(r)});
+   if(q<=600){[false,true].forEach(rt=>{if(rt&&!ST.rot)return;cands.push(packMR(g,list,fills,rt))})}}
+  else{[false,true].forEach(rt=>{if(rt&&!ST.rot)return;cands.push(packMR(g,list,fills,rt))})}
+  const fillMode=DS.length===1&&fills.length;let best=null;
+  for(const r of cands){if(!r.sheets.length)continue;const sc=fillMode?[-cnt(r),rotN(r)]:[r.sheets.length,rotN(r)];if(DS.length===1&&r.grid)sc[0]+=fillMode?-Math.ceil(cnt(r)*.1):-.5;if(!best||sc[0]<best.sc[0]||(sc[0]===best.sc[0]&&sc[1]<best.sc[1]))best={r,sc}}
+  if(best){out.sheets=best.r.sheets;out.errs=best.r.errs}else{cands.forEach(r=>r.errs.forEach(d=>{if(!out.errs.includes(d))out.errs.push(d)}))}}
+ out.sheets.forEach(sh=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;sh.items.forEach(i=>{x0=Math.min(x0,i.x);y0=Math.min(y0,i.y);x1=Math.max(x1,i.x+i.w);y1=Math.max(y1,i.y+i.h)});
+  const dx=ST.center?(UW-(x1-x0))/2-x0:0,dy=ST.center?(UH-(y1-y0))/2-y0:0;sh.items.forEach(i=>{i.x+=dx;i.y+=dy});sh.bb={x0:x0+dx,y0:y0+dy,x1:x1+dx,y1:y1+dy}});
+ return out}
+
+/* ---------- gambar ---------- */
+function draw(ctx,k,sh,prev){const PW=ST.pw,PH=ST.ph,g=G||layout();ctx.save();ctx.fillStyle='#fff';ctx.fillRect(0,0,PW*k,PH*k);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+ if(prev){ctx.strokeStyle='rgba(0,0,0,.28)';ctx.setLineDash([6,4]);ctx.lineWidth=1;ctx.strokeRect((PW-ST.aw)/2*k,(PH-ST.ah)/2*k,ST.aw*k,ST.ah*k);ctx.setLineDash([])}
+ if(!sh){ctx.restore();return}
+ const ox=(PW-g.UW)/2,oy=(PH-g.UH)/2,b=g.b;
+ sh.items.forEach(it=>{const X=(ox+it.x)*k,Y=(oy+it.y)*k,W=it.w*k,H=it.h*k;if(!it.r)ctx.drawImage(it.d.bmp,X,Y,W,H);else{ctx.save();ctx.translate(X+W/2,Y+H/2);ctx.rotate(Math.PI/2);ctx.drawImage(it.d.bmp,-H/2,-W/2,H,W);ctx.restore()}});
+ if(ST.marks==='in'){ctx.save();ctx.scale(k,k);ctx.lineCap='butt';const t=Math.max(MT,prev?1.3/k:0),paths=new Path2D();
+  sh.items.forEach(it=>{const x0=ox+it.x+b+t/2,y0=oy+it.y+b+t/2,x1=ox+it.x+it.w-b-t/2,y1=oy+it.y+it.h-b-t/2,l=Math.min(Math.max(ST.markL,prev?2.5/k:0),(x1-x0)/2,(y1-y0)/2);
+   [[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]].forEach(([cx,cy,sx,sy])=>{paths.moveTo(cx+sx*l,cy);paths.lineTo(cx,cy);paths.lineTo(cx,cy+sy*l)})});
+  ctx.strokeStyle='#e00000';ctx.lineWidth=t;ctx.stroke(paths);ctx.restore()}
+ else if(ST.marks==='reg'){const x0=ox+sh.bb.x0+b,y0=oy+sh.bb.y0+b,x1=ox+sh.bb.x1-b,y1=oy+sh.bb.y1-b;ctx.save();ctx.scale(k,k);ctx.strokeStyle='#000';ctx.lineWidth=Math.max(.05,prev?1.2/k:0);ctx.beginPath();
+  [[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]].forEach(([cx,cy,sx,sy])=>{const px=cx-sx*(REGO+b),py=cy-sy*(REGO+b);ctx.moveTo(px+sx*REGA,py);ctx.lineTo(px,py);ctx.lineTo(px,py+sy*REGA)});ctx.stroke();ctx.restore()}
+ ctx.restore()}
+let rq=0;function redraw(){cancelAnimationFrame(rq);rq=requestAnimationFrame(()=>{const st=$('stage'),cv=$('cv'),dpr=Math.min(2,window.devicePixelRatio||1),aw=st.clientWidth-20,ah=st.clientHeight-20,k=Math.max(1,Math.min(aw/ST.pw,ah/ST.ph));
+ cv.style.width=ST.pw*k+'px';cv.style.height=ST.ph*k+'px';cv.width=Math.round(ST.pw*k*dpr);cv.height=Math.round(ST.ph*k*dpr);const x=cv.getContext('2d');x.setTransform(1,0,0,1,0,0);draw(x,k*dpr,SH[cur],true)})}
+addEventListener('resize',redraw);
+/* ---------- hasil & preview tertunda ---------- */
+let tmr=0;function later(){$('busy').classList.add('on');clearTimeout(tmr);tmr=setTimeout(update,140)}
+function update(){const L=layout();SH=L.sheets;if(cur>=SH.length)cur=Math.max(0,SH.length-1);const g=G;
+ const tot=SH.reduce((a,s)=>a+s.items.length,0),ar=SH.reduce((a,s)=>a+s.items.reduce((q,i)=>q+(i.w-2*g.b)*(i.h-2*g.b),0),0),eff=SH.length&&g.UW>0?ar/(SH.length*g.UW*g.UH)*100:0;
+ const ad=DS.find(x=>x.id===act)||DS[0];$('c4').textContent=ad?fv(ad.w)+' × '+fv(ad.h)+' '+ST.unit:'-';$('c1').textContent=tot;$('c2').textContent=SH.length;$('c3').textContent=eff.toFixed(0)+'%';
+ const W=[];L.errs.forEach(d=>W.push(['b',d.name+': ukuran terlalu besar untuk area cetak.']));L.msgs.forEach(m=>W.push(['m',m]));
+ DS.forEach(d=>{if(dpiOf(d)<200)W.push(['m',d.name.slice(0,24)+': resolusi rendah ('+Math.round(dpiOf(d))+' dpi), hasil cetak bisa pecah.'])});
+ const wb=$('wbtn');wb.style.display=W.length?'':'none';wb.className='ib sm'+(W.length?(W.some(w=>w[0]==='b')?' bad':' has'):'');wb.innerHTML=IC('warn')+(W.length?'<b>'+W.length+'</b>':'');
+ $('wpop').innerHTML=W.map(w=>'<div class="'+w[0]+'">'+esc(w[1])+'</div>').join('');if(!W.length)$('wpop').classList.remove('on');
+ $('pn').textContent=SH.length?(cur+1)+' / '+SH.length:'-';$('pv').disabled=cur<=0;$('nx').disabled=cur>=SH.length-1;$('bpng').disabled=$('bpdf').disabled=!SH.length;
+ fillCounts();$('busy').classList.remove('on');redraw()}
+$('wbtn').onclick=e=>{e.stopPropagation();$('wpop').classList.toggle('on')};document.addEventListener('click',e=>{if(!e.target.closest('#wpop'))$('wpop').classList.remove('on')});
+$('pv').onclick=()=>{if(cur>0){cur--;update()}};$('nx').onclick=()=>{if(cur<SH.length-1){cur++;update()}};
+
+/* ---------- ekspor ---------- */
+const DPI=300;function renderSheet(sh){const k=DPI/2.54,c=document.createElement('canvas');c.width=Math.round(ST.pw*k);c.height=Math.round(ST.ph*k);draw(c.getContext('2d'),k,sh,false);return c}
+const blobOf=(c,t,q)=>new Promise(r=>c.toBlob(r,t,q));
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+const stamp=()=>ST.pw+'x'+ST.ph+'cm_'+Date.now();
+$('bpng').onclick=async()=>{if(!SH.length)return;$('busy').classList.add('on');const c=renderSheet(SH[cur]);dl(await blobOf(c,'image/png'),'POSITIF_Layout_'+stamp()+(SH.length>1?'_lembar'+(cur+1):'')+'.png');$('busy').classList.remove('on')};
+function buildPDF(pages,wcm,hcm){const enc=new TextEncoder(),parts=[],offs=[];let len=0;const push=b=>{if(typeof b==='string')b=enc.encode(b);parts.push(b);len+=b.length};
+ const W=(wcm/2.54*72).toFixed(2),H=(hcm/2.54*72).toFixed(2),n=pages.length,obj=(i,fn)=>{offs[i]=len;push(i+' 0 obj\n');fn();push('\nendobj\n')};
+ push('%PDF-1.4\n');obj(1,()=>push('<</Type/Catalog/Pages 2 0 R>>'));obj(2,()=>push('<</Type/Pages/Count '+n+'/Kids['+pages.map((_,i)=>(3+i*3)+' 0 R').join(' ')+']>>'));
+ pages.forEach((p,i)=>{const pg=3+i*3,ct=pg+1,im=pg+2,c='q '+W+' 0 0 '+H+' 0 0 cm /Im0 Do Q';
+  obj(pg,()=>push('<</Type/Page/Parent 2 0 R/MediaBox[0 0 '+W+' '+H+']/Resources<</XObject<</Im0 '+im+' 0 R>>>>/Contents '+ct+' 0 R>>'));
+  obj(ct,()=>push('<</Length '+c.length+'>>\nstream\n'+c+'\nendstream'));
+  obj(im,()=>{push('<</Type/XObject/Subtype/Image/Width '+p.w+'/Height '+p.h+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+p.bytes.length+'>>\nstream\n');push(p.bytes);push('\nendstream')})});
+ const xo=len,N=3*n+3;push('xref\n0 '+N+'\n0000000000 65535 f \n');for(let i=1;i<N;i++)push(String(offs[i]).padStart(10,'0')+' 00000 n \n');
+ push('trailer\n<</Size '+N+'/Root 1 0 R>>\nstartxref\n'+xo+'\n%%EOF');return new Blob(parts,{type:'application/pdf'})}
+async function makePDF(){const pages=[];for(const sh of SH){const c=renderSheet(sh),b=await blobOf(c,'image/jpeg',.95);pages.push({w:c.width,h:c.height,bytes:new Uint8Array(await b.arrayBuffer())})}return buildPDF(pages,ST.pw,ST.ph)}
+$('bpdf').onclick=async()=>{if(!SH.length)return;$('busy').classList.add('on');try{dl(await makePDF(),'POSITIF_Layout_'+stamp()+'.pdf')}finally{$('busy').classList.remove('on')}};
+
+/* ---------- awal ---------- */
+sync();drawList();update();
+</script></body></html>
