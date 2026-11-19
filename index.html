@@ -2,6 +2,14 @@
 <html lang="id" data-theme="dark"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Positif POS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060606">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Positif POS">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#ececec;--card:#fff;--text:#262626;--muted:#767676;--line:#d4d4d4;--acc:#cfcfcf;--acc-t:#111;--ok:#2f6f46;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -285,9 +293,32 @@ nav button.on{background:var(--acc);color:var(--acc-t);box-shadow:0 0 24px -6px 
 .dash .dclk-d{font:500 clamp(16px,2vw,26px) Barlow,sans-serif;color:var(--muted);margin-top:.5em}
 
 .ptabs{background:transparent;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+/* ===== revisi: POS, rail produksi, HP ===== */
+.logo{cursor:pointer}
+.hubmenu{z-index:60}
+.prod{display:flex;gap:12px;align-items:flex-start}.prod>#pbody{flex:1;min-width:0}
+#view .prod>.ptabs{flex-direction:column;overflow:visible;position:sticky;top:calc(var(--hh,52px) + 12px);padding:8px 6px;gap:8px;margin:0;border:1px solid rgba(212,255,63,.22);border-radius:20px;background:rgba(15,15,15,.7);flex:none;align-self:flex-start}
+#view .prod>.ptabs button{width:46px;height:46px;padding:0}
+#view.fit .prod{flex:1;min-height:0;align-items:stretch}
+#view.fit .prod>.ptabs{position:static;align-self:flex-start}
+@media(max-width:860px){#view .prod>.ptabs button{width:40px;height:40px;border-radius:12px}.prod{gap:8px}}
+.vgn{background:rgba(212,255,63,.13);border:1px solid rgba(212,255,63,.42);border-radius:10px;padding:7px 10px;margin-bottom:6px;color:var(--text)}
+.pdt .pn{background:rgba(212,255,63,.13);border:1px solid rgba(212,255,63,.42);border-radius:10px;padding:8px 12px;margin:8px 0 6px}
+.pjn{color:var(--acc)}
+.si{position:relative;display:inline-grid;place-items:center;width:42px;height:42px;flex:none;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);cursor:pointer}
+.si select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0!important;margin:0!important;font-size:16px}
+.si.act{border-color:var(--acc);color:var(--acc)}
+.bar.fn{flex-wrap:nowrap!important;align-items:center}#pfq{min-width:0;flex:1}
+@media(max-width:600px){.hm{display:none}}
+.chs{display:flex;flex-wrap:wrap;gap:6px}.chs .chp{padding:5px 11px;font-size:13px}
+.pjg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.pjg label{display:flex;flex-direction:column;gap:4px;font-weight:600}.pjg select{width:100%}
+.ptl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:12px}
+.pt{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.02)}
+.pth{display:flex;gap:8px;align-items:center}.pth input{flex:1;min-width:0}
+.sbh small{display:block}
 </style></head>
 <body>
-<header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing"></h1><nav id="nav"></nav><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
+<header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
 <main id="view"></main>
 <div id="modal" class="modal"><div class="card"><div id="rc" class="rc"></div>
 <div class="row noprint"><button class="btn sec" onclick="closeM()">Tutup</button><select id="rw" onchange="setRW(this.value)" title="Lebar kertas"><option value="58">58 mm</option><option value="80">80 mm</option><option value="100">100 mm</option></select><button class="btn" onclick="printRc()">Cetak struk</button></div></div></div>
@@ -357,9 +388,10 @@ refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="
 expand:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'};
 const IC=n=>'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">'+(ICO[n]||'')+'</svg>';
 const NI={beranda:'home',kasir:'receipt',produk:'shirt',stok:'box',bahan:'layers',produksi:'factory',pesanan:'clipboard'};
-const tabs=[['beranda','Dashboard'],['kasir','Kasir'],['produk','Produk'],['stok','Stok Produk'],['bahan','Stok Bahan Baku'],['produksi','Produksi'],['pesanan','Pesanan custom'],['riwayat','Riwayat'],['laporan','Laporan'],['cadangan','Cadangan data']];
+Object.assign(ICO,{chart:'<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',filter:'<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',thumb:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>'});
+const tabs=[['beranda','POS'],['kasir','Kasir'],['produk','Produk'],['stok','Stok Produk'],['bahan','Stok Bahan Baku'],['produksi','Produksi'],['pesanan','Pesanan custom'],['riwayat','Riwayat'],['laporan','Laporan'],['cadangan','Cadangan data']];
 const HUBAPPS=[['Resi Print','resi_print.html'],['Resi Video Packing','resi_video_packing.html'],['Resi Pickup Kurir','resi_pickup-kurir.html']];
-const HUB=`<span class="hub" onmouseenter="hubOpen(1)" onmouseleave="hubClose(1)"><button title="Positif Hub" aria-label="Positif Hub" onclick="location.href='PositifHub.html'">${IC('grid')}</button><button class="caret" id="hubcaret" aria-haspopup="true" aria-expanded="false" aria-label="Buka daftar app" onclick="hubToggle(event)">&#9662;</button><div class="hubmenu" id="hubmenu" role="menu">${HUBAPPS.map(a=>`<a role="menuitem" href="${a[1]}">${a[0]}</a>`).join('')}</div></span><button class="stk nv" title="Layout Stiker" aria-label="Layout Stiker" onclick="location.href='LAYOUT_STIKER.html'">${IC('sticker')}</button>`;
+const HUB=`<span class="hub" onmouseenter="hubOpen(1)" onmouseleave="hubClose(1)"><button title="Positif Hub" aria-label="Positif Hub" onclick="location.href='PositifHub.html'">${IC('grid')}</button><button class="caret" id="hubcaret" aria-haspopup="true" aria-expanded="false" aria-label="Buka daftar app" onclick="hubToggle(event)">&#9662;</button></span><button class="stk nv" title="Layout Stiker" aria-label="Layout Stiker" onclick="location.href='LAYOUT_STIKER.html'">${IC('sticker')}</button>`;
 let hubT=null;
 function hubOpen(hov){
  if(hov&&!matchMedia('(hover:hover)').matches)return;
@@ -383,9 +415,9 @@ const today=d=>new Date(d).toDateString()===new Date().toDateString();
 const fmt=d=>new Date(d).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'});
 $('lg').src=LOGO;
 let pend=null;
-const SALES=[['kasir','Kasir'],['riwayat','Riwayat penjualan'],['laporan','Laporan penjualan']];
+const SALES=[['riwayat','Riwayat penjualan'],['laporan','Laporan penjualan']];
 const nb=(k,l)=>{const n=k==='produksi'?lowN():0;return `<button class="nv${k===tab?' on':''}" title="${l}" aria-label="${l}" onclick="tab='${k}';render()">${IC(NI[k])}<span class="nl">${l}</span>${n?'<span class="bgn">'+n+'</span>':''}</button>`};
-const navH=()=>nb('beranda','Dashboard')+`<span class="dd" onmouseenter="ddOpen(1)" onmouseleave="ddClose(1)"><button class="nv ${SALES.some(s=>s[0]===tab)?'on':''}" title="Penjualan" aria-label="Penjualan" aria-haspopup="true" onclick="ddToggle(event)">${IC('receipt')}<span class="nl">Penjualan</span><span class="cv">&#9662;</span></button><div class="hubmenu" id="ddmenu" role="menu">${SALES.map(s=>`<a role="menuitem" href="#" class="${s[0]===tab?'cur':''}" onclick="go('${s[0]}');return false">${s[1]}</a>`).join('')}</div></span>`+[['produk','Produk'],['stok','Stok Produk'],['bahan','Stok Bahan Baku'],['produksi','Produksi'],['pesanan','Pesanan custom']].map(t=>nb(t[0],t[1])).join('')+HUB;
+const navH=()=>nb('beranda','POS')+nb('kasir','Kasir')+`<span class="dd" onmouseenter="ddOpen(1)" onmouseleave="ddClose(1)"><button class="nv ${SALES.some(s=>s[0]===tab)?'on':''}" title="Penjualan" aria-label="Penjualan" aria-haspopup="true" onclick="ddToggle(event)">${IC('chart')}<span class="nl">Penjualan</span><span class="cv">&#9662;</span></button></span>`+[['produk','Produk'],['stok','Stok Produk'],['bahan','Stok Bahan Baku'],['produksi','Produksi'],['pesanan','Pesanan custom']].map(t=>nb(t[0],t[1])).join('')+HUB;
 let ddT=null;
 function ddOpen(hov){if(hov&&!matchMedia('(hover:hover)').matches)return;clearTimeout(ddT);const m=$('ddmenu'),b=document.querySelector('.dd');if(!m||!b)return;const r=b.getBoundingClientRect();m.style.top=r.bottom+'px';m.classList.add('on');m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px'}
 function ddClose(hov){if(hov){clearTimeout(ddT);ddT=setTimeout(()=>ddClose(0),150);return}const m=$('ddmenu');if(m)m.classList.remove('on')}
@@ -394,6 +426,32 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;for(const[id,
 function go(t){tab=t;ddClose(0);render()}
 document.addEventListener('click',e=>{if(!e.target.closest('.dd'))ddClose(0)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')ddClose(0)});
+/* ===== menu dropdown: dibuat di <body> supaya tidak terpotong header/nav di HP ===== */
+function mkMenu(id,html){let m=$(id);if(!m){m=document.createElement('div');m.id=id;m.className='hubmenu';m.setAttribute('role','menu');m.onmouseenter=()=>{clearTimeout(hubT);clearTimeout(ddT)};m.onmouseleave=()=>{hubClose(1);ddClose(1)};document.body.appendChild(m)}m.innerHTML=html;return m}
+function placeMenu(m,a){const r=a.getBoundingClientRect();m.classList.add('on');m.style.top=(r.bottom+4)+'px';m.style.left=Math.max(6,Math.min(r.left,innerWidth-m.offsetWidth-6))+'px'}
+function hubOpen(hov){if(hov&&!matchMedia('(hover:hover)').matches)return;clearTimeout(hubT);ddClose(0);const h=document.querySelector('.hub');if(!h)return;placeMenu(mkMenu('hubmenu',HUBAPPS.map(a=>`<a role="menuitem" href="${a[1]}">${a[0]}</a>`).join('')),h);const c=$('hubcaret');if(c)c.setAttribute('aria-expanded','true')}
+function ddOpen(hov){if(hov&&!matchMedia('(hover:hover)').matches)return;clearTimeout(ddT);hubClose(0);const b=document.querySelector('.dd');if(!b)return;placeMenu(mkMenu('ddmenu',SALES.map(s=>`<a role="menuitem" href="#" class="${s[0]===tab?'cur':''}" onclick="go('${s[0]}');return false">${s[1]}</a>`).join('')),b)}
+/* ===== petugas & penanggung jawab ===== */
+const pList=()=>S.petugas||[],pAct=()=>pList().filter(p=>p.on!==0);
+const pjName=s=>{const id=(S.pj||{})[s],p=pList().find(x=>x.id===id&&x.on!==0);return p?p.name:''};
+const pdl=()=>'<datalist id="pdl">'+pAct().map(p=>'<option value="'+esc(p.name)+'">').join('')+'</datalist>';
+function pOk(by,st){const p=pList().find(x=>x.name.trim().toLowerCase()===String(by).trim().toLowerCase());if(!p)return true;if(p.on===0){toast(p.name+' tidak aktif. Ubah di Data petugas.',1);return false}if(!(p.tahap||[]).includes(st)){toast(p.name+' tidak punya akses ke tahap '+STL[st]+'.',1);return false}return true}
+function pSave(){save();render()}
+function petugasView(){const dis=isAdm?'':' disabled',P=pList();
+ const chips=p=>RS.map(s=>'<button class="chp'+((p.tahap||[]).includes(s)?' on':'')+'"'+dis+' onclick="togA(\''+p.id+'\',\''+s+'\')">'+STL[s]+'</button>').join('');
+ $('pbody').innerHTML='<div class="card"><h2 style="margin:0 0 6px">Data petugas</h2><p class="muted" style="margin:0 0 10px">Atur siapa yang boleh memproses tiap tahap produksi. Nama petugas muncul sebagai pilihan di kolom petugas saat memindahkan produk.</p>'
+ +(P.length?'<div class="ptl">'+P.map(p=>{const pj=RS.filter(s=>(S.pj||{})[s]===p.id).map(s=>STL[s]).join(', ');return'<div class="pt"><div class="pth"><input value="'+esc(p.name)+'"'+dis+' onchange="updP(\''+p.id+'\',this.value)"><button class="chp'+(p.on!==0?' on':'')+'"'+dis+' onclick="togP(\''+p.id+'\')">'+(p.on!==0?'Aktif':'Nonaktif')+'</button>'+(isAdm?'<button class="ib" title="Hapus" aria-label="Hapus" onclick="delP(\''+p.id+'\')">'+IC('trash')+'</button>':'')+'</div><div class="muted" style="font-size:13px;margin:8px 0 4px">Akses tahap</div><div class="chs">'+chips(p)+'</div>'+(pj?'<div class="pjn" style="margin-top:8px;font-size:14px">Penanggung jawab: '+pj+'</div>':'')+'</div>'}).join('')+'</div>':'<p class="muted">Belum ada petugas.</p>')
+ +(isAdm?'<div class="form" style="margin-top:12px"><input id="pn" placeholder="Nama petugas baru"><button class="btn" onclick="addP()">Tambah petugas</button></div>':'<p class="muted" style="margin-top:10px">Hanya admin yang dapat mengubah data petugas.</p>')+'</div>'
+ +'<div class="card" style="margin-top:14px"><h2 style="margin:0 0 6px">Penanggung jawab per divisi</h2><div class="pjg">'+RS.map(s=>{const o=pAct().filter(p=>(p.tahap||[]).includes(s));return'<label><span>'+STL[s]+'</span><select'+dis+' onchange="setPJ(\''+s+'\',this.value)"><option value="">- belum ditentukan -</option>'+o.map(p=>'<option value="'+p.id+'"'+((S.pj||{})[s]===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select></label>'}).join('')+'</div><p class="muted" style="margin:8px 0 0">Pilihan hanya berisi petugas aktif yang punya akses ke tahap tersebut.</p></div>'}
+function addP(){if(!isAdm)return;const n=$('pn').value.trim();if(!n)return toast('Isi nama petugas.',1);if(pList().some(p=>p.name.toLowerCase()===n.toLowerCase()))return toast('Nama petugas sudah ada.',1);S.petugas=pList().concat([{id:String(nid()),name:n,on:1,tahap:RS.slice()}]);pSave()}
+function updP(id,v){if(!isAdm)return;v=v.trim();const p=pList().find(x=>x.id===id);if(!p)return;if(!v||pList().some(x=>x.id!==id&&x.name.toLowerCase()===v.toLowerCase())){toast('Nama kosong atau sudah dipakai.',1);return petugasView()}p.name=v;pSave()}
+function togP(id){if(!isAdm)return;const p=pList().find(x=>x.id===id);if(!p)return;p.on=p.on===0?1:0;if(p.on===0)Object.keys(S.pj||{}).forEach(s=>{if(S.pj[s]===id)delete S.pj[s]});pSave()}
+function togA(id,s){if(!isAdm)return;const p=pList().find(x=>x.id===id);if(!p)return;const t=p.tahap||[];p.tahap=t.includes(s)?t.filter(x=>x!==s):t.concat([s]);if(!p.tahap.includes(s)&&(S.pj||{})[s]===id)delete S.pj[s];pSave()}
+function delP(id){if(!isAdm)return;if(!confirm('Hapus petugas ini?'))return;S.petugas=pList().filter(p=>p.id!==id);Object.keys(S.pj||{}).forEach(s=>{if(S.pj[s]===id)delete S.pj[s]});pSave()}
+function setPJ(s,id){if(!isAdm)return;S.pj=S.pj||{};if(id)S.pj[s]=id;else delete S.pj[s];pSave()}
+function ddClose(hov){if(hov){if(!matchMedia('(hover:hover)').matches)return;clearTimeout(ddT);ddT=setTimeout(()=>ddClose(0),150);return}const m=$('ddmenu');if(m)m.classList.remove('on')}
+function hubClose(hov){if(hov){if(!matchMedia('(hover:hover)').matches)return;clearTimeout(hubT);hubT=setTimeout(()=>hubClose(0),150);return}const m=$('hubmenu');if(m)m.classList.remove('on');const c=$('hubcaret');if(c)c.setAttribute('aria-expanded','false')}
+
 let _h0=1;addEventListener('popstate',()=>{const l=location.hash.slice(1);if(TABS.includes(l)&&l!==tab){tab=l;render()}});
 function render(){$('view').classList.toggle('bahan',tab==='bahan');const hh='#'+tab;if(location.hash!==hh)try{history[_h0?'replaceState':'pushState'](null,'',hh)}catch(e){}_h0=0;
  if(!ready){
@@ -501,7 +559,7 @@ function closeM(){$('modal').classList.remove('on')}
  ${p.variants.map(v=>`<tr><td><label class="thumb" title="Klik untuk mengganti foto">${v.img?`<img src="${v.img}" alt="">`:'+ Foto'}<input type="file" accept="image/*" hidden onchange="setImg(${v.id},this)"></label>${v.img?`<button class="lnk" onclick="delImg(${v.id})">Hapus foto</button>`:''}</td><td><input value="${esc(v.color)}" onchange="updV(${v.id},'color',this.value)"></td><td><input value="${esc(v.size)}" onchange="updV(${v.id},'size',this.value)"></td><td><input value="${esc(v.barcode||'')}" placeholder="${v.id}" onchange="setBC(${v.id},this.value)"></td><td><input type="text" inputmode="numeric" data-n value="${v.price||''}" placeholder="${nf(p.price)}" onchange="updV(${v.id},'price',+this.value)"></td><td><input type="text" inputmode="numeric" data-n value="${v.stock}" onchange="updV(${v.id},'stock',+this.value)"></td><td style="white-space:nowrap"><button class="btn sec" style="padding:4px 8px;margin-right:4px" onclick="printBC(${p.id},${v.id})">Cetak label</button><button class="x" style="width:34px;padding:0" title="Hapus varian" onclick="delV(${v.id})" aria-label="Hapus varian"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 11v6M14 11v6"/></svg></button></td></tr>`).join('')}</table></div></div>`;
 let ed=null,addOpen=false,pfq='',pfc='Semua';
 function vProduk(){
- $('view').innerHTML=`<div class="bar fn"><input id="pfq" placeholder="Cari produk atau varian..." value="${esc(pfq)}" oninput="pfq=this.value;pgrid()" autocomplete="off"><select onchange="pfc=this.value;pgrid()">${cats().map(c=>`<option ${c===pfc?'selected':''}>${esc(c)}</option>`).join('')}</select><button class="btn" onclick="addOpen=true;vProduk()">+ Tambah produk</button></div><div id="pgrid" class="grid fs"></div>`;
+ $('view').innerHTML=`<div class="bar fn"><input id="pfq" placeholder="Cari produk atau varian..." value="${esc(pfq)}" oninput="pfq=this.value;pgrid()" autocomplete="off"><label class="si${pfc!=='Semua'?' act':''}" title="Filter kategori">${IC('filter')}<select aria-label="Filter kategori" onchange="pfc=this.value;this.parentNode.classList.toggle('act',pfc!=='Semua');pgrid()">${cats().map(c=>`<option ${c===pfc?'selected':''}>${esc(c)}</option>`).join('')}</select></label><button class="btn" title="Tambah produk" aria-label="Tambah produk" onclick="addOpen=true;vProduk()">+<span class="hm"> Tambah produk</span></button></div><div id="pgrid" class="grid fs"></div>`;
  pgrid();edShow()}
 function pgrid(){const ql=pfq.toLowerCase(),l=S.products.filter(p=>(pfc==='Semua'||p.cat===pfc)&&(!ql||p.name.toLowerCase().includes(ql)||p.variants.some(v=>vl(v).toLowerCase().includes(ql)||bcv(v).includes(pfq))));
  $('pgrid').innerHTML=l.length?l.map(p=>{const im=(p.variants.find(v=>v.img)||{}).img,iv=(p.variants.find(v=>v.img)||{}).id,st=p.variants.reduce((a,v)=>a+v.stock,0),n=p.variants.length,pr=p.variants.map(v=>vp(p,v)),lo=pr.length?Math.min(...pr):p.price;
@@ -618,7 +676,7 @@ function zNav(d){ZI=(ZI+d+ZL.length)%ZL.length;zShow()}
 function zClose(){$('zm').classList.remove('on')}
 document.addEventListener('keydown',e=>{if(!$('zm').classList.contains('on'))return;if(e.key==='Escape'){zClose();e.stopImmediatePropagation();e.preventDefault()}else if(e.key==='ArrowLeft')zNav(-1);else if(e.key==='ArrowRight')zNav(1)},true);
 function setCS(v){CS=v;document.documentElement.dataset.cs=v;try{localStorage.setItem('positif_cs',v)}catch(e){}}
-function csCtl(){if($('cs'))return;const h=`<select id="cs" onchange="setCS(this.value)" title="View" aria-label="View"><option value="l">Large thumbnail</option><option value="m">Medium thumbnail</option><option value="s">Small thumbnail</option></select>`;let a=$('cat')||($('pfq')&&$('pfq').nextElementSibling);if(a){a.insertAdjacentHTML('afterend',h);$('cs').value=CS}}
+function csCtl(){if($('cs'))return;const h=`<label class="si" title="Ukuran thumbnail">${IC('thumb')}<select id="cs" onchange="setCS(this.value)" aria-label="Ukuran thumbnail"><option value="l">Large thumbnail</option><option value="m">Medium thumbnail</option><option value="s">Small thumbnail</option></select></label>`;let a=$('cat')||($('pfq')&&$('pfq').nextElementSibling);if(a){a.insertAdjacentHTML('afterend',h);$('cs').value=CS}}
 const _r=render;render=function(){_r();csCtl()};
 function vRiwayat(){
  const dt=d=>new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}),tm=d=>new Date(d).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
@@ -670,7 +728,7 @@ function rebuild(){
  S.gudang=g('gudang').map(x=>({...x.d,id:x.id})).sort((a,b)=>(a.ord||0)-(b.ord||0));
  S.jobs=g('jobs').map(x=>{const pj=v=>{if(typeof v==='string'){try{v=JSON.parse(v)}catch(e){}}return Array.isArray(v)?v:[]};return{...x.d,id:x.id,items:pj(x.d.items),hist:pj(x.d.hist),rejs:pj(x.d.rejs)}}).sort(dsc);
  S.log=g('log').map(x=>({...x.d,id:x.id})).sort(dsc);
- const c=g('cfg')[0];S.low=c&&+c.d.low||10;S.lastBackup=c&&c.d.lastBackup||null;S.v=2}
+ const c=g('cfg')[0];S.low=c&&+c.d.low||10;S.lastBackup=c&&c.d.lastBackup||null;const pj=v=>{if(typeof v==='string'){try{v=JSON.parse(v)}catch(e){v=null}}return v};S.petugas=Array.isArray(pj(c&&c.d.petugas))?pj(c.d.petugas):[];S.pj=pj(c&&c.d.pj)||{};S.v=2}
 function docsFromS(){
  const m={},base=Date.now();
  S.products.forEach((p,i)=>{if(p.ts==null)p.ts=base-i;
@@ -681,7 +739,7 @@ function docsFromS(){
  S.log.forEach(e=>{const{id,...r}=e;m['log/'+id]=r});
  (S.jobs||[]).forEach(j=>{const{id,...r}=j;m['jobs/'+id]=r});
  (S.gudang||[]).forEach(j=>{const{id,...r}=j;m['gudang/'+id]=r});
- m['cfg/main']={low:S.low,lastBackup:S.lastBackup||null};
+ m['cfg/main']={low:S.low,lastBackup:S.lastBackup||null,petugas:JSON.stringify(S.petugas||[]),pj:JSON.stringify(S.pj||{})};
  return m}
 const nz=x=>x==null?'':x;
 const same=(a,b)=>{a=nz(a);b=nz(b);return typeof a==='object'||typeof b==='object'?JSON.stringify(a)===JSON.stringify(b):String(a)===String(b)};
@@ -773,11 +831,11 @@ let pst='alur',pq='',pOnly=true,tgt=0,draft=[],pday='';
 const ymd=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
 const lowN=()=>ready?allV().filter(x=>!isJ(x.v)&&x.v.stock<=S.low).length:0;
 const jlist=s=>(S.jobs||[]).filter(j=>j.stage===s),lastH=j=>[...j.hist].reverse().find(x=>!x.kind)||j.hist[0]||{date:j.date},jq=j=>j.items.reduce((a,i)=>a+i.qty,0),jn=j=>j.items.map(i=>i.name).join(', '),tq=a=>a.reduce((s,j)=>s+jq(j),0);
-const PTI={alur:'workflow',cetak:'printer',selesai:'check',reject:'ban',gudang:'warehouse'};
-const PT2=[['alur','Alur produksi'],['cetak','Buat order cetak'],['selesai','Selesai'],['reject','Reject'],['gudang','Data gudang']];
+const PTI={alur:'workflow',cetak:'printer',selesai:'check',reject:'ban',gudang:'warehouse',petugas:'users'};
+const PT2=[['alur','Alur produksi'],['cetak','Buat order cetak'],['selesai','Selesai'],['reject','Reject'],['gudang','Data gudang'],['petugas','Data petugas']];
 function vProd(){if(!pday)pday=ymd(new Date());$('view').classList.toggle('fit',pst==='cetak'||pst==='selesai');
- $('view').innerHTML='<div class="ptabs">'+PT2.map(([k,l])=>'<button class="'+(k===pst?'on':'')+'" title="'+l+'" aria-label="'+l+'" onclick="pst=\''+k+'\';vProd()">'+IC(PTI[k])+'</button>').join('')+'</div><div id="pbody"></div>';
- if(pst==='alur')flowView();else if(pst==='cetak')cetakView();else if(pst==='selesai')doneView();else if(pst==='reject')rejectView();else gudangView();stk()}
+ $('view').innerHTML='<div class="prod"><div class="ptabs">'+PT2.map(([k,l])=>'<button class="'+(k===pst?'on':'')+'" title="'+l+'" aria-label="'+l+'" onclick="pst=\''+k+'\';vProd()">'+IC(PTI[k])+'</button>').join('')+'</div><div id="pbody"></div></div>';
+ if(pst==='alur')flowView();else if(pst==='cetak')cetakView();else if(pst==='selesai')doneView();else if(pst==='reject')rejectView();else if(pst==='petugas')petugasView();else gudangView();stk()}
 /* ----- Cetak: produk di kiri, order di kanan ----- */
 function cetakView(){$('pbody').innerHTML='<div class="cols"><div class="card fl"><div class="sk1 fn"><h2 style="margin:0 0 8px">Produk</h2><div class="bar" style="align-items:center;flex-wrap:wrap;margin-bottom:0"><input id="pq" placeholder="Cari produk, mis. kaos pe anak hitam L" value="'+esc(pq)+'" oninput="pq=this.value;fillL()" style="flex:1;min-width:160px"><select onchange="pjn=this.value;fillL()" title="Jenis produk">'+cats().map(c=>'<option value="'+esc(c)+'"'+(c===pjn?' selected':'')+'>'+(c==='Semua'?'Semua jenis':esc(c))+'</option>').join('')+'</select><label class="muted"><input type="checkbox" '+(pOnly?'checked':'')+' onchange="pOnly=this.checked;fillL()"> Hanya habis/menipis</label><span class="muted">Target stok</span><input type="text" inputmode="numeric" data-n min="1" value="'+(tgt||S.low*3)+'" style="width:80px" onchange="tgt=Math.max(1,+this.value||0);fillL()"></div></div><div id="pl" class="scroll fs"></div></div><div id="pr"></div></div>';fillL();fillR()}
 function pdata(){const inJ={},sold={},stt={},d30=Date.now()-30*864e5;(S.jobs||[]).filter(j=>j.stage!=='selesai').forEach(j=>j.items.forEach(i=>{inJ[i.vid]=(inJ[i.vid]||0)+i.qty;const o=stt[i.vid]=stt[i.vid]||{};o[j.stage]=(o[j.stage]||0)+i.qty}));S.sales.forEach(s=>{if(new Date(s.date)>d30)s.items.forEach(c=>sold[c.id]=(sold[c.id]||0)+c.qty)});return{inJ,sold,stt}}
@@ -822,7 +880,7 @@ function flowView(){const q=pq.trim().toLowerCase(),all=groups().filter(g=>!q||g
  const box=s=>{const L=all.filter(g=>g.st===s),tot=L.reduce((a,g)=>a+g.qty,0),by={};
   L.forEach(g=>{const n=splitN(g.name);(by[n.b]=by[n.b]||[]).push({g,s:n.s})});
   const names=Object.keys(by).sort((a,b)=>a.localeCompare(b,'id'));
-  return '<section class="sb'+(sel&&sel.st===s?' cur':'')+'"><div class="sbh"><span class="sbi">'+IC(SI2[s])+'</span><div><b>'+STL[s]+'</b><small>'+L.length+' item · '+dz(tot)+'</small></div></div><div class="sbl">'
+  return '<section class="sb'+(sel&&sel.st===s?' cur':'')+'"><div class="sbh"><span class="sbi">'+IC(SI2[s])+'</span><div><b>'+STL[s]+'</b><small>'+L.length+' item · '+dz(tot)+'</small>'+(pjName(s)?'<small class="pjn">PJ: '+esc(pjName(s))+'</small>':'')+'</div></div><div class="sbl">'
   +(names.map(b=>'<div class="vg"><div class="vgn">'+esc(b)+'</div>'+by[b].sort((x,y)=>x.s.localeCompare(y.s,'id',{numeric:true})).map(x=>'<button class="vr'+(x.g.k===psel?' on':'')+'" onclick="psel=\''+esc(x.g.k)+'\';flowView()"><span class="vs">'+esc(x.s||'Standar')+(multi?'<small> · '+esc(gname(x.g.loc))+'</small>':'')+'</span><span class="vq">'+dzf(x.g.qty)+'</span></button>').join('')+'</div>').join('')||'<div class="sbe">Kosong</div>')+'</div></section>'};
  $('pbody').innerHTML='<div class="pfh"><div><h1 class="pt">Alur produksi</h1><p class="muted">Pantau posisi setiap produk dari vendor sampai siap dikirim.</p></div><div class="bar" style="align-items:center;margin:0">'+(gl.length>1?'<select onchange="pg=this.value;flowView()"><option value="Semua"'+(pg==='Semua'?' selected':'')+'>Semua gudang</option>'+gl.map(g=>'<option value="'+esc(g.id)+'"'+(g.id===pg?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select>':'')+'<input id="pq" placeholder="Cari produk" value="'+esc(pq)+'" oninput="pfs(this.value)" style="min-width:160px"><button class="ib" title="Cetak A4 tahap ini" aria-label="Cetak A4 tahap ini" onclick="printStage(\''+(sel&&sel.st!=='cetak'?sel.st:'bahan')+'\')">'+IC('printer')+'</button></div></div>'
  +'<div class="stp">'+RS.map((s,i)=>'<div class="sti'+(i<ci?' dn':i===ci?' cur':'')+'"><b>'+(i<ci?'&#10003;':i+1)+'</b>'+STL[s]+'</div>').join('<i></i>')+'</div>'
@@ -831,7 +889,7 @@ function flowView(){const q=pq.trim().toLowerCase(),all=groups().filter(g=>!q||g
 function panel(G){const nx=RS[RS.indexOf(G.st)+1]||'selesai',dy=Math.floor((Date.now()-new Date(G.date))/864e5),oth=GL().filter(x=>x.id!==G.loc),k=esc(G.k),r=(a,b)=>'<div class="dr2"><span>'+a+'</span><b>'+b+'</b></div>',ni='type="text" inputmode="numeric" data-n';
  let h='<div class="card pdt"><h2 style="margin:0">Detail produk</h2><div class="pn">'+esc(G.name)+'</div><div class="muted">'+(G.n>1?'Gabungan '+G.n+' order':'1 order')+(G.vendor?' · Vendor: '+esc(G.vendor):'')+'</div><hr class="mhr">'+r('Jumlah',dzf(G.qty))+r('Tahap',STL[G.st])+r('Masuk tahap',fmt(G.date)+' ('+dy+' hari)')+(G.st==='cetak'?'':r('Petugas sebelumnya',esc(G.prev)));
  if(G.st==='cetak')h+='<label class="muted">Masuk ke gudang</label><select id="tg">'+GL().map(g=>'<option value="'+esc(g.id)+'"'+(g.id===(pg!=='Semua'?pg:GL()[0].id)?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select><button class="btn wide" onclick="pdone(\''+k+'\')">Tandai sudah dicetak</button>';
- else h+='<label class="muted">Sudah jadi</label><div class="f2"><input '+ni+' id="dl" value="'+Math.floor(G.qty/12)+'" oninput="prc(\''+k+'\')"><span>lusin</span><input '+ni+' id="dp" value="'+G.qty%12+'" oninput="prc(\''+k+'\')"><span>pcs</span></div><label class="muted">Reject (pcs)</label><input '+ni+' id="rj" placeholder="0" oninput="prc(\''+k+'\')"><div id="sisa" class="muted" style="margin-bottom:6px"></div><input id="by" placeholder="Nama petugas (wajib)" value="'+esc(lby(G.st))+'"><input id="nt" placeholder="Catatan (opsional)"><button class="btn wide" onclick="padv(\''+k+'\')">'+(nx==='selesai'?'Selesai: masuk stok POS':'Pindahkan ke '+STL[nx])+'</button>'
+ else h+='<label class="muted">Sudah jadi</label><div class="f2"><input '+ni+' id="dl" value="'+Math.floor(G.qty/12)+'" oninput="prc(\''+k+'\')"><span>lusin</span><input '+ni+' id="dp" value="'+G.qty%12+'" oninput="prc(\''+k+'\')"><span>pcs</span></div><label class="muted">Reject (pcs)</label><input '+ni+' id="rj" placeholder="0" oninput="prc(\''+k+'\')"><div id="sisa" class="muted" style="margin-bottom:6px"></div><input id="by" list="pdl" autocomplete="off" placeholder="Petugas (wajib)" value="'+esc(lby(G.st)||pjName(G.st))+'">'+pdl()+'<input id="nt" placeholder="Catatan (opsional)"><button class="btn wide" onclick="padv(\''+k+'\')">'+(nx==='selesai'?'Selesai: masuk stok POS':'Pindahkan ke '+STL[nx])+'</button>'
  +(oth.length?'<label class="muted">Kirim ke gudang lain (kosong = semua)</label><div class="f2"><select id="kt">'+oth.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'</select><input '+ni+' id="sl" placeholder="lusin" style="width:70px"><input '+ni+' id="sp" placeholder="pcs" style="width:70px"></div><button class="btn sec wide" onclick="psend(\''+k+'\')">Kirim</button>':'');
  h+='<hr class="mhr"><div class="muted">Isi gabungan</div>'+G.parts.map(p=>'<div class="dr2"><span>'+esc(p.j.no||'')+'</span><span>'+dz(p.it.qty)+' <button type="button" class="jh" onclick="showHist(\''+p.j.id+'\')" title="Riwayat" aria-label="Riwayat">'+HIC+'</button></span></div>').join('');
  if(isAdm)h+='<button class="btn sec wide" onclick="pdel(\''+k+'\')">'+(G.st==='cetak'?'Batalkan order':'Hapus permanen')+'</button>';
@@ -847,7 +905,7 @@ async function runQ(){PR=true;busyW++;setSync('Menyimpan...');const fin=[];
 async function padv(k){const G=groups().find(x=>x.k===k);if(!G)return;if(isV(G))return toast('Masih menyimpan, tunggu sebentar.',1);
  const d=(Math.floor(+$('dl').value)||0)*12+(Math.floor(+$('dp').value)||0),r=Math.floor(+$('rj').value)||0,by=$('by').value.trim(),nt=$('nt').value||'';
  if(d+r<=0)return toast('Isi jumlah yang sudah jadi atau reject.',1);if(d+r>G.qty)return toast('Jadi + reject melebihi jumlah ('+dz(G.qty)+').',1);
- if(!by){$('by').focus();return toast('Nama petugas wajib diisi.',1)}
+ if(!by){$('by').focus();return toast('Nama petugas wajib diisi.',1)}if(!pOk(by,G.st))return;
  if(!(await chkSrv()))return;sby(G.st,by);const nx=RS[RS.indexOf(G.st)+1]||'selesai',calls=[],ov=[];let rd=d,rr=r;
  G.parts.slice().sort((a,b)=>a.j.date<b.j.date?-1:1).forEach(p=>{const cap=p.it.qty,td=Math.min(rd,cap),tr=Math.min(rr,cap-td),v=p.it.vid;rd-=td;rr-=tr;if(td||tr){calls.push([p.j.id,G.st,by,nt,tr?{[v]:tr}:{},{done:td?{[v]:td}:{}}]);ov.push({k:++PK,jid:p.j.id,vid:v,done:td,rej:tr,to:nx,by})}});
  psel=G.qty-d-r>0?G.k:nextSel(G);enq(calls,ov,G.name+': '+dz(d)+' → '+(nx==='selesai'?'masuk stok POS':STL[nx])+(r?' · reject '+r+' pcs':''))}
@@ -855,7 +913,7 @@ async function pdone(k){const G=groups().find(x=>x.k===k);if(!G)return;if(isV(G)
  G.parts.forEach(p=>{calls.push([p.j.id,'cetak','','',{},{loc:g}]);ov.push({k:++PK,jid:p.j.id,vid:p.it.vid,done:p.it.qty,to:'bahan',loc:g})});
  psel=nextSel(G);enq(calls,ov,G.name+': '+dz(G.qty)+' → Rak bahan')}
 async function psend(k){const G=groups().find(x=>x.k===k);if(!G)return;if(isV(G))return toast('Masih menyimpan, tunggu sebentar.',1);const by=$('by').value.trim(),to=$('kt').value;
- if(!by){$('by').focus();return toast('Nama petugas wajib diisi.',1)}
+ if(!by){$('by').focus();return toast('Nama petugas wajib diisi.',1)}if(!pOk(by,G.st))return;
  const a=(Math.floor(+$('sl').value)||0)*12+(Math.floor(+$('sp').value)||0),q=a>0?a:G.qty;if(q>G.qty)return toast('Jumlah kirim melebihi jumlah yang ada ('+dz(G.qty)+').',1);
  if(!(await chkSrv()))return;sby(G.st,by);let rem=q;const calls=[],ov=[];
  G.parts.slice().sort((a,b)=>a.j.date<b.j.date?-1:1).forEach(p=>{const t=Math.min(rem,p.it.qty);rem-=t;if(t){calls.push([p.j.id,G.st,by,$('nt').value||'',{},{mode:'send',to,send:{[p.it.vid]:t}}]);ov.push({k:++PK,jid:p.j.id,vid:p.it.vid,mv:t,toLoc:to})}});
@@ -894,7 +952,7 @@ function printTbl(title,sub,heads,rows,o){o=o||{};const ti=heads.findIndex(h=>h[
 function printA4(title,sub,rows){printTbl(title,sub,[['No','c'],['Produk',''],['Jumlah (pcs)','n',1]],rows.map((r,i)=>[i+1,r.name,r.qty]),{sign:['Dibuat oleh','Vendor']})}
 function printDraft(){if(!draft.length)return;const vd=($('vend')||{}).value||'';printA4('Order Cetak',new Date().toLocaleDateString('id-ID',{dateStyle:'full'})+(vd?' · Vendor: '+vd:''),draft.map(d=>({name:d.name,qty:d.qty})))}
 function printDay(){const l=(S.jobs||[]).filter(j=>ymd(j.date)===pday);if(!l.length){alert('Tidak ada order cetak pada tanggal ini.');return}const vs=[...new Set(l.map(j=>j.vendor).filter(Boolean))];printA4('Order Cetak',new Date(pday+'T00:00').toLocaleDateString('id-ID',{dateStyle:'full'})+(vs.length?' · Vendor: '+vs.join(', '):''),l.map(j=>({name:jn(j),qty:jq(j)})))}
-function stk(){const s=document.documentElement.style,h=document.querySelector('header'),t=document.querySelector('.ptabs'),b=document.querySelector('.sk1');s.setProperty('--hh',(h?h.offsetHeight:52)+'px');s.setProperty('--th',(t?t.offsetHeight:0)+'px');s.setProperty('--bh',(b?b.offsetHeight:0)+'px')}
+function stk(){const s=document.documentElement.style,h=document.querySelector('header'),t=document.querySelector('.ptabs'),b=document.querySelector('.sk1');s.setProperty('--hh',(h?h.offsetHeight:52)+'px');s.setProperty('--th','0px');s.setProperty('--bh',(b?b.offsetHeight:0)+'px')}
 addEventListener('resize',stk);
 function tungguView(){const wait=jlist('cetak').sort((a,b)=>a.date<b.date?-1:1);
  $('pbody').innerHTML='<div class="card fl"><h2 class="fn" style="margin:0 0 8px">Menunggu di vendor ('+nf(tq(wait))+' pcs)</h2>'+(wait.length?'<div class="scroll fs"><table class="hv"><tr><th></th><th>Produk</th><th>Jumlah</th><th>Vendor</th><th>Order</th></tr>'+wait.map(j=>'<tr><td><input type="checkbox" id="pc'+j.id+'"></td><td>'+jl(j)+'</td><td>'+jq(j)+'</td><td>'+esc(j.vendor||'-')+'</td><td>'+fmt(j.date)+'</td></tr>').join('')+'</table></div><div class="form fn" style="margin-top:10px"><label class="muted">Masuk ke <select id="tg">'+GL().map(g=>'<option value="'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</select></label><button class="btn" onclick="markPrinted()">Tandai sudah dicetak (masuk rak bahan)</button><button class="btn sec" onclick="selAll()">Pilih semua</button><button class="btn sec" onclick="cancelSel()">Batalkan order</button><button class="btn sec" onclick="printWait()">Cetak A4</button></div>':'<p class="muted">Tidak ada order yang menunggu di vendor.</p>')+'</div>'}
