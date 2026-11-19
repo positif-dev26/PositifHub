@@ -125,9 +125,18 @@ html:has(#view.fit){overflow:hidden}
 #view.fit #pr .rk{flex:1 1 0}
 #view.fit .fs>table th,#view.fit .fs.scroll th,#hmc .fs th{position:sticky;top:0;background:var(--card);z-index:2}
 }
+/* hover, tekan, popup */
+.modal{background:rgba(0,0,0,.72);backdrop-filter:blur(3px)}
+.modal .card{background:color-mix(in srgb,var(--card),var(--text) 7%);border:1px solid var(--text);box-shadow:0 24px 70px rgba(0,0,0,.65);animation:mpop .15s ease-out}
+@keyframes mpop{from{opacity:0;transform:translateY(8px) scale(.98)}}
+@media (prefers-reduced-motion:reduce){.modal .card{animation:none}}
+#pm{z-index:30}body:has(.modal.on){overflow:hidden}
+@media (hover:hover){nav button:not(.on):not(.stk):not(.hub *):hover{color:var(--text);background:rgba(128,128,128,.14)}.btn:not(:disabled):hover{filter:brightness(1.12)}.btn.sec:not(:disabled):hover,.qty button:hover,.x:hover{border-color:var(--text)}}
+.btn:not(:disabled):active,.qty button:active,.x:active{transform:translateY(1px)}
+@media print{.modal .card{background:var(--card)!important;box-shadow:none!important;animation:none!important}#modal .card{border:0!important}}
 </style></head>
 <body>
-<header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing"></h1><nav id="nav"></nav><span id="sync" class="muted" style="font-size:13px"></span><span id="acc"></span></header>
+<header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing"></h1><nav id="nav"></nav><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
 <main id="view"></main>
 <div id="modal" class="modal"><div class="card"><div id="rc" class="rc"></div>
 <div class="row noprint"><button class="btn sec" onclick="closeM()">Tutup</button><button class="btn" onclick="window.print()">Cetak struk</button></div></div></div>
@@ -156,6 +165,11 @@ let S=emptyS();
 
 
 const $=id=>document.getElementById(id);
+const _vd=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value'),nf=n=>Number(n||0).toLocaleString('id-ID'),fd=v=>{v=String(v==null?'':v).replace(/\D/g,'');return v?Number(v).toLocaleString('id-ID'):''};
+function numInit(e){if(e._n)return;e._n=1;Object.defineProperty(e,'value',{get(){return _vd.get.call(this).replace(/\./g,'')},set(v){_vd.set.call(this,fd(v))},configurable:true});_vd.set.call(e,fd(_vd.get.call(e)));
+ e.addEventListener('input',()=>{const a=_vd.get.call(e),f=fd(a);if(f===a)return;const d=a.slice(0,e.selectionStart).replace(/\D/g,'').length;_vd.set.call(e,f);let i=0,c=0;while(i<f.length&&c<d){if(/\d/.test(f[i]))c++;i++}e.setSelectionRange(i,i)},true)}
+new MutationObserver(m=>m.forEach(r=>r.addedNodes.forEach(n=>{if(n.nodeType!==1)return;if(n.matches('input[data-n]'))numInit(n);n.querySelectorAll('input[data-n]').forEach(numInit)}))).observe(document.documentElement,{childList:true,subtree:true});
+document.querySelectorAll('input[data-n]').forEach(numInit);
 const rp=n=>'Rp'+Number(n||0).toLocaleString('id-ID');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const vl=v=>[v.color,v.size].filter(Boolean).join(' / ')||'Standar';
@@ -187,7 +201,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')hubClose(0)});
 addEventListener('resize',()=>hubClose(0));
 document.addEventListener('scroll',()=>hubClose(0),true);
 const HID='Disembunyikan';
-let tab='beranda',cart=[],q='',cat=HID,pk=null;
+const TABS=['beranda','kasir','riwayat','laporan','produk','stok','pesanan','produksi'];let tab=(l=>TABS.includes(l)?l:'beranda')(location.hash.slice(1)),cart=[],q='',cat=HID,pk=null;
 const cats=()=>['Semua',...new Set(S.products.map(p=>p.cat))];
 const today=d=>new Date(d).toDateString()===new Date().toDateString();
 const fmt=d=>new Date(d).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'});
@@ -200,10 +214,12 @@ let ddT=null;
 function ddOpen(hov){if(hov&&!matchMedia('(hover:hover)').matches)return;clearTimeout(ddT);const m=$('ddmenu'),b=document.querySelector('.dd');if(!m||!b)return;const r=b.getBoundingClientRect();m.style.top=r.bottom+'px';m.classList.add('on');m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px'}
 function ddClose(hov){if(hov){clearTimeout(ddT);ddT=setTimeout(()=>ddClose(0),150);return}const m=$('ddmenu');if(m)m.classList.remove('on')}
 function ddToggle(e){e.stopPropagation();const m=$('ddmenu');m&&m.classList.contains('on')?ddClose(0):ddOpen(0)}
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;for(const[id,f]of[['pm',closePm],['hm',closeHm],['pk',closePk],['ed',edClose],['modal',closeM]]){const m=$(id);if(m&&m.classList.contains('on')){f();e.stopImmediatePropagation();e.preventDefault();return}}},true);
 function go(t){tab=t;ddClose(0);render()}
 document.addEventListener('click',e=>{if(!e.target.closest('.dd'))ddClose(0)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')ddClose(0)});
-function render(){
+let _h0=1;addEventListener('popstate',()=>{const l=location.hash.slice(1);if(TABS.includes(l)&&l!==tab){tab=l;render()}});
+function render(){const hh='#'+tab;if(location.hash!==hh)try{history[_h0?'replaceState':'pushState'](null,'',hh)}catch(e){}_h0=0;
  if(!ready){
   $('nav').innerHTML=navH();$('view').classList.toggle('full',tab==='beranda');
   if(tab==='beranda')vBeranda();else if(pend)pend();
@@ -223,9 +239,9 @@ function vKasir(){
  <div class="bar fn"><input id="q" placeholder="Scan barcode atau cari produk..." value="${esc(q)}" oninput="q=this.value;grid()" onkeydown="scanKey(event)" autocomplete="off" autofocus><select id="cat" onchange="cat=this.value;grid()">${[HID,...cats()].map(c=>`<option ${c===cat?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
  <div id="msg" class="muted fn" style="min-height:22px;margin:-4px 0 8px"></div><div id="grid" class="grid fs"></div></section>
  <aside class="card fl"><h2 class="fn" style="margin:0 0 4px;font-size:24px">Keranjang</h2><div id="lines" class="fs"></div><div class="fn">
- <div class="row"><span>Diskon (Rp)</span><input id="disc" type="number" min="0" value="0" style="width:130px" oninput="calc()"></div>
+ <div class="row"><span>Diskon (Rp)</span><input id="disc" type="text" inputmode="numeric" data-n min="0" value="0" style="width:130px" oninput="calc()"></div>
  <div class="row"><span>Pembayaran</span><select id="pay" onchange="calc()"><option>Transfer</option><option>Tunai</option><option>QRIS</option></select></div>
- <div class="row" id="paidrow"><span>Uang diterima</span><input id="paid" type="number" min="0" style="width:130px" oninput="calc()"></div>
+ <div class="row" id="paidrow"><span>Uang diterima</span><input id="paid" type="text" inputmode="numeric" data-n min="0" style="width:130px" oninput="calc()"></div>
  <div class="row"><span class="muted">Total bayar</span><span id="tot" class="num total">Rp0</span></div>
  <div class="row"><span class="muted">Kembalian</span><b id="chg">Rp0</b></div>
  <button class="btn big" id="go" onclick="checkout()">Bayar</button></div></aside></div>`;
@@ -250,14 +266,14 @@ function scanKey(e){
 function pick(pid){const p=S.products.find(x=>x.id===pid);if(p.variants.length===1)addV(p.variants[0].id);else{pk=pid;renderPk();$('pk').classList.add('on')}}
 function closePk(){pk=null;$('pk').classList.remove('on');const i=$('q');if(i)i.focus()}
 function renderPk(){const p=S.products.find(x=>x.id===pk);if(!p)return;
- $('pkc').innerHTML=`<h2 style="margin:0 0 4px;font-size:24px">${esc(p.name)}</h2><p class="muted" style="margin:0 0 10px">Pilih varian. Klik beberapa kali untuk menambah jumlah.</p><div class="grid">${p.variants.map(v=>{const c=cart.find(c=>c.id===v.id);return `<button class="p" ${v.stock<1?'disabled':''} onclick="addV(${v.id})">${v.img?`<img src="${v.img}" alt="">`:''}<b>${esc(vl(v))}</b><small>${v.stock>=9999?'jasa':'stok '+v.stock}${c?', di keranjang '+c.qty:''}</small><span class="num">${rp(vp(p,v))}</span></button>`}).join('')}</div><div class="row"><span></span><button class="btn" onclick="closePk()">Selesai</button></div>`}
+ $('pkc').innerHTML=`<h2 style="margin:0 0 4px;font-size:24px">${esc(p.name)}</h2><p class="muted" style="margin:0 0 10px">Pilih varian. Klik beberapa kali untuk menambah jumlah.</p><div class="grid">${p.variants.map(v=>{const c=cart.find(c=>c.id===v.id);return `<button class="p" ${v.stock<1?'disabled':''} onclick="addV(${v.id})">${v.img?`<img src="${v.img}" alt="">`:''}<b>${esc(vl(v))}</b><small>${v.stock>=9999?'jasa':'stok '+nf(v.stock)}${c?', di keranjang '+c.qty:''}</small><span class="num">${rp(vp(p,v))}</span></button>`}).join('')}</div><div class="row"><span></span><button class="btn" onclick="closePk()">Selesai</button></div>`}
 function addV(id){const x=findV(id);if(!x)return;const c=cart.find(c=>c.id===id);
  if(c){if(c.qty<x.v.stock)c.qty++}else if(x.v.stock>0)cart.push({id,name:cn(x.p,x.v),price:vp(x.p,x.v),qty:1});
  lines();if(pk)renderPk();else{const i=$('q');if(i)i.focus()}}
 function chg(id,d){const c=cart.find(x=>x.id===id),x=findV(id);c.qty+=d;if(x&&c.qty>x.v.stock)c.qty=x.v.stock;if(c.qty<1)cart=cart.filter(x=>x.id!==id);lines()}
 function lines(){
  cart=cart.filter(c=>findV(c.id));
- $('lines').innerHTML=cart.length?cart.map(c=>`<div class="line"><b>${esc(c.name)}</b><span>${rp(c.price*c.qty)}</span><div class="qty"><button onclick="chg(${c.id},-1)" aria-label="Kurangi">-</button>${c.qty}<button onclick="chg(${c.id},1)" aria-label="Tambah">+</button></div><span class="muted">@ ${rp(c.price)}</span></div>`).join(''):'<p class="muted">Scan barcode atau pilih produk untuk mulai transaksi.</p>';
+ $('lines').innerHTML=cart.length?cart.map(c=>`<div class="line"><b>${esc(c.name)}</b><span>${rp(c.price*c.qty)}</span><div class="qty"><button onclick="chg(${c.id},-1)" aria-label="Kurangi">-</button>${nf(c.qty)}<button onclick="chg(${c.id},1)" aria-label="Tambah">+</button></div><span class="muted">@ ${rp(c.price)}</span></div>`).join(''):'<p class="muted">Scan barcode atau pilih produk untuk mulai transaksi.</p>';
  calc();
 }
 function calc(){
@@ -276,18 +292,18 @@ function checkout(){
 }
 function receipt(s){
  $('rc').innerHTML=`<img class="rlogo" src="${LOGO}" alt="Positif Clothing" style="display:block;width:70%;margin:0 auto 6px"><p style="text-align:center;margin:0" class="muted">${fmt(s.date)}<br>${s.id}</p><hr>`+
- s.items.map(i=>`<div>${esc(i.name)}</div><div class="row"><span>${i.qty} x ${rp(i.price)}</span><span>${rp(i.qty*i.price)}</span></div>`).join('')+
+ s.items.map(i=>`<div>${esc(i.name)}</div><div class="row"><span>${nf(i.qty)} x ${rp(i.price)}</span><span>${rp(i.qty*i.price)}</span></div>`).join('')+
  `<hr><div class="row"><span>Subtotal</span><span>${rp(s.sub)}</span></div>${s.disc?`<div class="row"><span>Diskon</span><span>-${rp(s.disc)}</span></div>`:''}<div class="row"><b>Total</b><b>${rp(s.total)}</b></div><div class="row"><span>${s.pay}</span><span>${rp(s.paid)}</span></div>${s.paid>s.total?`<div class="row"><span>Kembali</span><span>${rp(s.paid-s.total)}</span></div>`:''}<hr><p style="text-align:center;margin:0">Terima kasih!</p>`;
  $('modal').classList.add('on');
 }
 function closeM(){$('modal').classList.remove('on')}
 /* ---------- PRODUK & VARIAN ---------- */
  const addForm=()=>`<div>
- <div class="form"><input id="n" placeholder="Nama (cth: Kaos Polos)"><input id="c" placeholder="Kategori" list="cl"><datalist id="cl">${cats().slice(1).map(c=>`<option value="${esc(c)}">`).join('')}</datalist><input id="pr" type="number" placeholder="Harga dasar"><input id="co" placeholder="Warna, pisahkan koma (opsional)"><input id="sz" placeholder="Ukuran, cth: S,M,L,XL (opsional)"><button class="btn" onclick="addP()">Buat produk dan varian</button></div>
+ <div class="form"><input id="n" placeholder="Nama (cth: Kaos Polos)"><input id="c" placeholder="Kategori" list="cl"><datalist id="cl">${cats().slice(1).map(c=>`<option value="${esc(c)}">`).join('')}</datalist><input id="pr" type="text" inputmode="numeric" data-n placeholder="Harga dasar"><input id="co" placeholder="Warna, pisahkan koma (opsional)"><input id="sz" placeholder="Ukuran, cth: S,M,L,XL (opsional)"><button class="btn" onclick="addP()">Buat produk dan varian</button></div>
  <p class="muted" style="margin:0 0 8px">Setiap kombinasi warna dan ukuran menjadi satu varian dengan foto, barcode, harga, dan stok sendiri. Barcode varian baru otomatis sama dengan ID varian.</p><button class="btn sec" onclick="fillBC(null)">Isi semua barcode kosong dengan ID varian</button></div>`;
- const pEd=p=>`<div><div class="form"><input value="${esc(p.name)}" onchange="updP(${p.id},'name',this.value)" aria-label="Nama produk"><input value="${esc(p.cat)}" onchange="updP(${p.id},'cat',this.value)" aria-label="Kategori"><input type="number" value="${p.price}" onchange="updP(${p.id},'price',+this.value)" aria-label="Harga dasar"><button class="btn sec" onclick="addVar(${p.id})">+ Varian</button><button class="btn sec" onclick="printBC(${p.id})">Cetak barcode</button><button class="btn sec" onclick="fillBC(${p.id})">Isi barcode kosong</button><button class="btn sec" onclick="delP(${p.id})">Hapus produk</button></div>
+ const pEd=p=>`<div><div class="form"><input value="${esc(p.name)}" onchange="updP(${p.id},'name',this.value)" aria-label="Nama produk"><input value="${esc(p.cat)}" onchange="updP(${p.id},'cat',this.value)" aria-label="Kategori"><input type="text" inputmode="numeric" data-n value="${p.price}" onchange="updP(${p.id},'price',+this.value)" aria-label="Harga dasar"><button class="btn sec" onclick="addVar(${p.id})">+ Varian</button><button class="btn sec" onclick="printBC(${p.id})">Cetak label semua varian</button><button class="btn sec" onclick="fillBC(${p.id})">Buat barcode otomatis (yang kosong)</button><button class="btn sec" onclick="delP(${p.id})">Hapus produk</button></div>
  <div class="scroll"><table><tr><th>Foto</th><th>Warna</th><th>Ukuran</th><th>Barcode</th><th>Harga (kosong = dasar)</th><th>Stok</th><th></th></tr>
- ${p.variants.map(v=>`<tr><td><label class="thumb" title="Klik untuk mengganti foto">${v.img?`<img src="${v.img}" alt="">`:'+ Foto'}<input type="file" accept="image/*" hidden onchange="setImg(${v.id},this)"></label>${v.img?`<button class="lnk" onclick="delImg(${v.id})">Hapus foto</button>`:''}</td><td><input value="${esc(v.color)}" onchange="updV(${v.id},'color',this.value)"></td><td><input value="${esc(v.size)}" onchange="updV(${v.id},'size',this.value)"></td><td><input value="${esc(v.barcode||'')}" placeholder="${v.id}" onchange="setBC(${v.id},this.value)"></td><td><input type="number" value="${v.price||''}" placeholder="${p.price}" onchange="updV(${v.id},'price',+this.value)"></td><td><input type="number" value="${v.stock}" onchange="updV(${v.id},'stock',+this.value)"></td><td style="white-space:nowrap"><button class="btn sec" style="padding:4px 8px;margin-right:4px" onclick="printBC(${p.id},${v.id})">Cetak</button><button class="x" onclick="delV(${v.id})" aria-label="Hapus varian">x</button></td></tr>`).join('')}</table></div></div>`;
+ ${p.variants.map(v=>`<tr><td><label class="thumb" title="Klik untuk mengganti foto">${v.img?`<img src="${v.img}" alt="">`:'+ Foto'}<input type="file" accept="image/*" hidden onchange="setImg(${v.id},this)"></label>${v.img?`<button class="lnk" onclick="delImg(${v.id})">Hapus foto</button>`:''}</td><td><input value="${esc(v.color)}" onchange="updV(${v.id},'color',this.value)"></td><td><input value="${esc(v.size)}" onchange="updV(${v.id},'size',this.value)"></td><td><input value="${esc(v.barcode||'')}" placeholder="${v.id}" onchange="setBC(${v.id},this.value)"></td><td><input type="text" inputmode="numeric" data-n value="${v.price||''}" placeholder="${p.price}" onchange="updV(${v.id},'price',+this.value)"></td><td><input type="text" inputmode="numeric" data-n value="${v.stock}" onchange="updV(${v.id},'stock',+this.value)"></td><td style="white-space:nowrap"><button class="btn sec" style="padding:4px 8px;margin-right:4px" onclick="printBC(${p.id},${v.id})">Cetak label</button><button class="x" style="width:auto;padding:0 8px" onclick="delV(${v.id})" aria-label="Hapus varian">Hapus</button></td></tr>`).join('')}</table></div></div>`;
 let ed=null,addOpen=false,pfq='',pfc='Semua';
 function vProduk(){
  $('view').innerHTML=`<div class="bar fn"><input id="pfq" placeholder="Cari produk atau varian..." value="${esc(pfq)}" oninput="pfq=this.value;pgrid()" autocomplete="off"><select onchange="pfc=this.value;pgrid()">${cats().map(c=>`<option ${c===pfc?'selected':''}>${esc(c)}</option>`).join('')}</select><button class="btn" onclick="addOpen=true;vProduk()">+ Tambah produk</button></div><div id="pgrid" class="grid fs"></div>`;
@@ -319,19 +335,19 @@ function vStok(){
  const tr=allV().filter(x=>!isJ(x.v)),lo=tr.filter(x=>x.v.stock>0&&x.v.stock<=S.low).length,ou=tr.filter(x=>x.v.stock<1).length;
  const chip=(k,t)=>`<button class="btn ${sf===k?'':'sec'}" onclick="sf='${k}';vStok()">${t}</button>`;
  $('view').innerHTML=`<div class="stats">
- <div class="card stat"><span>Total unit tersedia</span><div class="num">${tr.reduce((a,x)=>a+x.v.stock,0)}</div></div>
+ <div class="card stat"><span>Total unit tersedia</span><div class="num">${nf(tr.reduce((a,x)=>a+x.v.stock,0))}</div></div>
  <div class="card stat"><span>Varian stok menipis</span><div class="num ${lo?'bad':''}">${lo}</div></div>
  <div class="card stat"><span>Varian habis</span><div class="num ${ou?'bad':''}">${ou}</div></div>
  <div class="card stat"><span>Total varian</span><div class="num">${tr.length}</div></div></div>
  <div class="card"><div class="sk1"><div class="bar" style="flex-wrap:wrap;align-items:center"><button class="btn ${sv==='now'?'':'sec'}" onclick="sv='now';vStok()">Stok terkini</button><button class="btn ${sv==='log'?'':'sec'}" onclick="sv='log';vStok()">Riwayat perubahan</button>
  <input id="sq" placeholder="Cari produk, varian, barcode..." value="${esc(sq)}" oninput="sq=this.value;sbody()" style="flex:1;min-width:200px" autocomplete="off"></div>
- ${sv==='now'?`<div class="bar" style="flex-wrap:wrap;align-items:center">${chip('all','Semua')}${chip('low','Menipis')}${chip('out','Habis')}${chip('ok','Aman')}<span class="muted" style="margin-left:auto">Batas menipis (unit)</span><input type="number" min="1" value="${S.low}" style="width:80px" onchange="S.low=Math.max(1,+this.value||10);save();vStok()"></div>`:`<div class="bar"><select onchange="lt=this.value;sbody()">${['all','Tambah','Kurangi','Ubah','Penjualan','Hapus'].map(t=>`<option value="${t}" ${lt===t?'selected':''}>${t==='all'?'Semua jenis':t}</option>`).join('')}</select></div>`}
+ ${sv==='now'?`<div class="bar" style="flex-wrap:wrap;align-items:center">${chip('all','Semua')}${chip('low','Menipis')}${chip('out','Habis')}${chip('ok','Aman')}<span class="muted" style="margin-left:auto">Batas menipis (unit)</span><input type="text" inputmode="numeric" data-n min="1" value="${S.low}" style="width:80px" onchange="S.low=Math.max(1,+this.value||10);save();vStok()"></div>`:`<div class="bar"><select onchange="lt=this.value;sbody()">${['all','Tambah','Kurangi','Ubah','Penjualan','Hapus'].map(t=>`<option value="${t}" ${lt===t?'selected':''}>${t==='all'?'Semua jenis':t}</option>`).join('')}</select></div>`}
  </div><div id="sbody" class="scroll"></div></div>`;sbody();stk()}
 function sbody(){
  const ql=sq.toLowerCase();let h;
  if(sv==='now'){
   const l=allV().filter(x=>!isJ(x.v)&&(x.p.name+' '+vl(x.v)+' '+bcv(x.v)).toLowerCase().includes(ql)&&(sf==='all'||(sf==='low'&&x.v.stock>0&&x.v.stock<=S.low)||(sf==='out'&&x.v.stock<1)||(sf==='ok'&&x.v.stock>S.low))).sort((a,b)=>sf==='all'?0:a.v.stock-b.v.stock);
-  h=l.length?`<table><tr><th>Foto</th><th>Produk / varian</th><th>Stok</th><th>Ubah stok</th></tr>${l.map(({p,v})=>`<tr class="${srow(v)}"><td><div class="thumb" style="cursor:default">${v.img?`<img src="${v.img}" alt="">`:''}</div></td><td><b>${esc(p.name)}</b><br><small class="muted">${esc(vl(v))}${', '+esc(bcv(v))}</small></td><td><span class="num" style="font-size:26px;font-weight:700">${v.stock}</span> ${sbadge(v)}</td><td><div class="form" style="margin:0;grid-template-columns:90px minmax(120px,1fr) repeat(3,auto)"><input type="number" min="0" id="a${v.id}" placeholder="Jumlah"><input id="t${v.id}" placeholder="Catatan (opsional)"><button class="btn sec" onclick="adj(${v.id},'add')">Tambah</button><button class="btn sec" onclick="adj(${v.id},'sub')">Kurangi</button><button class="btn sec" onclick="adj(${v.id},'set')">Ubah jadi</button></div></td></tr>`).join('')}</table><p class="muted">Produk jasa tidak dihitung stoknya.</p>`:'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>'}
+  h=l.length?`<table><tr><th>Foto</th><th>Produk / varian</th><th>Stok</th><th>Ubah stok</th></tr>${l.map(({p,v})=>`<tr class="${srow(v)}"><td><div class="thumb" style="cursor:default">${v.img?`<img src="${v.img}" alt="">`:''}</div></td><td><b>${esc(p.name)}</b><br><small class="muted">${esc(vl(v))}${', '+esc(bcv(v))}</small></td><td><span class="num" style="font-size:26px;font-weight:700">${nf(v.stock)}</span> ${sbadge(v)}</td><td><div class="form" style="margin:0;grid-template-columns:90px minmax(120px,1fr) repeat(3,auto)"><input type="text" inputmode="numeric" data-n min="0" id="a${v.id}" placeholder="Jumlah"><input id="t${v.id}" placeholder="Catatan (opsional)"><button class="btn sec" onclick="adj(${v.id},'add')">Tambah</button><button class="btn sec" onclick="adj(${v.id},'sub')">Kurangi</button><button class="btn sec" onclick="adj(${v.id},'set')">Ubah jadi</button></div></td></tr>`).join('')}</table><p class="muted">Produk jasa tidak dihitung stoknya.</p>`:'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>'}
  else{
   const l=S.log.filter(e=>(lt==='all'||e.type===lt)&&(e.name+' '+e.note).toLowerCase().includes(ql)).slice(0,300);
   h=l.length?`<table><tr><th>Waktu</th><th>Produk / varian</th><th>Jenis</th><th>Sebelum</th><th>Sesudah</th><th>Selisih</th><th>Catatan</th></tr>${l.map(e=>{const d=e.after-e.before;return `<tr><td>${fmt(e.date)}</td><td>${esc(e.name)}</td><td><span class="badge">${e.type}</span></td><td>${e.before}</td><td>${e.after}</td><td class="${d<0?'bad':'ok'}"><b>${d>0?'+':''}${d}</b></td><td>${esc(e.note)}</td></tr>`}).join('')}</table>`:'<p class="muted">Belum ada riwayat perubahan stok. Penambahan, pengubahan, dan penjualan akan tercatat di sini.</p>'}
@@ -341,30 +357,30 @@ function adj(id,m){const n=$('a'+id).value;if(n===''||isNaN(n)||+n<0){alert('Isi
  if(a===b){alert('Stok tidak berubah.');return}
  x.v.stock=a;logS(x,m==='add'?'Tambah':m==='sub'?'Kurangi':'Ubah',b,a,$('t'+id).value.trim());save();vStok()}
 /* ---------- FOTO & CETAK BARCODE ---------- */
-let PB={pid:null,q:{},size:'50x30',price:true,single:false};
+let PB={pid:null,q:{},size:'50x30',price:true,single:false,only:null};try{Object.assign(PB,JSON.parse(localStorage.getItem('positif_pb')||'{}'))}catch(e){}
 function delImg(id){if(confirm('Hapus foto varian ini?')){findV(id).v.img=null;save();render()}}
 function fillBC(pid){let n=0;S.products.forEach(p=>{if(pid&&p.id!==pid)return;p.variants.forEach(v=>{if(!v.barcode){v.barcode=String(v.id);n++}})});
  if(!n){alert('Semua barcode sudah terisi.');return}save();render();alert(n+' barcode diisi sesuai ID varian.')}
-function printBC(pid,vid){const p=S.products.find(x=>x.id===pid);PB.pid=pid;PB.q={};p.variants.forEach(v=>PB.q[v.id]=vid?(v.id===vid?1:0):1);renderPm();$('pm').classList.add('on')}
+function printBC(pid,vid){const p=S.products.find(x=>x.id===pid);PB.pid=pid;PB.only=vid||null;PB.q={};p.variants.forEach(v=>PB.q[v.id]=vid?(v.id===vid?1:0):1);renderPm();$('pm').classList.add('on')}
 function closePm(){$('pm').classList.remove('on')}
 function renderPm(){
  const p=S.products.find(x=>x.id===PB.pid);if(!p)return;
- $('pmc').innerHTML=`<h2 style="margin:0 0 8px;font-size:24px">Cetak barcode: ${esc(p.name)}</h2>
+ $('pmc').innerHTML=`<h2 style="margin:0 0 8px;font-size:24px">Cetak label: ${esc(p.name)}${PB.only?' · '+esc(vl(p.variants.find(v=>v.id===PB.only)||{})):''}</h2>
  <div class="form"><select onchange="PB.size=this.value">${[['40x25','Label 40 x 25 mm'],['50x30','Label 50 x 30 mm'],['60x40','Label 60 x 40 mm']].map(o=>`<option value="${o[0]}" ${PB.size===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
  <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" ${PB.price?'checked':''} onchange="PB.price=this.checked"> Tampilkan harga</label>
  <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" ${PB.single?'checked':''} onchange="PB.single=this.checked"> Satu label per halaman (printer stiker)</label></div>
- <div class="scroll"><table><tr><th>Varian</th><th>Barcode</th><th>Stok</th><th>Jumlah label</th></tr>${p.variants.map(v=>`<tr><td>${esc(vl(v))}</td><td><small>${esc(bcv(v))}</small></td><td>${v.stock>=9999?'jasa':v.stock}</td><td><input type="number" min="0" value="${PB.q[v.id]||0}" style="width:90px" onchange="PB.q[${v.id}]=Math.max(0,+this.value||0)"></td></tr>`).join('')}</table></div>
- <div class="row" style="flex-wrap:wrap"><span><button class="btn sec" onclick="pbAll(1)">Semua 1</button> <button class="btn sec" onclick="pbAll(0)">Sesuai stok</button></span><span><button class="btn sec" onclick="closePm()">Batal</button> <button class="btn" onclick="doPrint()">Cetak</button></span></div>`}
+ <div class="scroll"><table><tr><th>Varian</th><th>Barcode</th><th>Stok</th><th>Jumlah label</th></tr>${p.variants.filter(v=>!PB.only||v.id===PB.only).map(v=>`<tr><td>${esc(vl(v))}</td><td><small>${esc(bcv(v))}</small></td><td>${v.stock>=9999?'jasa':nf(v.stock)}</td><td><input type="text" inputmode="numeric" data-n min="0" value="${PB.q[v.id]||0}" style="width:90px" onchange="PB.q[${v.id}]=Math.max(0,+this.value||0)"></td></tr>`).join('')}</table></div>
+ <div class="row" style="flex-wrap:wrap"><span>${PB.only?'':'<button class="btn sec" onclick="pbAll(1)">Semua 1</button> <button class="btn sec" onclick="pbAll(0)">Sesuai stok</button>'}</span><span><button class="btn sec" onclick="closePm()">Batal</button> <button class="btn" onclick="doPrint()">Cetak</button></span></div>`}
 function pbAll(m){const p=S.products.find(x=>x.id===PB.pid);p.variants.forEach(v=>PB.q[v.id]=m?1:(v.stock>=9999?1:Math.min(v.stock,500)));renderPm()}
 function doPrint(){
  if(!window.JsBarcode){alert('Pustaka barcode belum termuat. Periksa koneksi internet lalu muat ulang halaman.');return}
- const p=S.products.find(x=>x.id===PB.pid),[w,h]=PB.size.split('x').map(Number);let html='',n=0;
- p.variants.forEach(v=>{const c=PB.q[v.id]||0;for(let i=0;i<c&&n<500;i++,n++)html+=`<div class="lb" style="width:${w}mm;height:${h}mm"><div class="ln">${esc(p.name)}</div><div class="lv">${esc(vl(v))}</div><svg class="bcs" data-c="${esc(bcv(v))}"></svg>${PB.price?`<div class="lp">${rp(vp(p,v))}</div>`:''}</div>`});
+ const p=S.products.find(x=>x.id===PB.pid),[w,h]=PB.size.split('x').map(Number);let html='',n=0;const tot=p.variants.reduce((a,v)=>a+(PB.q[v.id]||0),0);if(tot>500){alert('Maksimal 500 label sekali cetak. Sekarang '+tot+' label, kurangi jumlahnya.');return}try{localStorage.setItem('positif_pb',JSON.stringify({size:PB.size,price:PB.price,single:PB.single}))}catch(e){}
+ p.variants.forEach(v=>{const c=PB.q[v.id]||0;for(let i=0;i<c&&n<500;i++,n++)html+=`<div class="lb" style="width:${w}mm;height:${h}mm"><div class="ln">${esc(p.name)}</div><div class="lv">${esc(vl(v))}</div><svg class="bcs" style="max-height:${(h*.42).toFixed(1)}mm" data-c="${esc(bcv(v))}"></svg>${PB.price?`<div class="lp">${rp(vp(p,v))}</div>`:''}</div>`});
  if(!n){alert('Isi jumlah label yang akan dicetak.');return}
  const box=$('plabels');box.innerHTML=html;
  box.querySelectorAll('svg.bcs').forEach(s=>{try{JsBarcode(s,s.dataset.c,{format:'CODE128',width:2,height:h>=40?40:30,displayValue:true,fontSize:12,margin:0});
   if(!s.getAttribute('viewBox'))s.setAttribute('viewBox','0 0 '+parseFloat(s.getAttribute('width'))+' '+parseFloat(s.getAttribute('height')))}catch(e){s.outerHTML='<div class="lv">'+esc(s.dataset.c)+'</div>'}});
- const st=document.createElement('style');st.id='pgs';st.textContent=PB.single?`@page{size:${w}mm ${h}mm;margin:0}.lb{page-break-after:always}`:'@page{margin:6mm}';document.head.appendChild(st);
+ const st=document.createElement('style');st.id='pgs';st.textContent=PB.single?`@page{size:${w}mm ${h}mm;margin:0}.lb{page-break-after:always}.lb:last-child{page-break-after:auto}`:'@page{margin:6mm}';document.head.appendChild(st);
  document.body.classList.add('print-labels');closePm();
  const done=()=>{document.body.classList.remove('print-labels');const s=$('pgs');if(s)s.remove();window.removeEventListener('afterprint',done);document.removeEventListener('pointerdown',done,true)};
  window.addEventListener('afterprint',done);document.addEventListener('pointerdown',done,true);setTimeout(()=>window.print(),150)}
@@ -373,12 +389,12 @@ const ST=['Desain','Produksi','Selesai','Diambil'];
 let ofq='',ofs='Semua';
 function vPesanan(){
  $('view').innerHTML=`<div class="card fl"><h2 class="fn" style="margin:0 0 10px">Pesanan custom baru</h2>
- <div class="form fn"><input id="oc" placeholder="Nama pelanggan / tim"><input id="od" placeholder="Detail (cth: Jersey tim, 12 pcs)"><input id="oq" type="number" placeholder="Jumlah"><input id="ot" type="number" placeholder="Total harga"><input id="op" type="number" placeholder="DP dibayar"><button class="btn" onclick="addO()">Simpan pesanan</button></div>
+ <div class="form fn"><input id="oc" placeholder="Nama pelanggan / tim"><input id="od" placeholder="Detail (cth: Jersey tim, 12 pcs)"><input id="oq" type="text" inputmode="numeric" data-n placeholder="Jumlah"><input id="ot" type="text" inputmode="numeric" data-n placeholder="Total harga"><input id="op" type="text" inputmode="numeric" data-n placeholder="DP dibayar"><button class="btn" onclick="addO()">Simpan pesanan</button></div>
  <div class="bar fn" style="flex-wrap:wrap;align-items:center"><input id="ofq" placeholder="Cari nama pelanggan atau detail..." value="${esc(ofq)}" oninput="ofq=this.value;obody()" autocomplete="off" style="flex:1;min-width:200px"><select onchange="ofs=this.value;obody()">${['Semua',...ST,'Belum lunas'].map(s=>`<option ${s===ofs?'selected':''}>${s}</option>`).join('')}</select><span id="ocnt" class="muted"></span></div>
  <div id="obody" class="scroll fs"></div></div>`;obody()}
 function obody(){const ql=ofq.trim().toLowerCase(),o=S.orders.filter(x=>(!ql||((x.cust||'')+' '+(x.desc||'')).toLowerCase().includes(ql))&&(ofs==='Semua'||(ofs==='Belum lunas'?x.total-x.dp>0:x.status===ofs)));
  $('ocnt').textContent=o.length+' pesanan';
- $('obody').innerHTML='<table><tr><th>Pelanggan</th><th>Detail</th><th>Total</th><th>Sisa bayar</th><th>Status</th><th></th></tr>'+(o.length?o.map(x=>`<tr><td><b>${esc(x.cust)}</b><br><small class="muted">${fmt(x.date)}</small></td><td>${esc(x.desc)} (${x.qty} pcs)</td><td>${rp(x.total)}</td><td class="${x.total-x.dp>0?'bad':'ok'}">${x.total-x.dp>0?rp(x.total-x.dp):'Lunas'}</td><td><select onchange="setO(${x.id},this.value)">${ST.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select></td><td>${x.total-x.dp>0?`<button class="btn sec" onclick="payO(${x.id})">Terima pelunasan</button> `:''}<button class="x" onclick="delO(${x.id})" aria-label="Hapus">x</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">'+(S.orders.length?'Tidak ada pesanan yang cocok.':'Belum ada pesanan. Catat pesanan jersey atau baju custom di formulir di atas.')+'</td></tr>')+'</table>'}
+ $('obody').innerHTML='<table><tr><th>Pelanggan</th><th>Detail</th><th>Total</th><th>Sisa bayar</th><th>Status</th><th></th></tr>'+(o.length?o.map(x=>`<tr><td><b>${esc(x.cust)}</b><br><small class="muted">${fmt(x.date)}</small></td><td>${esc(x.desc)} (${nf(x.qty)} pcs)</td><td>${rp(x.total)}</td><td class="${x.total-x.dp>0?'bad':'ok'}">${x.total-x.dp>0?rp(x.total-x.dp):'Lunas'}</td><td><select onchange="setO(${x.id},this.value)">${ST.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select></td><td>${x.total-x.dp>0?`<button class="btn sec" onclick="payO(${x.id})">Terima pelunasan</button> `:''}<button class="x" style="width:auto;padding:0 8px" onclick="delO(${x.id})" aria-label="Hapus">Hapus</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">'+(S.orders.length?'Tidak ada pesanan yang cocok.':'Belum ada pesanan. Catat pesanan jersey atau baju custom di formulir di atas.')+'</td></tr>')+'</table>'}
 function addO(){if(!$('oc').value.trim()||!$('ot').value){alert('Isi nama pelanggan dan total harga.');return}
  S.orders.unshift({id:nid(),cust:$('oc').value.trim(),desc:$('od').value.trim(),qty:+$('oq').value||1,total:+$('ot').value,dp:+$('op').value||0,status:'Desain',date:new Date().toISOString()});save();render()}
 function setO(id,v){S.orders.find(x=>x.id===id).status=v;save()}
@@ -401,21 +417,24 @@ function vLaporan(){
  <div class="card stat"><span>Total omzet semua</span><div class="num">${rp(sum(S.sales))}</div></div>
  <div class="card stat"><span>Sisa bayar pesanan custom</span><div class="num ${piutang?'bad':''}">${rp(piutang)}</div></div></div>
  <div class="two"><div class="card fl"><h2 class="fn" style="margin:0 0 8px">Produk terlaris</h2><div class="fs">${top.length?top.map(t=>`<div class="row"><span>${esc(t[0])}</span><b>${t[1]} terjual</b></div>`).join(''):'<p class="muted">Belum ada data penjualan.</p>'}</div></div>
- <div class="card fl"><h2 class="fn" style="margin:0 0 8px">Stok menipis atau habis</h2><div class="fs">${low.length?low.map(x=>`<div class="row"><span>${esc(cn(x.p,x.v))}</span><b class="bad">${x.v.stock}</b></div>`).join(''):'<p class="muted">Semua stok aman.</p>'}</div></div></div>
+ <div class="card fl"><h2 class="fn" style="margin:0 0 8px">Stok menipis atau habis</h2><div class="fs">${low.length?low.map(x=>`<div class="row"><span>${esc(cn(x.p,x.v))}</span><b class="bad">${nf(x.v.stock)}</b></div>`).join(''):'<p class="muted">Semua stok aman.</p>'}</div></div></div>
  `;
 }
 /* ---------- SINKRON (GOOGLE SHEETS VIA APPS SCRIPT) ---------- */
 const NAMES=['products','variants','sales','orders','log','cfg','jobs','gudang'];
 let ready=false,isAdm=false,skipSetup=false,R={},KO={},Q=Promise.resolve(),busyW=0,errF=false,errMsg='',dirty=false,tm=null,VER=-1,PIN='',ME='',SSURL='';
+let OUT=[],flushing=false,rt=null,rtN=0;try{OUT=JSON.parse(localStorage.getItem('positif_outbox')||'[]')||[]}catch(e){OUT=[]}
+function outSave(){try{localStorage.setItem('positif_outbox',JSON.stringify(OUT))}catch(e){}}
 function emptyS(){return{jobs:[],gudang:[],v:2,products:[],sales:[],orders:[],log:[],low:10}}
 function invId(){const d=new Date(),p=n=>String(n).padStart(2,'0');return 'INV-'+String(d.getFullYear()).slice(2)+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds())+'-'+Math.floor(Math.random()*90+10)}
-function setSync(t,bad){const e=$('sync');if(e){e.textContent=t;e.className=bad?'bad':'muted'}}
+function setSync(t,bad){const e=$('sync');if(e){if(t==='Tersinkron')t+=' · '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':');e.textContent=t;e.className=bad?'bad':'muted'}}
 /* >>> Tempel alamat server (URL Apps Script yang berakhiran /exec) di antara tanda kutip di bawah ini. Boleh dikosongkan: aplikasi akan memintanya saat pertama dibuka. <<< */
 const API_URL='PASTE_URL_APLIKASI_ANDA_DI_SINI';
 let API=/^https:\/\//.test(API_URL)?API_URL:'';try{if(!API)API=localStorage.getItem('positif_api')||''}catch(e){}
+const NE=m=>{const x=new Error(m);x.net=1;return x};
 async function api(fn,...a){
- let r;try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn,pin:PIN,a}),redirect:'follow'})}catch(e){throw new Error('Tidak bisa menjangkau server. Periksa internet dan alamat server.')}
- let j;try{j=await r.json()}catch(e){throw new Error('Balasan server tidak dikenali. Pastikan alamat server benar dan deployment sudah diperbarui.')}
+ let r;try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn,pin:PIN,a}),redirect:'follow'})}catch(e){throw NE('Tidak bisa menjangkau server. Periksa internet dan alamat server.')}
+ let j;try{j=await r.json()}catch(e){throw NE('Balasan server tidak dikenali. Pastikan alamat server benar dan deployment sudah diperbarui.')}
  if(!j.ok)throw new Error(j.error||'Gagal');return j.data}
 function mkKO(){KO={};NAMES.forEach(n=>(R[n]||[]).forEach(x=>{KO[n+'/'+x.id]=x.d}))}
 function apply(r){NAMES.forEach(n=>{R[n]=((r.data||{})[n]||[]).map(x=>{const{id,...d}=x;return{id:String(id),d}})});(R.jobs||[]).forEach(x=>['items','hist','rejs'].forEach(k=>{if(typeof x.d[k]==='string'){try{x.d[k]=JSON.parse(x.d[k])}catch(e){}}}));VER=r.ver;mkKO()}
@@ -452,21 +471,35 @@ function save(){
  for(const p in KO)if(!(p in m)){const i=p.indexOf('/');ops.push({t:'delete',c:p.slice(0,i),id:p.slice(i+1)})}
  if(!ops.length)return;
  ops.forEach(o=>{const p=o.c+'/'+o.id;if(o.t==='delete')delete KO[p];else{const{_d,...dd}=o.d;KO[p]=o.t==='set'?o.d:{...KO[p],...dd}}});
- busyW++;errF=false;errMsg='';setSync('Menyimpan...');
- Q=Q.then(async()=>{for(let i=0;i<ops.length;i+=20){try{const r=await api('applyOps',ops.slice(i,i+20));VER=r.ver}catch(e){errF=true;errMsg=errMsg||e.message}}})
-  .finally(async()=>{busyW--;if(busyW>0)return;
-   if(errF)alert('Sebagian perubahan gagal disimpan: '+errMsg);
-   try{await load(false)}catch(e){setSync('Gagal menyinkronkan',1);return}
-   setSync(errF?'Ada perubahan yang gagal':'Tersinkron',errF)})}
+ OUT.push(...ops);outSave();flush()}
+function flush(){
+ if(flushing||!OUT.length)return;
+ flushing=true;busyW++;errF=false;errMsg='';setSync('Menyimpan...');
+ Q=Q.then(async()=>{let net=false;
+  while(OUT.length){const b=OUT.slice(0,20);
+   try{const r=await api('applyOps',b);VER=r.ver;OUT.splice(0,b.length);outSave()}
+   catch(e){if(e.net){net=true;break}errF=true;errMsg=errMsg||e.message;OUT.splice(0,b.length);outSave()}}
+  return net}).catch(()=>true)
+ .then(async net=>{flushing=false;busyW--;
+  if(net){outRetry();return}
+  if(OUT.length){flush();return}
+  rtN=0;if(busyW>0)return;
+  if(errF)alert('Sebagian perubahan gagal disimpan: '+errMsg);
+  try{await load(false)}catch(e){setSync('Gagal menyinkronkan',1);return}
+  setSync(errF?'Ada perubahan yang gagal':'Tersinkron',errF)})}
+function outRetry(){setSync('Offline · '+OUT.length+' perubahan menunggu',1);clearTimeout(rt);rt=setTimeout(flush,Math.min(30000,5000*Math.pow(2,rtN++)))}
+function syncNow(){if(!ready)return;if(OUT.length){rtN=0;clearTimeout(rt);flush();return}if(busyW>0)return;setSync('Menyinkronkan...');load(false).catch(e=>{if(/AUTH/.test(e.message))logout();else setSync('Gagal menyinkronkan',1)})}
+addEventListener('online',()=>{rtN=0;clearTimeout(rt);flush()});
+addEventListener('beforeunload',e=>{if(OUT.length){e.preventDefault();e.returnValue=''}});
 async function load(first){
  const r=await api('getAll');
- if(!first&&busyW>0)return;
+ if(!first&&(busyW>0||OUT.length))return;
  ME=r.name;isAdm=r.role==='admin';SSURL=r.ss;apply(r);
- if(first){ready=true;rebuild();render();startPoll()}else{rebuild();onData()}
+ if(first){ready=true;rebuild();render();startPoll();if(OUT.length)flush()}else{rebuild();onData()}
  setSync('Tersinkron')}
 function startPoll(){
- const chk=async()=>{if(document.hidden||busyW>0||!ready)return;try{const v=await api('getVersion');if(v!==VER)await load(false)}catch(e){if(/AUTH/.test(e.message))logout();else setSync('Koneksi bermasalah',1)}};
- setInterval(chk,30000);document.addEventListener('visibilitychange',chk)}
+ const chk=async()=>{if(document.hidden||!ready)return;if(OUT.length){if(!flushing){clearTimeout(rt);flush()}return}if(busyW>0)return;try{const v=await api('getVersion');if(v!==VER)await load(false)}catch(e){if(/AUTH/.test(e.message))logout();else setSync('Koneksi bermasalah',1)}};
+ setInterval(chk,15000);document.addEventListener('visibilitychange',chk)}
 function isBusy(){const a=document.activeElement;return !!a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)}
 function onData(){
  if(!ready)return;
@@ -479,7 +512,7 @@ async function replaceAll(o){
  o.log=o.log||[];o.low=o.low||10;o.v=2;
  busyW++;setSync('Menyimpan...');
  try{await api('applyOps',['variants','products','sales','orders','log'].concat(o.jobs?['jobs']:[]).concat(o.gudang?['gudang']:[]).map(c=>({t:'wipe',c})))}catch(e){errF=true;alert('Gagal menghapus data lama: '+e.message)}
- KO={};S=o;busyW--;save();
+ KO={};OUT=[];outSave();S=o;busyW--;save();
  if(busyW===0){try{await load(false)}catch(e){}}
  render()}
 function resetAll(){if(confirm('Hapus SEMUA data di spreadsheet (produk, stok, transaksi, pesanan) untuk semua komputer? Tindakan ini tidak bisa dibatalkan.'))replaceAll(emptyS())}
@@ -520,19 +553,19 @@ function vProd(){if(!pday)pday=ymd(new Date());$('view').classList.toggle('fit',
  $('view').innerHTML='<div class="ptabs">'+PT.map(([k,l])=>{const n=(k==='cetak'||k==='reject'||k==='selesai'||k==='gudang')?0:tq(jlist(k==='tunggu'?'cetak':k));return'<button class="'+(k===pst?'on':'')+'" onclick="pst=\''+k+'\';vProd()">'+l+(n?' ('+n+')':'')+'</button>'}).join('')+'</div><div id="pbody"></div>';
  if(pst==='cetak')cetakView();else if(pst==='tunggu')tungguView();else if(pst==='selesai')doneView();else if(pst==='reject')rejectView();else if(pst==='gudang')gudangView();else stageView(pst);stk()}
 /* ----- Cetak: produk di kiri, order di kanan ----- */
-function cetakView(){$('pbody').innerHTML='<div class="cols"><div class="card fl"><div class="sk1 fn"><h2 style="margin:0 0 8px">Produk</h2><div class="bar" style="align-items:center;flex-wrap:wrap;margin-bottom:0"><input id="pq" placeholder="Cari produk, mis. kaos pe anak hitam L" value="'+esc(pq)+'" oninput="pq=this.value;fillL()" style="flex:1;min-width:160px"><select onchange="pjn=this.value;fillL()" title="Jenis produk">'+cats().map(c=>'<option value="'+esc(c)+'"'+(c===pjn?' selected':'')+'>'+(c==='Semua'?'Semua jenis':esc(c))+'</option>').join('')+'</select><label class="muted"><input type="checkbox" '+(pOnly?'checked':'')+' onchange="pOnly=this.checked;fillL()"> Hanya habis/menipis</label><span class="muted">Target stok</span><input type="number" min="1" value="'+(tgt||S.low*3)+'" style="width:80px" onchange="tgt=Math.max(1,+this.value||0);fillL()"></div></div><div id="pl" class="scroll fs"></div></div><div id="pr"></div></div>';fillL();fillR()}
+function cetakView(){$('pbody').innerHTML='<div class="cols"><div class="card fl"><div class="sk1 fn"><h2 style="margin:0 0 8px">Produk</h2><div class="bar" style="align-items:center;flex-wrap:wrap;margin-bottom:0"><input id="pq" placeholder="Cari produk, mis. kaos pe anak hitam L" value="'+esc(pq)+'" oninput="pq=this.value;fillL()" style="flex:1;min-width:160px"><select onchange="pjn=this.value;fillL()" title="Jenis produk">'+cats().map(c=>'<option value="'+esc(c)+'"'+(c===pjn?' selected':'')+'>'+(c==='Semua'?'Semua jenis':esc(c))+'</option>').join('')+'</select><label class="muted"><input type="checkbox" '+(pOnly?'checked':'')+' onchange="pOnly=this.checked;fillL()"> Hanya habis/menipis</label><span class="muted">Target stok</span><input type="text" inputmode="numeric" data-n min="1" value="'+(tgt||S.low*3)+'" style="width:80px" onchange="tgt=Math.max(1,+this.value||0);fillL()"></div></div><div id="pl" class="scroll fs"></div></div><div id="pr"></div></div>';fillL();fillR()}
 function pdata(){const inJ={},sold={},stt={},d30=Date.now()-30*864e5;(S.jobs||[]).filter(j=>j.stage!=='selesai').forEach(j=>j.items.forEach(i=>{inJ[i.vid]=(inJ[i.vid]||0)+i.qty;const o=stt[i.vid]=stt[i.vid]||{};o[j.stage]=(o[j.stage]||0)+i.qty}));S.sales.forEach(s=>{if(new Date(s.date)>d30)s.items.forEach(c=>sold[c.id]=(sold[c.id]||0)+c.qty)});return{inJ,sold,stt}}
 function fillL(){const{inJ,sold,stt}=pdata(),t=tgt||S.low*3,q=pq.trim().toLowerCase();
  let rows=allV().filter(x=>!isJ(x.v)).map(x=>{const pj=inJ[x.v.id]||0,s30=sold[x.v.id]||0;return{...x,pj,s30,st:stt[x.v.id]||{},n:Math.max(Math.max(t,s30)-x.v.stock-pj,0)}}).filter(x=>(!q||cn(x.p,x.v).toLowerCase().includes(q))&&(pjn==='Semua'||x.p.cat===pjn)&&(!pOnly||q||x.v.stock<=S.low)).sort((a,b)=>a.v.stock-b.v.stock);
  const tot=rows.length;rows=rows.slice(0,80);
- $('pl').innerHTML=rows.length?'<table><tr><th>Produk</th><th>Stok</th><th>Terjual 30 hari</th><th>Diproduksi</th><th>Status produksi</th><th>Jumlah</th><th></th></tr>'+rows.map(({p,v,pj,s30,st,n})=>'<tr><td><b>'+esc(cn(p,v))+'</b>'+(p.cat?'<br><small class="muted">'+esc(p.cat)+'</small>':'')+'</td><td>'+v.stock+' '+sbadge(v)+'</td><td>'+(s30||'-')+'</td><td>'+(pj||'-')+'</td><td>'+(pj?Object.entries(st).map(([s,k])=>'<div>'+SS[s]+': <b>'+k+'</b></div>').join(''):'<span class="muted">-</span>')+'</td><td><input type="number" min="1" id="q'+v.id+'" value="'+(n||'')+'" style="width:80px"></td><td><button class="btn sec" onclick="addD('+v.id+')">+ Order</button></td></tr>').join('')+'</table>'+(tot>80?'<p class="muted">Menampilkan 80 dari '+tot+'. Gunakan pencarian.</p>':''):'<p class="muted">'+(q?'Produk tidak ditemukan.':'Tidak ada produk yang perlu dicetak pada filter ini.')+'</p>'}
+ $('pl').innerHTML=rows.length?'<table><tr><th>Produk</th><th>Stok</th><th>Terjual 30 hari</th><th>Diproduksi</th><th>Status produksi</th><th>Jumlah</th><th></th></tr>'+rows.map(({p,v,pj,s30,st,n})=>'<tr><td><b>'+esc(cn(p,v))+'</b>'+(p.cat?'<br><small class="muted">'+esc(p.cat)+'</small>':'')+'</td><td>'+v.stock+' '+sbadge(v)+'</td><td>'+(s30||'-')+'</td><td>'+(pj||'-')+'</td><td>'+(pj?Object.entries(st).map(([s,k])=>'<div>'+SS[s]+': <b>'+k+'</b></div>').join(''):'<span class="muted">-</span>')+'</td><td><input type="text" inputmode="numeric" data-n min="1" id="q'+v.id+'" value="'+(n||'')+'" style="width:80px"></td><td><button class="btn sec" onclick="addD('+v.id+')">+ Order</button></td></tr>').join('')+'</table>'+(tot>80?'<p class="muted">Menampilkan 80 dari '+tot+'. Gunakan pencarian.</p>':''):'<p class="muted">'+(q?'Produk tidak ditemukan.':'Tidak ada produk yang perlu dicetak pada filter ini.')+'</p>'}
 function addD(id){const n=Math.floor(+$('q'+id).value)||0;if(n<=0){alert('Isi jumlah cetak lebih dari 0.');return}
  const x=allV().find(x=>x.v.id===id);if(!x)return;const d=draft.find(i=>i.vid===id);if(d)d.qty+=n;else draft.push({vid:id,name:cn(x.p,x.v),qty:n});fillR()}
 function fillR(){const jobs=S.jobs||[],day=pday,made=jobs.filter(j=>ymd(j.date)===day),done=jobs.filter(j=>j.hist.some(h=>h.stage==='bahan'&&!h.kind&&ymd(h.date)===day));
  const tb=a=>a.length?'<div class="scroll"><table><tr><th>Produk</th><th>Jumlah</th><th>Vendor</th><th>Status</th></tr>'+a.map(j=>'<tr><td>'+jl(j)+'</td><td>'+jq(j)+'</td><td>'+esc(j.vendor||'-')+'</td><td>'+SL[j.stage]+'</td></tr>').join('')+'</table></div>':'<p class="muted" style="margin:4px 0">Tidak ada.</p>';
  const h3=t=>'<h3 style="margin:12px 0 4px;font-size:14px">'+t+'</h3>';
- $('pr').innerHTML='<div class="card fl dr"><h2 class="fn" style="margin:0 0 8px">Buat order cetak</h2>'+(draft.length?'<div class="fs"><table><tr><th>Produk</th><th>Jumlah</th><th></th></tr>'+draft.map((d,k)=>'<tr><td>'+esc(d.name)+'</td><td><input type="number" min="1" value="'+d.qty+'" style="width:70px" onchange="draft['+k+'].qty=Math.max(1,Math.floor(+this.value)||1)"></td><td><button class="btn sec" onclick="draft.splice('+k+',1);fillR()">Hapus</button></td></tr>').join('')+'</table></div><div class="form fn" style="margin-top:10px"><input id="vend" placeholder="Nama vendor cetak"><button class="btn" onclick="saveOrd()">Simpan order ('+draft.reduce((a,d)=>a+d.qty,0)+' pcs)</button><button class="btn sec" onclick="printDraft()">Cetak A4</button></div>':'<p class="muted">Klik "+ Order" pada produk di sebelah kiri. Order yang sudah disimpan menunggu di tab "Menunggu vendor".</p>')+'</div>'
- +'<div class="card fl rk"><h2 class="fn" style="margin:0 0 8px">Rekap per hari</h2><div class="bar fn" style="align-items:center"><input type="date" value="'+day+'" onchange="pday=this.value||ymd(new Date());fillR()"><button class="btn sec" onclick="pday=ymd(new Date());fillR()">Hari ini</button><button class="btn sec" onclick="printDay()">Cetak A4</button></div><div class="fs">'+h3('Order dibuat ('+tq(made)+' pcs)')+tb(made)+h3('Selesai dicetak, masuk rak bahan ('+tq(done)+' pcs)')+tb(done)+'</div></div>'}
+ $('pr').innerHTML='<div class="card fl dr"><h2 class="fn" style="margin:0 0 8px">Buat order cetak</h2>'+(draft.length?'<div class="fs"><table><tr><th>Produk</th><th>Jumlah</th><th></th></tr>'+draft.map((d,k)=>'<tr><td>'+esc(d.name)+'</td><td><input type="text" inputmode="numeric" data-n min="1" value="'+d.qty+'" style="width:70px" onchange="draft['+k+'].qty=Math.max(1,Math.floor(+this.value)||1)"></td><td><button class="btn sec" onclick="draft.splice('+k+',1);fillR()">Hapus</button></td></tr>').join('')+'</table></div><div class="form fn" style="margin-top:10px"><input id="vend" placeholder="Nama vendor cetak"><button class="btn" onclick="saveOrd()">Simpan order ('+nf(draft.reduce((a,d)=>a+d.qty,0))+' pcs)</button><button class="btn sec" onclick="printDraft()">Cetak A4</button></div>':'<p class="muted">Klik "+ Order" pada produk di sebelah kiri. Order yang sudah disimpan menunggu di tab "Menunggu vendor".</p>')+'</div>'
+ +'<div class="card fl rk"><h2 class="fn" style="margin:0 0 8px">Rekap per hari</h2><div class="bar fn" style="align-items:center"><input type="date" value="'+day+'" onchange="pday=this.value||ymd(new Date());fillR()"><button class="btn sec" onclick="pday=ymd(new Date());fillR()">Hari ini</button><button class="btn sec" onclick="printDay()">Cetak A4</button></div><div class="fs">'+h3('Order dibuat ('+nf(tq(made))+' pcs)')+tb(made)+h3('Selesai dicetak, masuk rak bahan ('+nf(tq(done))+' pcs)')+tb(done)+'</div></div>'}
 function saveOrd(){if(!draft.length)return;const vd=($('vend')||{}).value?$('vend').value.trim():'',now=new Date().toISOString(),base=invId().replace('INV','PRD');S.jobs=S.jobs||[];
  draft.forEach((it,k)=>S.jobs.unshift({id:String(nid()),no:base+'-'+(k+1),grp:base,date:now,stage:'cetak',vendor:vd,items:[{vid:it.vid,name:it.name,qty:it.qty}],hist:[{stage:'cetak',date:now,by:vd||ME,note:'Order cetak dibuat'}]}));
  draft=[];save();render()}
@@ -541,13 +574,13 @@ async function markPrinted(){const l=jlist('cetak').filter(j=>$('pc'+j.id)&&$('p
 /* ----- Rak bahan, Cutting, Jahit, Finishing: satu tab per tahap ----- */
 function stageView(s){$('pbody').innerHTML='<div class="card fl"><div class="bar sk1 fn" style="align-items:center;flex-wrap:wrap"><h2 style="margin:0">'+SL[s]+'</h2><select onchange="pg=this.value;fillS(\''+s+'\')"><option value="Semua"'+(pg==='Semua'?' selected':'')+'>Semua gudang</option>'+GL().map(g=>'<option value="'+esc(g.id)+'"'+(g.id===pg?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select><input id="pq" placeholder="Cari produk" value="'+esc(pq)+'" oninput="pq=this.value;fillS(\''+s+'\')" style="flex:1;min-width:140px"><span id="ps" class="muted"></span><button class="btn sec" onclick="printStage(\''+s+'\')">Cetak A4</button></div><div id="pl" class="scroll fs"></div></div>';fillS(s)}
 function fillS(s){const nx=STG[STG.indexOf(s)+1],rows=stageRows(s),gl=GL();
- $('ps').textContent=rows.length+' baris · '+tq(rows)+' pcs';
+ $('ps').textContent=rows.length+' baris · '+nf(tq(rows))+' pcs';
  const col=(j,f)=>'<td>'+j.items.map(f).join('')+'</td>';
  $('pl').innerHTML=rows.length?'<table><tr><th>Produk</th><th>Gudang</th><th>Masuk tahap</th><th>Petugas sebelumnya</th><th>Jumlah</th><th>Sudah jadi</th><th>Reject</th><th>Masih proses</th><th>Petugas *</th><th>Catatan</th><th></th></tr>'+rows.map(j=>{const lh=lastH(j),dy=Math.floor((Date.now()-new Date(lh.date))/864e5),g=jloc(j),oth=gl.filter(x=>x.id!==g),one=j.items.length===1;
   return'<tr><td><b>'+jl(j)+'</b>'+(j.vendor?'<br><small class="muted">Vendor: '+esc(j.vendor)+'</small>':'')+'</td><td>'+esc(gname(g))+'</td><td>'+fmt(lh.date)+' <span class="muted">('+dy+' hari)</span></td><td>'+esc(prevBy(j))+'</td>'
-  +col(j,it=>'<div>'+it.qty+'</div>')+col(j,it=>'<div><input type="number" min="0" max="'+it.qty+'" id="dn'+j.id+'_'+it.vid+'" value="'+it.qty+'" oninput="rc(\''+j.id+'\')" style="width:70px"></div>')+col(j,it=>'<div><input type="number" min="0" max="'+it.qty+'" id="rj'+j.id+'_'+it.vid+'" placeholder="0" oninput="rc(\''+j.id+'\')" style="width:70px"></div>')+col(j,it=>'<div id="ms'+j.id+'_'+it.vid+'">0</div>')
+  +col(j,it=>'<div>'+it.qty+'</div>')+col(j,it=>'<div><input type="text" inputmode="numeric" data-n min="0" max="'+it.qty+'" id="dn'+j.id+'_'+it.vid+'" value="'+it.qty+'" oninput="rc(\''+j.id+'\')" style="width:70px"></div>')+col(j,it=>'<div><input type="text" inputmode="numeric" data-n min="0" max="'+it.qty+'" id="rj'+j.id+'_'+it.vid+'" placeholder="0" oninput="rc(\''+j.id+'\')" style="width:70px"></div>')+col(j,it=>'<div id="ms'+j.id+'_'+it.vid+'">0</div>')
   +'<td><input id="by'+j.id+'" placeholder="Wajib diisi" style="min-width:120px"></td><td><input id="nt'+j.id+'" placeholder="Opsional" style="min-width:100px"></td><td style="white-space:nowrap"><div id="ka'+j.id+'"><button class="btn" onclick="adv(\''+j.id+'\')">'+(nx==='selesai'?'Selesai: masuk stok POS':'Lanjut: '+SL[nx])+'</button>'+(oth.length?'<div style="margin-top:6px"><button class="btn sec" onclick="kOpen(\''+j.id+'\',1)">'+(oth.length===1?'Kirim ke '+esc(oth[0].name):'Kirim ke gudang lain')+'</button>'+(isAdm?' <button class="btn sec" onclick="delJ(\''+j.id+'\')">Batalkan</button>':'')+'</div>':(isAdm?'<div style="margin-top:6px"><button class="btn sec" onclick="delJ(\''+j.id+'\')">Batalkan</button></div>':''))+'</div>'
-  +(oth.length?'<div id="ks'+j.id+'" style="display:none"><div class="muted" style="margin-bottom:4px">Kirim ke gudang lain</div><div class="bar" style="align-items:center;margin:0"><select id="kt'+j.id+'">'+oth.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'</select><input type="number" min="1" max="'+jq(j)+'" id="sd'+j.id+'" '+(one?'value="'+j.items[0].qty+'" placeholder="Qty"':'placeholder="Semua" disabled')+' style="width:76px"><button class="btn" onclick="sendG(\''+j.id+'\')">Proses</button><button class="btn sec" onclick="kOpen(\''+j.id+'\',0)">Batal</button></div></div>':'')+'</td></tr>'}).join('')+'</table><p class="muted" style="margin:8px 0 0">* Nama petugas wajib diisi untuk melanjutkan atau mengirim. Kalau "Sudah jadi" lebih kecil dari jumlah, sisanya tetap di tahap ini dan yang sudah jadi lanjut ke proses berikutnya.</p>':'<p class="muted">Tidak ada barang di tahap ini.</p>';
+  +(oth.length?'<div id="ks'+j.id+'" style="display:none"><div class="muted" style="margin-bottom:4px">Kirim ke gudang lain</div><div class="bar" style="align-items:center;margin:0"><select id="kt'+j.id+'">'+oth.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'</select><input type="text" inputmode="numeric" data-n min="1" max="'+jq(j)+'" id="sd'+j.id+'" '+(one?'value="'+j.items[0].qty+'" placeholder="Qty"':'placeholder="Semua" disabled')+' style="width:76px"><button class="btn" onclick="sendG(\''+j.id+'\')">Proses</button><button class="btn sec" onclick="kOpen(\''+j.id+'\',0)">Batal</button></div></div>':'')+'</td></tr>'}).join('')+'</table><p class="muted" style="margin:8px 0 0">* Nama petugas wajib diisi untuk melanjutkan atau mengirim. Kalau "Sudah jadi" lebih kecil dari jumlah, sisanya tetap di tahap ini dan yang sudah jadi lanjut ke proses berikutnya.</p>':'<p class="muted">Tidak ada barang di tahap ini.</p>';
  rows.forEach(j=>rc(j.id))}
 function kOpen(id,on){const a=$('ka'+id),k=$('ks'+id);if(a)a.style.display=on?'none':'';if(k)k.style.display=on?'':'none';if(on){const e=$('sd'+id);if(e&&e.focus)e.focus()}}
 function rc(id){const j=(S.jobs||[]).find(x=>x.id===id);if(!j)return;j.items.forEach(it=>{const d=Math.floor(+($('dn'+id+'_'+it.vid)||{}).value||0),r=Math.floor(+($('rj'+id+'_'+it.vid)||{}).value||0),e=$('ms'+id+'_'+it.vid);if(e){const m=it.qty-d-r;e.textContent=m;e.style.color=m<0?'var(--bad,#b3261e)':''}})}
@@ -590,7 +623,7 @@ function printDay(){const l=(S.jobs||[]).filter(j=>ymd(j.date)===pday);if(!l.len
 function stk(){const s=document.documentElement.style,h=document.querySelector('header'),t=document.querySelector('.ptabs'),b=document.querySelector('.sk1');s.setProperty('--hh',(h?h.offsetHeight:52)+'px');s.setProperty('--th',(t?t.offsetHeight:0)+'px');s.setProperty('--bh',(b?b.offsetHeight:0)+'px')}
 addEventListener('resize',stk);
 function tungguView(){const wait=jlist('cetak').sort((a,b)=>a.date<b.date?-1:1);
- $('pbody').innerHTML='<div class="card fl"><h2 class="fn" style="margin:0 0 8px">Menunggu di vendor ('+tq(wait)+' pcs)</h2>'+(wait.length?'<div class="scroll fs"><table><tr><th></th><th>Produk</th><th>Jumlah</th><th>Vendor</th><th>Order</th></tr>'+wait.map(j=>'<tr><td><input type="checkbox" id="pc'+j.id+'"></td><td>'+jl(j)+'</td><td>'+jq(j)+'</td><td>'+esc(j.vendor||'-')+'</td><td>'+fmt(j.date)+'</td></tr>').join('')+'</table></div><div class="form fn" style="margin-top:10px"><label class="muted">Masuk ke <select id="tg">'+GL().map(g=>'<option value="'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</select></label><button class="btn" onclick="markPrinted()">Tandai sudah dicetak (masuk rak bahan)</button><button class="btn sec" onclick="selAll()">Pilih semua</button><button class="btn sec" onclick="printWait()">Cetak A4</button></div>':'<p class="muted">Tidak ada order yang menunggu di vendor.</p>')+'</div>'}
+ $('pbody').innerHTML='<div class="card fl"><h2 class="fn" style="margin:0 0 8px">Menunggu di vendor ('+nf(tq(wait))+' pcs)</h2>'+(wait.length?'<div class="scroll fs"><table><tr><th></th><th>Produk</th><th>Jumlah</th><th>Vendor</th><th>Order</th></tr>'+wait.map(j=>'<tr><td><input type="checkbox" id="pc'+j.id+'"></td><td>'+jl(j)+'</td><td>'+jq(j)+'</td><td>'+esc(j.vendor||'-')+'</td><td>'+fmt(j.date)+'</td></tr>').join('')+'</table></div><div class="form fn" style="margin-top:10px"><label class="muted">Masuk ke <select id="tg">'+GL().map(g=>'<option value="'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</select></label><button class="btn" onclick="markPrinted()">Tandai sudah dicetak (masuk rak bahan)</button><button class="btn sec" onclick="selAll()">Pilih semua</button><button class="btn sec" onclick="printWait()">Cetak A4</button></div>':'<p class="muted">Tidak ada order yang menunggu di vendor.</p>')+'</div>'}
 function printWait(){const l=jlist('cetak');if(!l.length){alert('Tidak ada order yang menunggu.');return}printTbl('Order Cetak Menunggu di Vendor',new Date().toLocaleDateString('id-ID',{dateStyle:'full'}),[['No','c'],['Produk',''],['Vendor',''],['Tanggal order',''],['Jumlah (pcs)','n',1]],l.map((j,i)=>[i+1,jn(j),j.vendor||'-',fmt(j.date),jq(j)]),{sign:['Dibuat oleh','Vendor']})}
 function printStage(s){const r=stageRows(s);if(!r.length){alert('Tidak ada data untuk dicetak.');return}
  printTbl(SL[s],new Date().toLocaleDateString('id-ID',{dateStyle:'full'})+' · '+(pg==='Semua'?'Semua gudang':gname(pg)),[['No','c'],['Produk',''],['Gudang',''],['Masuk tahap',''],['Petugas sebelumnya',''],['Jumlah (pcs)','n',1],['Jadi','n'],['Reject','n'],['Petugas',''],['Paraf','']],r.map((j,i)=>[i+1,jn(j),gname(jloc(j)),fmt(lastH(j).date),prevBy(j),jq(j),'','','','']),{land:1,sign:['Petugas '+SL[s],'Penanggung jawab']})}
@@ -601,7 +634,7 @@ async function chkSrv(){if(srv2)return true;let m='';
  alert(m+' Salin Produksi.gs dan Code.gs yang baru ke Apps Script, lalu Terapkan > Kelola deployment > pensil > Versi baru > Terapkan. Perpindahan dibatalkan supaya jumlah barang tidak salah.');return false}
 function ensureG(){if(!S.gudang||!S.gudang.length)S.gudang=GDEF.map((g,i)=>({...g,ord:i}))}
 function gudangView(){const act=(S.jobs||[]).filter(j=>j.stage!=='selesai'&&j.stage!=='cetak'),ss=['bahan','cutting','jahit','finishing'],cn2=(g,s)=>tq(act.filter(j=>j.stage===s&&jloc(j)===g)),dis=isAdm?'':' disabled';
- $('pbody').innerHTML='<div class="card"><h2 style="margin:0 0 6px">Data gudang</h2><p class="muted" style="margin:0 0 10px">Nama dan keterangan gudang produksi. Perubahan nama otomatis dipakai di semua tab produksi. Angka di bawah adalah jumlah pcs yang sedang ada di tiap tahap.</p><div class="scroll"><table><tr><th>Nama gudang</th><th>Keterangan</th>'+ss.map(s=>'<th>'+SL[s]+'</th>').join('')+'<th>Total (pcs)</th><th></th></tr>'+GL().map(g=>'<tr><td><input value="'+esc(g.name)+'"'+dis+' onchange="updG(\''+g.id+'\',\'name\',this.value)" style="min-width:150px"></td><td><input value="'+esc(g.note||'')+'"'+dis+' placeholder="Alamat, penanggung jawab, dll" onchange="updG(\''+g.id+'\',\'note\',this.value)" style="min-width:240px"></td>'+ss.map(s=>'<td>'+cn2(g.id,s)+'</td>').join('')+'<td><b>'+ss.reduce((a,s)=>a+cn2(g.id,s),0)+'</b></td><td>'+(isAdm?'<button class="btn sec" onclick="delG(\''+g.id+'\')">Hapus</button>':'')+'</td></tr>').join('')+'</table></div>'+(isAdm?'<div class="form" style="margin-top:12px"><input id="gn" placeholder="Nama gudang baru"><input id="gk" placeholder="Keterangan (opsional)"><button class="btn" onclick="addG()">Tambah gudang</button></div>':'<p class="muted" style="margin-top:10px">Hanya admin yang dapat mengubah data gudang.</p>')+'</div>'}
+ $('pbody').innerHTML='<div class="card"><h2 style="margin:0 0 6px">Data gudang</h2><p class="muted" style="margin:0 0 10px">Nama dan keterangan gudang produksi. Perubahan nama otomatis dipakai di semua tab produksi. Angka di bawah adalah jumlah pcs yang sedang ada di tiap tahap.</p><div class="scroll"><table><tr><th>Nama gudang</th><th>Keterangan</th>'+ss.map(s=>'<th>'+SL[s]+'</th>').join('')+'<th>Total (pcs)</th><th></th></tr>'+GL().map(g=>'<tr><td><input value="'+esc(g.name)+'"'+dis+' onchange="updG(\''+g.id+'\',\'name\',this.value)" style="min-width:150px"></td><td><input value="'+esc(g.note||'')+'"'+dis+' placeholder="Alamat, penanggung jawab, dll" onchange="updG(\''+g.id+'\',\'note\',this.value)" style="min-width:240px"></td>'+ss.map(s=>'<td>'+nf(cn2(g.id,s))+'</td>').join('')+'<td><b>'+nf(ss.reduce((a,s)=>a+cn2(g.id,s),0))+'</b></td><td>'+(isAdm?'<button class="btn sec" onclick="delG(\''+g.id+'\')">Hapus</button>':'')+'</td></tr>').join('')+'</table></div>'+(isAdm?'<div class="form" style="margin-top:12px"><input id="gn" placeholder="Nama gudang baru"><input id="gk" placeholder="Keterangan (opsional)"><button class="btn" onclick="addG()">Tambah gudang</button></div>':'<p class="muted" style="margin-top:10px">Hanya admin yang dapat mengubah data gudang.</p>')+'</div>'}
 function updG(id,k,v){if(!isAdm)return;ensureG();const g=S.gudang.find(x=>x.id===id);if(!g)return;v=v.trim();
  if(k==='name'){if(!v){alert('Nama gudang tidak boleh kosong.');gudangView();return}if(S.gudang.some(x=>x.id!==id&&x.name.toLowerCase()===v.toLowerCase())){alert('Nama gudang sudah dipakai.');gudangView();return}const old=g.name;(S.jobs||[]).forEach(j=>{if(j.loc===old)j.loc=id})}
  g[k]=v;save();render()}
@@ -609,7 +642,7 @@ function addG(){if(!isAdm)return;const n=$('gn').value.trim(),k=$('gk').value.tr
  S.gudang.push({id:String(nid()),name:n,note:k,ord:Math.max(0,...S.gudang.map(g=>g.ord||0))+1});save();render()}
 function delG(id){if(!isAdm)return;const used=(S.jobs||[]).filter(j=>j.stage!=='selesai'&&j.stage!=='cetak'&&jloc(j)===id);
  if(GL().length<=1){alert('Minimal harus ada satu gudang.');return}
- if(used.length){alert('Gudang masih berisi '+tq(used)+' pcs barang. Kirim dulu ke gudang lain.');return}
+ if(used.length){alert('Gudang masih berisi '+nf(tq(used))+' pcs barang. Kirim dulu ke gudang lain.');return}
  if(!confirm('Hapus gudang ini?'))return;ensureG();S.gudang=S.gudang.filter(x=>x.id!==id);if(pg===id)pg='Semua';save();render()}
 /* ---------- AKUN, RIWAYAT ORDER ---------- */
 const FIT=['kasir','laporan','riwayat','produk','pesanan','produksi'];
@@ -630,10 +663,10 @@ const jl=j=>esc(jn(j))+' <button type="button" class="jh" onclick="showHist(\''+
 function closeHm(){$('hm').classList.remove('on')}
 function showHist(id){const j=(S.jobs||[]).find(x=>x.id===id);if(!j)return;const ev=[];
  (j.hist||[]).forEach(h=>ev.push({d:h.date||'',st:h.kind?'Kirim antar gudang':(SL[h.stage]||h.stage||'-'),by:h.by,note:h.note,rj:0}));
- (j.rejs||[]).forEach(r=>ev.push({d:r.date||'',st:'Reject di '+(SL[r.stage]||r.stage||'-'),by:r.by,note:r.name+': '+r.qty+' pcs'+(r.note?' · '+r.note:''),rj:1}));
+ (j.rejs||[]).forEach(r=>ev.push({d:r.date||'',st:'Reject di '+(SL[r.stage]||r.stage||'-'),by:r.by,note:r.name+': '+nf(r.qty)+' pcs'+(r.note?' · '+r.note:''),rj:1}));
  if(j.stage==='selesai')j.items.forEach(it=>{if(it.rej>0)ev.push({d:lastH(j).date||'',st:'Reject di Finishing',by:lastH(j).by,note:it.name+': '+it.rej+' pcs',rj:1})});
  ev.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
- $('hmc').innerHTML='<div class="row fn" style="margin-top:0"><h2 style="margin:0;font-size:24px">Riwayat order '+esc(j.no||'')+'</h2><button class="btn sec" onclick="closeHm()">Tutup</button></div><p class="muted fn" style="margin:0 0 8px">'+esc(jn(j))+' · '+jq(j)+' pcs'+(j.vendor?' · Vendor: '+esc(j.vendor):'')+' · Posisi: '+(SL[j.stage]||j.stage)+(j.stage!=='cetak'&&j.stage!=='selesai'?' ('+esc(gname(jloc(j)))+')':'')+'</p><div class="fs"><table><tr><th>Waktu</th><th>Tahap</th><th>Petugas</th><th>Keterangan</th></tr>'+(ev.length?ev.map(e=>'<tr><td>'+(e.d?fmt(e.d):'-')+'</td><td'+(e.rj?' class="bad"':'')+'>'+esc(e.st)+'</td><td>'+esc(e.by||'-')+'</td><td>'+esc(e.note||'-')+'</td></tr>').join(''):'<tr><td colspan="4" class="muted">Belum ada riwayat.</td></tr>')+'</table></div><p class="muted fn" style="margin:8px 0 0;font-size:13px">Petugas pada baris tahap adalah yang memindahkan order ke tahap tersebut.</p>';
+ $('hmc').innerHTML='<div class="row fn" style="margin-top:0"><h2 style="margin:0;font-size:24px">Riwayat order '+esc(j.no||'')+'</h2><button class="btn sec" onclick="closeHm()">Tutup</button></div><p class="muted fn" style="margin:0 0 8px">'+esc(jn(j))+' · '+nf(jq(j))+' pcs'+(j.vendor?' · Vendor: '+esc(j.vendor):'')+' · Posisi: '+(SL[j.stage]||j.stage)+(j.stage!=='cetak'&&j.stage!=='selesai'?' ('+esc(gname(jloc(j)))+')':'')+'</p><div class="fs"><table><tr><th>Waktu</th><th>Tahap</th><th>Petugas</th><th>Keterangan</th></tr>'+(ev.length?ev.map(e=>'<tr><td>'+(e.d?fmt(e.d):'-')+'</td><td'+(e.rj?' class="bad"':'')+'>'+esc(e.st)+'</td><td>'+esc(e.by||'-')+'</td><td>'+esc(e.note||'-')+'</td></tr>').join(''):'<tr><td colspan="4" class="muted">Belum ada riwayat.</td></tr>')+'</table></div><p class="muted fn" style="margin:8px 0 0;font-size:13px">Petugas pada baris tahap adalah yang memindahkan order ke tahap tersebut.</p>';
  $('hm').classList.add('on')}
 function bmsg(t,bad){const e=$('bmsg');if(e&&$('accm').classList.contains('on')){e.textContent=t;e.className=bad?'bad':'ok'}else if(bad)alert(t)}
 async function mkBackup(){bmsg('Membuat salinan...');try{const r=await api('backupCopy');S.lastBackup=new Date().toISOString();save();accFill();bmsg('Salinan dibuat di Google Drive: '+r.name,0)}catch(e){bmsg('Gagal membuat salinan: '+e.message,1)}}
