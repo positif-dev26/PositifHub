@@ -523,11 +523,14 @@ const S = {
   ui: { q: '', status: 'aktif', sort: 'deadline', mtab: 'produk', prod: 'jersey', cq: '' }
 };
 const GAS = (typeof google !== 'undefined' && google.script && google.script.run) ? google.script.run : null;
+// Link server sudah ditanam: perangkat baru langsung ke halaman login.
+const DEFAULT_API = 'https://script.google.com/macros/s/AKfycbw-FqOIohjsjl0z3xcYyAruy3oQ5oGbpXZGYp_pXlFPZ574kyfe78QNDsFY26uyM5dL/exec';
+const DEFAULT_POS = 'https://positif-dev26.github.io/PositifHub/';
 (function initApi() {
   if (GAS) { S.api = 'apps-script'; return; }
   const p = new URLSearchParams(location.search);
   if (p.get('api')) LS.set('ppc_api', p.get('api').trim());
-  S.api = LS.get('ppc_api', '');
+  S.api = LS.get('ppc_api', '') || DEFAULT_API;
 })();
 
 /* ---------------- UI helpers ---------------- */
@@ -574,7 +577,8 @@ async function api(action, data) {
   const j = await post({ action, token: S.token, data: data || {} });
   if (!j.ok && j.error === 'SESI_HABIS') { logout(true); throw new Error('Sesi habis, silakan masuk lagi.'); }
   if (!j.ok) { setSync('Gagal sinkron', true); throw new Error(j.error || 'Gagal memproses.'); }
-  if (action !== 'bootstrap' && action !== 'uploadImage') setSync('ok');
+  if (action !== 'bootstrap' && action !== 'uploadImage' && action !== 'getVer') setSync('ok');
+  if (j.ver != null && WRITE_ACTS.indexOf(action) > -1) { if (j.ver === (S.ver || 0) + 1) S.ver = j.ver; snapSave(); }
   return j;
 }
 function demoDB() {
@@ -679,23 +683,84 @@ async function demoLogin(role) {
 async function logout(silent) {
   if (!silent && S.edit && S.editDirty && !(await ask('Perubahan pesanan belum disimpan. Tetap keluar?'))) return;
   if (!S.demo && S.token) api('logout').catch(() => {});
-  LS.del('ppc_session'); S.user = null; S.token = ''; S.edit = null; S.view = 'list'; render();
+  if (S.user && !S.demo) IDB.del('ppc:' + S.user.username);
+  LS.del('ppc_session'); S.user = null; S.token = ''; S.edit = null; S.view = 'list'; S.ver = null; render();
+}
+/* ---------- simpan data terakhir di perangkat (IndexedDB) supaya langsung tampil ---------- */
+const WRITE_ACTS = ['saveOrder', 'saveOrders', 'deleteOrder', 'saveCustomer', 'deleteCustomer', 'saveMaster'];
+const IDB = { p: null,
+  db() { return this.p || (this.p = new Promise((res, rej) => { try { const q = indexedDB.open('positif-pesanan', 1); q.onupgradeneeded = () => q.result.createObjectStore('kv'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); } catch (e) { rej(e); } })); },
+  run(mode, f) { return Promise.race([this.db().then(db => new Promise(res => { const t = db.transaction('kv', mode), q = f(t.objectStore('kv')); t.oncomplete = () => res(q && q.result); t.onerror = t.onabort = () => res(null); })), new Promise(r => setTimeout(() => r(null), 2000))]).catch(() => null); },
+  get(k) { return this.run('readonly', st => st.get(k)); }, set(k, v) { return this.run('readwrite', st => st.put(v, k)); }, del(k) { return this.run('readwrite', st => st.delete(k)); } };
+let snapT = null;
+function snapSave() {
+  if (S.demo || !S.user || !S.master) return;
+  clearTimeout(snapT);
+  snapT = setTimeout(() => IDB.set('ppc:' + S.user.username, { ver: S.ver, t: Date.now(), role: S.user.role, master: S.master, orders: S.orders, customers: S.customers }), 700);
+}
+function applyData(j) {
+  S.master = mergeMaster(j.master);
+  S.orders = j.orders || []; S.customers = j.customers || [];
+  S.ver = j.ver != null ? j.ver : S.ver;
+}
+/* setelah data baru masuk: perbarui tampilan tanpa mengganggu yang sedang diketik */
+function refreshView() {
+  if (S.view === 'order' && S.user.role !== 'pemilik' && S.edit) { const o = S.orders.find(x => x.id === S.edit.id); if (o) S.edit = normalizeOrder(clone(o)); render(); return; }
+  if (S.view === 'list' || S.view === 'customers') { render(); return; }
+  const h = document.querySelector('header.top .bgn'); if (h) h.textContent = aktifCount();
 }
 async function boot(keep) {
+  // tampil langsung dari data terakhir di perangkat
+  if (!keep && !S.demo) {
+    const snap = await IDB.get('ppc:' + S.user.username);
+    if (snap && snap.master && snap.role === S.user.role) {
+      S.master = mergeMaster(snap.master); S.orders = snap.orders || []; S.customers = snap.customers || []; S.ver = snap.ver;
+      S.view = 'list'; S.edit = null; S.editCustomer = null; S.mEdit = null; S.mDirty = false;
+      setSync('Menyinkronkan...'); render(); startPoll();
+      syncCheck(false);
+      return;
+    }
+  }
   loading(true);
   setSync('Menyinkronkan...');
   try {
     const j = await api('bootstrap');
-    S.master = mergeMaster(j.master);
-    S.orders = j.orders || []; S.customers = j.customers || [];
+    applyData(j);
     S.mEdit = null; S.mDirty = false;
     if (!keep || S.view === 'order' || S.view === 'customer') { S.view = 'list'; S.edit = null; S.editCustomer = null; }
     setSync('ok');
-    render();
+    render(); snapSave(); startPoll();
     if (keep) toast('Data dimuat ulang');
     if (!j.master && !S.demo && S.user.role === 'pemilik') toast('Master harga awal dimuat. Buka menu Harga lalu Simpan untuk menyimpannya ke server.');
   } catch (e) { setSync('Gagal sinkron', true); toast(e.message, true); if (!keep) { S.user = null; render(); } }
   finally { loading(false); }
+}
+/* ---------- sinkron: cek versi tiap 10 detik, berhenti saat aplikasi tidak dilihat ---------- */
+let POLL = false, SYNCING = false;
+function startPoll() {
+  if (POLL || S.demo) return; POLL = true;
+  const chk = () => { if (!document.hidden && S.user && !S.demo) syncCheck(false); };
+  setInterval(chk, 10000);
+  document.addEventListener('visibilitychange', chk);
+  addEventListener('focus', chk);
+  addEventListener('pageshow', e => { if (e.persisted) chk(); });
+}
+async function syncCheck(manual, force) {
+  if (SYNCING || !S.user || S.demo) return;
+  SYNCING = true;
+  if (manual) setSync('Menyinkronkan...');
+  try {
+    let v = null;
+    if (!force) { try { v = (await api('getVer')).ver; } catch (e) { if (/SESI|sesi/i.test(e.message)) throw e; v = null; } }
+    if (v != null && v === S.ver) { setSync('ok'); if (manual && !force) toast('Data sudah terbaru'); return; }
+    const j = await api('bootstrap');
+    if (!S.user) return;
+    applyData(j); snapSave(); setSync('ok'); refreshView();
+    if (manual && !force) toast('Data dimuat ulang');
+  } catch (e) {
+    if (/SESI|sesi habis/i.test(e.message)) return;
+    setSync(/fetch|Failed/i.test(e.message) ? 'Offline · data terakhir' : 'Gagal sinkron', true);
+  } finally { SYNCING = false; }
 }
 function mergeMaster(m) {
   const d = clone(DEFAULT_MASTER);
@@ -889,7 +954,7 @@ const POS_SALES = [['riwayat', 'Riwayat penjualan'], ['laporan', 'Laporan penjua
 const HUBAPPS = [['Resi Print', 'resi_print.html'], ['Resi Video Packing', 'resi_video_packing.html'], ['Resi Pickup Kurir', 'resi_pickup-kurir.html']];
 function posBase() {
   let b = ((S.master && S.master.toko && S.master.toko.posUrl) || '').trim();
-  if (!b) return GAS ? '' : './';
+  if (!b) return GAS || location.protocol === 'file:' ? DEFAULT_POS : './';
   b = b.replace(/[#?].*$/, '').replace(/[^/]*\.html$/, '');
   return b.endsWith('/') ? b : b + '/';
 }
@@ -1908,7 +1973,7 @@ const ACT = {
   ddHub: el => dropMenu(el, HUBAPPS.map(([l, f]) => `<a href="#" data-act="posFile" data-f="${f}">${l}</a>`).join('')),
   ddAcc: el => dropMenu(el, `<div style="padding:10px 14px 6px"><b>${esc(S.user.nama)}</b><div class="muted small">${ROLE_LABEL[S.user.role]}${S.demo ? ' · Mode Coba' : ''}</div></div><hr>
     <div class="accrow">${ibc('syncNow', 'refresh', 'Muat ulang', '', 'sm')}${S.user.role === 'pemilik' ? ibc('exportJson', 'down', 'Cadangan', '', 'sm') : ''}${ibc('logout', 'out', 'Keluar', '', 'sm danger')}</div>`),
-  syncNow: async () => { closeDrop(); if ((S.editDirty && S.view === 'order') || S.mDirty) { toast('Simpan dulu perubahan sebelum memuat ulang.', true); return; } await boot(true); },
+  syncNow: async () => { closeDrop(); await syncCheck(true); },
   bPick: el => { S.ui.bahan = el.dataset.id; rerenderMain(); },
   bKat: el => { S.ui.bkat = el.dataset.k; rerenderMain(); },
   bSupAdd: el => { const b = S.mEdit.bahan[+el.dataset.i]; (b.supplier = b.supplier || []).push(SUP0('', 0, 'kg')); b.supplier[b.supplier.length - 1].tgl = todayISO(); S.mDirty = true; rerenderMain(); },

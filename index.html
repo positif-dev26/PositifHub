@@ -738,11 +738,12 @@ function emptyS(){return{jobs:[],gudang:[],v:2,products:[],sales:[],orders:[],lo
 function invId(){const d=new Date(),p=n=>String(n).padStart(2,'0');return 'INV-'+String(d.getFullYear()).slice(2)+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds())+'-'+Math.floor(Math.random()*90+10)}
 function setSync(t,bad){const e=$('sync');if(e){if(t==='Tersinkron')t+=' · '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':');e.textContent=t;e.className=bad?'bad':'muted'}}
 /* >>> Tempel alamat server (URL Apps Script yang berakhiran /exec) di antara tanda kutip di bawah ini. Boleh dikosongkan: aplikasi akan memintanya saat pertama dibuka. <<< */
-const API_URL='PASTE_URL_APLIKASI_ANDA_DI_SINI';
+const API_URL='https://script.google.com/macros/s/AKfycbwUEqf4lS9mn3Gdyo3vpDmTl3u9gxQzIEIf83dJMeopMDDQpHu_-pcG9puoPFHfMOOBkA/exec';
 let API=/^https:\/\//.test(API_URL)?API_URL:'';try{if(!API)API=localStorage.getItem('positif_api')||''}catch(e){}
+let TOK='';
 const NE=m=>{const x=new Error(m);x.net=1;return x};
 async function api(fn,...a){
- let r;try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn,user:USR,pin:PIN,a}),redirect:'follow'})}catch(e){throw NE('Tidak bisa menjangkau server. Periksa internet dan alamat server.')}
+ let r;try{r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(TOK?{fn,user:USR,tok:TOK,a}:{fn,user:USR,pin:PIN,a}),redirect:'follow'})}catch(e){throw NE('Tidak bisa menjangkau server. Periksa internet dan alamat server.')}
  let j;try{j=await r.json()}catch(e){throw NE('Balasan server tidak dikenali. Pastikan alamat server benar dan deployment sudah diperbarui.')}
  if(!j.ok)throw new Error(j.error||'Gagal');return j.data}
 function mkKO(){KO={};NAMES.forEach(n=>(R[n]||[]).forEach(x=>{KO[n+'/'+x.id]=x.d}))}
@@ -795,20 +796,54 @@ function flush(){
   rtN=0;if(busyW>0)return;
   if(errF)alert('Sebagian perubahan gagal disimpan: '+errMsg);
   if(errF||OTH||VER<0){OTH=false;try{await load(false)}catch(e){setSync('Gagal menyinkronkan',1);return}}
-  setSync(errF?'Ada perubahan yang gagal':'Tersinkron',errF)})}
+  snapSave();setSync(errF?'Ada perubahan yang gagal':'Tersinkron',errF)})}
 function outRetry(){setSync('Offline · '+OUT.length+' perubahan menunggu',1);clearTimeout(rt);rt=setTimeout(flush,Math.min(30000,5000*Math.pow(2,rtN++)))}
-function syncNow(){if(!ready)return;if(OUT.length){rtN=0;clearTimeout(rt);flush();return}if(busyW>0)return;setSync('Menyinkronkan...');load(false).catch(e=>{if(/AUTH/.test(e.message))logout();else setSync('Gagal menyinkronkan',1)})}
+function syncNow(){if(!ready)return;if(OUT.length){rtN=0;clearTimeout(rt);flush();return}if(busyW>0)return;syncCheck(true)}
 addEventListener('online',()=>{rtN=0;clearTimeout(rt);flush()});
 addEventListener('beforeunload',e=>{if(OUT.length){e.preventDefault();e.returnValue=''}});
 async function load(first){
  const r=await api('getAll');
  if(!first&&(busyW>0||OUT.length||DR))return;
- ME=r.name;isAdm=r.role==='admin';SSURL=r.ss;ACC(r);apply(r);
- if(first){ready=true;rebuild();render();startPoll();if(OUT.length)flush();else save()}else{rebuild();onData()}
- setSync('Tersinkron')}
+ ME=r.name;isAdm=r.role==='admin';SSURL=r.ss;ACC(r);apply(r);META=metaOf(r);
+ if(first&&!ready){ready=true;rebuild();render();startPoll();if(OUT.length)flush();else save()}else{rebuild();onData()}
+ snapSave();setSync('Tersinkron')}
+/* ---------- simpan data terakhir di perangkat (IndexedDB) supaya aplikasi langsung tampil ---------- */
+let META=null,snapT=null,POLL=false;
+const IDB={p:null,
+ db(){return this.p||(this.p=new Promise((res,rej)=>{try{const q=indexedDB.open('positif-pos',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}catch(e){rej(e)}}))},
+ run(mode,f){return Promise.race([this.db().then(db=>new Promise(res=>{const t=db.transaction('kv',mode),st=t.objectStore('kv'),q=f(st);t.oncomplete=()=>res(q&&q.result);t.onerror=t.onabort=()=>res(null)})),new Promise(r=>setTimeout(()=>r(null),2000))]).catch(()=>null)},
+ get(k){return this.run('readonly',st=>st.get(k))},set(k,v){return this.run('readwrite',st=>st.put(v,k))},del(k){return this.run('readwrite',st=>st.delete(k))}};
+function metaOf(r){return{name:r.name,user:r.user,role:r.role,perm:r.perm,weak:r.weak,ss:r.ss,users:r.users,roles:r.roles}}
+function snapData(){const d={};NAMES.forEach(n=>{d[n]=[]});for(const p in KO){const i=p.indexOf('/'),c=p.slice(0,i);if(d[c])d[c].push({id:p.slice(i+1),...KO[p]})}return d}
+function snapSave(){if(!ready||!META||!USR)return;clearTimeout(snapT);snapT=setTimeout(()=>{IDB.set('snap:'+USR,{...META,users:USERS,roles:ROLEP,ver:VER,t:Date.now(),data:snapData()})},700)}
+function snapDel(u){return IDB.del('snap:'+(u||USR))}
+/* tampilkan langsung dari cuplikan, lalu sinkron di belakang layar */
+function fromSnap(r){ME=r.name;isAdm=r.role==='admin';SSURL=r.ss;ACC(r);apply(r);META=metaOf(r);ready=true;rebuild();render();startPoll();if(OUT.length)flush()}
+/* ---------- sinkron pintar: hanya jenis data yang berubah ---------- */
+let SYNCING=false;
+async function syncCheck(manual){
+ if(!ready||SYNCING)return;if(OUT.length){if(!flushing){rtN=0;clearTimeout(rt);flush()}return}if(busyW>0||DR)return;
+ SYNCING=true;if(manual)setSync('Menyinkronkan...');
+ try{let v;try{v=await api('getVer2')}catch(e){if(/AUTH/.test(e.message))throw e;v={ver:await api('getVersion'),old:1}}
+  if(v.ver===VER){setSync('Tersinkron');return}
+  if(v.old||VER<0||v.ver!==v.mk||VER<v.full){await load(false);return}
+  const ns=Object.keys(v.cv||{}).filter(c=>v.cv[c]>VER&&NAMES.includes(c));
+  if(!ns.length){await load(false);return}
+  await loadPart(ns,v.ver)}
+ catch(e){if(/AUTH/.test(e.message)){snapDel();logout(1)}else setSync(e.net?'Offline · data terakhir':'Koneksi bermasalah',1)}
+ finally{SYNCING=false}}
+async function loadPart(ns,want){
+ const r=await api('getSome',ns);
+ if(r.ver!==want){await load(false);return}
+ if(busyW>0||OUT.length||DR)return;
+ ns.forEach(k=>{R[k]=((r.data||{})[k]||[]).map(x=>{const{id,...d}=x;return{id:String(id),d}})});
+ (R.jobs||[]).forEach(x=>['items','hist','rejs'].forEach(k=>{if(typeof x.d[k]==='string'){try{x.d[k]=JSON.parse(x.d[k])}catch(e){}}}));
+ ns.forEach(k=>{Object.keys(KO).forEach(p=>{if(p.startsWith(k+'/'))delete KO[p]});(R[k]||[]).forEach(x=>{KO[k+'/'+x.id]=x.d})});
+ VER=r.ver;rebuild();onData();snapSave();setSync('Tersinkron')}
 function startPoll(){
- const chk=async()=>{if(document.hidden||!ready)return;if(OUT.length){if(!flushing){clearTimeout(rt);flush()}return}if(busyW>0)return;try{const v=await api('getVersion');if(v!==VER)await load(false)}catch(e){if(/AUTH/.test(e.message))logout();else setSync('Koneksi bermasalah',1)}};
- setInterval(chk,15000);document.addEventListener('visibilitychange',chk)}
+ if(POLL)return;POLL=true;
+ const chk=()=>{if(document.hidden||!ready)return;syncCheck(false)};
+ setInterval(chk,10000);document.addEventListener('visibilitychange',chk);addEventListener('pageshow',e=>{if(e.persisted)chk()});addEventListener('focus',chk)}
 function isBusy(){const a=document.activeElement;return !!a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)}
 function onData(){
  if(!ready)return;
@@ -1066,29 +1101,40 @@ function opOk(o){if(isAdm)return true;const c=o.c,t=o.t,d=o.d||{};if(t==='update
  if(c==='cfg'){const k=Object.keys(d);return k.length&&k.every(x=>x==='lastBackup')?can('backup'):can('pengaturan')}
  return false}
 /* ---------- masuk / keluar ---------- */
-function getCred(){let v='';try{v=localStorage.getItem('positif_cred')||sessionStorage.getItem('positif_cred')||''}catch(e){}try{const o=JSON.parse(v);return o&&o.u&&o.p?o:null}catch(e){return null}}
-function putCred(u,p,rem){try{localStorage.removeItem('positif_pin');localStorage.setItem('positif_user',u);const v=JSON.stringify({u,p});if(rem){localStorage.setItem('positif_cred',v);sessionStorage.removeItem('positif_cred')}else{sessionStorage.setItem('positif_cred',v);localStorage.removeItem('positif_cred')}}catch(e){}}
+function getCred(){let v='';try{v=localStorage.getItem('positif_cred')||sessionStorage.getItem('positif_cred')||''}catch(e){}try{const o=JSON.parse(v);return o&&o.u&&(o.t||o.p)?o:null}catch(e){return null}}
+/* kredensial yang disimpan: tiket sesi {u,t}. PIN hanya disimpan kalau server masih versi lama. */
+function putCred(u,p,rem){try{localStorage.removeItem('positif_pin');localStorage.setItem('positif_user',u);const v=JSON.stringify(TOK?{u,t:TOK}:{u,p});if(rem){localStorage.setItem('positif_cred',v);sessionStorage.removeItem('positif_cred')}else{sessionStorage.setItem('positif_cred',v);localStorage.removeItem('positif_cred')}}catch(e){}}
 function vLoginUI(msg){let u0=window.LU||'',rem=false;try{u0=u0||localStorage.getItem('positif_user')||'';rem=!!localStorage.getItem('positif_cred')}catch(e){}
  $('view').innerHTML=`<div class="card" style="max-width:380px;margin:40px auto"><h2 style="margin:0 0 6px;font-size:26px">Masuk ke Positif POS</h2><p class="muted" style="margin:0 0 10px">${API?'Masukkan username dan PIN Anda.':'Isi alamat server satu kali, lalu masukkan username dan PIN Anda.'}</p>${API?'':'<input id="url" autocomplete="off" placeholder="Alamat server (berakhiran /exec)" style="width:100%;margin-bottom:10px">'}<input id="usr" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Username" value="${esc(u0)}" style="width:100%;margin-bottom:10px" onkeydown="if(event.key==='Enter')$('pin').focus()"><input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN" style="width:100%;margin-bottom:10px" onkeydown="if(event.key==='Enter')doLogin()"><label class="muted" style="display:flex;gap:8px;align-items:center;margin:0 0 12px;cursor:pointer"><input id="rem" type="checkbox" style="width:auto;margin:0"${rem?' checked':''}> Ingat saya di perangkat ini</label><button class="btn big" onclick="doLogin()">Masuk</button><p id="lm" class="bad" style="margin:10px 0 0">${esc(msg||'')}</p></div>`;
  const i=$(u0?'pin':'usr');if(i)i.focus()}
 async function doLogin(){
  const u=$('usr').value.trim().toLowerCase(),p=$('pin').value.trim(),rem=$('rem').checked;if(!u||!p){$('lm').textContent='Isi username dan PIN.';return}
  if(!API){const x=(($('url')||{}).value||'').trim();if(!/^https:\/\/script\.google\.com\/.+\/exec/.test(x)){$('lm').textContent='Isi alamat server yang benar (berakhiran /exec).';return}API=x;try{localStorage.setItem('positif_api',API)}catch(e){}}
- window.LU=u;USR=u;PIN=p;$('lm').className='muted';$('lm').textContent='Memeriksa...';setSync('Menghubungkan...');
- try{await load(true);putCred(u,p,rem)}
+ window.LU=u;USR=u;PIN=p;TOK='';$('lm').className='muted';$('lm').textContent='Memeriksa...';setSync('Menghubungkan...');
+ try{await getTok();await load(true);putCred(u,p,rem);PIN=TOK?'':PIN}
  catch(e){PIN='';setSync('Belum masuk');const auth=/AUTH/.test(e.message);if(!auth&&!/^https:\/\//.test(API_URL)){API='';try{localStorage.removeItem('positif_api')}catch(x){}}vLogin(auth?(/terkunci/.test(e.message)?e.message.replace(/^AUTH\s*/,''):'Username atau PIN salah.'):'Gagal terhubung: '+e.message)}}
-function logout(){try{localStorage.removeItem('positif_pin');localStorage.removeItem('positif_cred');sessionStorage.removeItem('positif_cred')}catch(e){}location.reload()}
-function boot(){
+/* minta tiket sesi; kalau server masih versi lama, tetap memakai PIN seperti sebelumnya */
+async function getTok(){try{const r=await api('login');if(r&&r.tok)TOK=r.tok}catch(e){if(/AUTH|terkunci/.test(e.message))throw e}}
+async function logout(keepSnap){const t=TOK,u=USR;try{localStorage.removeItem('positif_pin');localStorage.removeItem('positif_cred');sessionStorage.removeItem('positif_cred')}catch(e){}
+ if(!keepSnap&&u)await snapDel(u);if(t){try{await Promise.race([api('logout'),new Promise(r=>setTimeout(r,1500))])}catch(e){}}location.reload()}
+async function boot(){
  const c=getCred();try{localStorage.removeItem('positif_pin')}catch(e){}
  setSync('Belum masuk');if(!c||!API){vLogin();return}
- USR=c.u;PIN=c.p;pend=()=>{$('view').innerHTML='<p class="muted">Menghubungkan ke Google Sheets...</p>'};render();setSync('Menghubungkan...');
- load(true).catch(e=>{PIN='';setSync('Belum masuk');vLogin(/AUTH/.test(e.message)?(/terkunci/.test(e.message)?e.message.replace(/^AUTH\s*/,''):'Sesi berakhir. Masuk lagi.'):'Gagal terhubung: '+e.message)})}
+ USR=c.u;TOK=c.t||'';PIN=c.t?'':(c.p||'');
+ const snap=await IDB.get('snap:'+USR);
+ if(snap&&snap.data&&snap.user===USR){
+  try{fromSnap(snap);setSync('Menyinkronkan...');
+   if(!TOK&&PIN){try{await getTok();if(TOK){putCred(USR,'',!!localStorage.getItem('positif_cred'));PIN=''}}catch(e){}}
+   syncCheck(true);return}catch(e){ready=false;R={};KO={}}}
+ pend=()=>{$('view').innerHTML='<p class="muted">Menghubungkan ke Google Sheets...</p>'};render();setSync('Menghubungkan...');
+ try{if(!TOK&&PIN){try{await getTok();if(TOK){putCred(USR,'',!!localStorage.getItem('positif_cred'));PIN=''}}catch(e){}}await load(true)}
+ catch(e){PIN='';TOK='';setSync('Belum masuk');vLogin(/AUTH/.test(e.message)?(/terkunci/.test(e.message)?e.message.replace(/^AUTH\s*/,''):'Sesi berakhir. Masuk lagi.'):'Gagal terhubung: '+e.message)}}
 function chPin(){const d=document.createElement('div');d.className='modal on';d.style.zIndex=50;
  d.innerHTML='<div class="card" style="width:min(380px,92vw)"><h2 style="margin:0 0 10px">Ganti PIN</h2><input id="cp0" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN lama" style="width:100%;margin-bottom:8px"><input id="cp1" type="password" inputmode="numeric" autocomplete="new-password" placeholder="PIN baru (4-10 angka)" style="width:100%;margin-bottom:8px"><input id="cp2" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Ulangi PIN baru" style="width:100%"><p id="cpm" class="bad" style="margin:8px 0 0"></p><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn sec" id="cpx">Batal</button><button class="btn" id="cpo">Simpan</button></div></div>';
  document.body.appendChild(d);const g=i=>d.querySelector('#'+i),cl=()=>d.remove();g('cp0').focus();g('cpx').onclick=cl;
  g('cpo').onclick=async()=>{const o=g('cp0').value.trim(),n=g('cp1').value.trim(),m=g('cp2').value.trim(),e=g('cpm');
   if(!/^\d{4,10}$/.test(n)){e.textContent='PIN baru harus 4-10 angka.';return}if(n!==m){e.textContent='Ulangan PIN baru tidak sama.';return}
-  try{await api('changePin',o,n);PIN=n;const c=getCred();if(c)putCred(c.u,n,!!localStorage.getItem('positif_cred'));WEAK=false;cl();toast('PIN diganti.');accFill()}catch(x){e.textContent=x.message}}}
+  try{await api('changePin',o,n);if(!TOK){PIN=n;const c=getCred();if(c)putCred(c.u,n,!!localStorage.getItem('positif_cred'))}WEAK=false;cl();toast('PIN diganti.');accFill()}catch(x){e.textContent=x.message}}}
 function accFill(){const m=$('accm');if(!m)return;
  const B=(t,ic,fn,cls)=>'<button class="ib'+(cls?' '+cls:'')+'" title="'+t+'" aria-label="'+t+'" onclick="'+fn+'">'+IC(ic)+'</button>';
  const bk='Buat salinan cadangan (terakhir: '+(S.lastBackup?fmt(S.lastBackup):'belum pernah')+')';
