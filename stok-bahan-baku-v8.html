@@ -173,6 +173,24 @@ dialog::backdrop{background:#000b;backdrop-filter:blur(4px)}
  .panel{padding:14px}
  input,select{font-size:16px}
 }
+/* ===== sub menu berlabel + garis lime menyala (samakan dengan Positif POS) ===== */
+#rail{width:84px;gap:8px;border-right-color:rgba(212,255,63,.35);box-shadow:0 0 26px -12px rgba(212,255,63,.5)}
+.app{margin-left:84px}
+#rail .ri{width:64px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/1 "Barlow Semi Condensed",sans-serif}
+#rail .ri svg{width:22px;height:22px}
+#rail .ri:after{display:none}
+#rail .ri:hover{border-color:rgba(212,255,63,.3)}
+#rail .bg{top:-4px;right:2px}
+.panel,.pc,.dvb,.sc,.ord,dialog{border-color:rgba(212,255,63,.45)!important;box-shadow:0 0 22px -10px rgba(212,255,63,.5)}
+.pc:hover{border-color:rgba(212,255,63,.8)!important}
+input,select{border-color:rgba(212,255,63,.28)}
+@media(max-width:760px){
+ #rail{width:auto;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));height:66px;border:1px solid rgba(212,255,63,.45);border-radius:18px;padding:4px;justify-content:space-around;overflow-x:auto;scrollbar-width:none}
+ #rail::-webkit-scrollbar{display:none}
+ #rail .ri{flex:1 0 auto;width:auto;min-width:52px;height:56px}
+ .app{margin-left:0;padding-bottom:92px}
+ #toast{bottom:96px}
+}
 </style>
 </head>
 <body>
@@ -327,7 +345,7 @@ function render(){
   $("who").innerHTML='<button class="acb'+(view=="lap"||view=="riwayat"?" on":"")+'" onclick="tgAcc(event)">'+IC("user")+'<b>'+(me?esc(me.name):"Masuk")+'</b>'+IC("chev")+'</button><div class="ddm" id="accm">'+(me?'<div class="whoi">Masuk sebagai <b>'+esc(me.name)+'</b> · '+rl+'</div>':"")+'<button onclick="dPeng()">'+IC("users")+'Daftar pengambil</button><button onclick="go(\'lap\')">'+IC("chart")+'Laporan</button><button onclick="go(\'riwayat\')">'+IC("hist")+'Riwayat</button><hr>'+(me?'<button onclick="me=null;render()">'+IC("out")+'Keluar</button>':'<button onclick="dLogin()">'+IC("inn")+'Masuk</button>')+'</div>';
   var lv=leaves(),c={habis:0,tipis:0,aman:0},ns=0,nk=0;lv.forEach(function(b){var s=sts(b);c[s]++;if(s!="aman"){if(isK(b))nk++;else ns++}});
   var cn={stok:ns,kain:nk,order:ordW().filter(open_).length};
-  $("rail").innerHTML=NV.map(function(v){var n=cn[v[0]];return'<button class="ri'+(v[0]==view?" on":"")+'" data-tip="'+v[1]+'" aria-label="'+v[1]+'" onclick="go(\''+v[0]+'\')">'+IC(v[2])+(n?'<span class="bg">'+n+'</span>':"")+'</button>'}).join("");
+  $("rail").innerHTML=NV.map(function(v){var n=cn[v[0]];return'<button class="ri'+(v[0]==view?" on":"")+'" data-tip="'+v[1]+'" aria-label="'+v[1]+'" onclick="go(\''+v[0]+'\')">'+IC(v[2])+'<span class="rlb">'+v[3]+'</span>'+(n?'<span class="bg">'+n+'</span>':"")+'</button>'}).join("");
   $("hm").style.display=view=="home"?"":"none";$("view").style.display=view=="home"?"none":"";
   $("tot").innerHTML=GN()+" · Total bahan: <b>"+S.Bahan.filter(function(b){return!b.parent&&wsOf(b)==W}).length+"</b> · "+lv.length+" item (termasuk variasi)";
   $("sum").innerHTML=[["Stok menipis",c.tipis,"var(--yel)"],["Stok habis",c.habis,"var(--red)"],["Stok aman",c.aman,"var(--grn)"],["Order berjalan",ordW().filter(open_).length,"var(--blu)"]]
@@ -337,7 +355,7 @@ function render(){
   $("view").className="panel"+(view=="stok"?" flat":"");$("view").innerHTML={home:vHome,ambil:vAmbil,stok:vStok,kain:vKain,order:vOrder,alat:vAlat,lap:vLap,riwayat:vRiwayat}[view]();
   if(foc){var el=$("r-"+foc);if(el){el.scrollIntoView({block:"center",behavior:"smooth"});el.classList.add("fl")}foc=null}
 }
-var NV=[["home","Ringkasan Stok","dash"],["ambil","Pengambilan","swap"],["stok","Stok persediaan","box"],["kain","Stok kain","layers"],["order","Order restok","cart"],["alat","Inventaris alat","wrench"]];
+var NV=[["home","Ringkasan Stok","dash","Ringkasan"],["ambil","Pengambilan","swap","Ambil"],["stok","Stok persediaan","box","Stok"],["kain","Stok kain","layers","Kain"],["order","Order restok","cart","Restok"],["alat","Inventaris alat","wrench","Alat"]];
 var COL={habis:"var(--red)",tipis:"var(--yel)",aman:"var(--grn)"};
 var isKd=function(d){return!!d&&/^kain$/i.test(String(d.nama).trim())};
 var isK=function(b){return isKd(S.Divisi[idx(S.Divisi,b.divisi)])};

@@ -67,9 +67,10 @@ history:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M
 sliders:'<path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
 plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',minus:'<path d="M5 12h14"/>',equal:'<path d="M5 9h14"/><path d="M5 15h14"/>',
 refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+barcode:'<path d="M4 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M16 5v14"/><path d="M20 5v14"/>',
 expand:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'};
 const IC=n=>'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">'+(ICO[n]||'')+'</svg>';
-const NI={beranda:'home',kasir:'receipt',produk:'shirt',stok:'box',bahan:'layers',produksi:'factory',pesanan:'clipboard'};
+const NI={beranda:'home',kasir:'receipt',produk:'box',stok:'box',bahan:'layers',produksi:'factory',pesanan:'clipboard'};
 Object.assign(ICO,{chart:'<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',filter:'<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',thumb:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',key:'<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',copy:'<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',sheet:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/>'});
 const tabs=[['beranda','POS'],['kasir','Kasir'],['produk','Produk'],['stok','Stok Produk'],['bahan','Stok Bahan Baku'],['produksi','Produksi'],['pesanan','Pesanan custom'],['riwayat','Riwayat'],['laporan','Laporan'],['cadangan','Cadangan data']];
 const HUBAPPS=[['Resi Print','resi_print.html'],['Resi Video Packing','resi_video_packing.html'],['Resi Pickup Kurir','resi_pickup-kurir.html']];
@@ -99,7 +100,7 @@ $('lg').src=LOGO;
 let pend=null;
 const SALES=[['riwayat','Riwayat penjualan'],['laporan','Laporan penjualan']];
 const nb=(k,l)=>{const n=k==='produksi'?lowN():0;return `<button class="nv${k===tab?' on':''}" title="${l}" aria-label="${l}" onclick="tab='${k}';render()">${IC(NI[k])}${k==='beranda'?'':`<span class="nl">${l}</span>`}${n?'<span class="bgn">'+n+'</span>':''}</button>`};
-const navH=()=>nb('beranda','Beranda')+(can('kasir')?nb('kasir','Kasir'):'')+(SALES.some(s=>can(s[0]))?`<span class="dd" onmouseenter="ddOpen(1)" onmouseleave="ddClose(1)"><button class="nv ${SALES.some(s=>s[0]===tab)?'on':''}" title="Penjualan" aria-label="Penjualan" aria-haspopup="true" onclick="ddToggle(event)">${IC('chart')}<span class="nl">Penjualan</span><span class="cv">&#9662;</span></button></span>`:'')+[['produk','Produk'],['stok','Stok Produk'],['bahan','Stok Bahan Baku'],['produksi','Produksi'],['pesanan','Pesanan custom']].filter(t=>tabOk(t[0])).map(t=>nb(t[0],t[1])).join('')+HUB;
+const navH=()=>(can('kasir')?nb('kasir','Kasir'):'')+(SALES.some(s=>can(s[0]))?`<span class="dd" onmouseenter="ddOpen(1)" onmouseleave="ddClose(1)"><button class="nv ${SALES.some(s=>s[0]===tab)?'on':''}" title="Penjualan" aria-label="Penjualan" aria-haspopup="true" onclick="ddToggle(event)">${IC('chart')}<span class="nl">Penjualan</span><span class="cv">&#9662;</span></button></span>`:'')+[['produk','Produk'],['bahan','Stok Bahan Baku'],['produksi','Produksi'],['pesanan','Pesanan custom']].filter(t=>tabOk(t[0])).map(t=>nb(t[0],t[1])).join('')+HUB;
 let ddT=null;
 function ddOpen(hov){if(hov&&!matchMedia('(hover:hover)').matches)return;clearTimeout(ddT);const m=$('ddmenu'),b=document.querySelector('.dd');if(!m||!b)return;const r=b.getBoundingClientRect();m.style.top=r.bottom+'px';m.classList.add('on');m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px'}
 function ddClose(hov){if(hov){clearTimeout(ddT);ddT=setTimeout(()=>ddClose(0),150);return}const m=$('ddmenu');if(m)m.classList.remove('on')}
@@ -116,8 +117,8 @@ function ddOpen(hov){if(hov&&!matchMedia('(hover:hover)').matches)return;clearTi
 function ddClose(hov){if(hov){if(!matchMedia('(hover:hover)').matches)return;clearTimeout(ddT);ddT=setTimeout(()=>ddClose(0),150);return}const m=$('ddmenu');if(m)m.classList.remove('on')}
 function hubClose(hov){if(hov){if(!matchMedia('(hover:hover)').matches)return;clearTimeout(hubT);hubT=setTimeout(()=>hubClose(0),150);return}const m=$('hubmenu');if(m)m.classList.remove('on');const c=$('hubcaret');if(c)c.setAttribute('aria-expanded','false')}
 
-let _h0=1;addEventListener('popstate',()=>{const l=location.hash.slice(1);if(TABS.includes(l)&&l!==tab){tab=l;render()}});
-function render(){if(ready&&!tabOk(tab))tab='beranda';if(!PAGE_TABS.includes(tab)){goPage(tab);return}$('view').classList.toggle('bahan',tab==='bahan'||(tab==='pesanan'&&pesananOn()));const hh='#'+tab;if(location.hash!==hh)try{history[_h0?'replaceState':'pushState'](null,'',hh)}catch(e){}_h0=0;
+let _h0=1;addEventListener('popstate',()=>{const l=location.hash.slice(1);if(l==='stok'){tab='stok';render();return}if(TABS.includes(l)&&l!==tab){tab=l;render()}});
+function render(){if(tab==='stok'){tab='produk';window.PSUB_REQ='stok'}if(ready&&!tabOk(tab))tab='beranda';if(!PAGE_TABS.includes(tab)){goPage(tab);return}$('view').classList.toggle('bahan',tab==='bahan'||(tab==='pesanan'&&pesananOn()));const hh='#'+tab;if(location.hash!==hh)try{history[_h0?'replaceState':'pushState'](null,'',hh)}catch(e){}_h0=0;
  if(!ready){
   $('nav').innerHTML=navH();$('view').classList.toggle('full',tab==='beranda');
   if(pend)pend();else vBeranda();
@@ -155,13 +156,30 @@ const STG=['cetak','bahan','cutting','jahit','finishing','selesai'],SL={cetak:'D
 const lowN=()=>ready?allV().filter(x=>!isJ(x.v)&&x.v.stock<=S.low).length:0;
 const RS=['cetak','bahan','cutting','jahit','finishing'],STL={cetak:'Cetak vendor',bahan:'Rak bahan',cutting:'Cutting',jahit:'Jahit',finishing:'Finishing',selesai:'Masuk stok'};
 function toast(m,bad){let h=$('toasts');if(!h){h=document.createElement('div');h.id='toasts';document.body.appendChild(h)}const t=document.createElement('div');t.className='toast'+(bad?' bad':'');t.innerHTML='<span>'+(bad?'!':'&#10003;')+'</span>'+esc(m);h.appendChild(t);setTimeout(()=>t.classList.add('out'),bad?4500:2800);setTimeout(()=>t.remove(),bad?5000:3300)}
-function stk(){const s=document.documentElement.style,h=document.querySelector('header'),t=document.querySelector('.ptabs'),b=document.querySelector('.sk1');s.setProperty('--hh',(h?h.offsetHeight:52)+'px');s.setProperty('--th','0px');s.setProperty('--bh',(b?b.offsetHeight:0)+'px')}
+function stk(){const s=document.documentElement.style,h=document.querySelector('header'),t=document.querySelector('.ptabs'),b=document.querySelector('.sk1');s.setProperty('--hh',(h?h.offsetHeight:52)+'px');s.setProperty('--th','0px');s.setProperty('--bh',(b?b.offsetHeight:0)+'px');const k=document.querySelector('.sk2');s.setProperty('--kh',(k?k.offsetHeight:0)+'px')}
 /* ---------- SINKRON (GOOGLE SHEETS VIA APPS SCRIPT) ---------- */
 const NAMES=['products','variants','sales','orders','log','cfg','jobs','gudang'];
 let ready=false,isAdm=false,skipSetup=false,R={},KO={},Q=Promise.resolve(),busyW=0,errF=false,errMsg='',dirty=false,tm=null,VER=-1,PIN='',ME='',SSURL='';
 let DR=null,OUT=[],flushing=false,rt=null,rtN=0;try{OUT=JSON.parse(localStorage.getItem('positif_outbox')||'[]')||[]}catch(e){OUT=[]}
 function outSave(){try{localStorage.setItem('positif_outbox',JSON.stringify(OUT))}catch(e){}}
-function askC(msg,ok){return new Promise(res=>{const d=document.createElement('div');d.className='modal on';d.style.zIndex=50;d.innerHTML='<div class="card" style="width:min(380px,92vw)"><p style="margin:0 0 16px;font-size:16px"></p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sec" data-r="0">Batal</button><button class="btn" data-r="1" style="background:#c62828;color:#fff;border-color:#c62828"></button></div></div>';d.querySelector('p').textContent=msg;d.querySelector('[data-r="1"]').textContent=ok||'Hapus';const f=v=>{removeEventListener('keydown',k,true);d.remove();res(v)},k=e=>{if(e.key==='Escape'){e.stopImmediatePropagation();e.preventDefault();f(false)}};d.onclick=e=>{if(e.target===d)f(false);const r=e.target.dataset&&e.target.dataset.r;if(r)f(r==='1')};addEventListener('keydown',k,true);document.body.appendChild(d);d.querySelector('[data-r="0"]').focus()})}
+/* ===== KOTAK PESAN BERTEMA: pengganti alert / confirm / prompt bawaan browser =====
+   uiAlert(pesan) · uiConfirm(pesan, teksTombol, bahaya) · uiPrompt(pesan, isiAwal)  -> semuanya Promise */
+function uiBox(o){return new Promise(res=>{const d=document.createElement('div');d.className='ubx';
+ d.innerHTML='<div class="ubc" role="dialog" aria-modal="true">'+(o.title?'<h3 class="ubt"></h3>':'')+'<div class="ubm"></div>'+(o.input!=null?'<input class="ubi" autocomplete="off">':'')+'<div class="uba">'+(o.cancel===false?'':'<button class="btn sec" data-r="0"></button>')+'<button class="btn'+(o.danger?' dgr':'')+'" data-r="1"></button></div></div>';
+ if(o.title)d.querySelector('.ubt').textContent=o.title;const m=d.querySelector('.ubm');if(o.html)m.innerHTML=o.html;else m.textContent=o.msg||'';
+ const inp=d.querySelector('.ubi');if(inp){inp.value=o.input;if(o.num)inp.inputMode='numeric';if(o.ph)inp.placeholder=o.ph}
+ d.querySelector('[data-r="1"]').textContent=o.ok||'OK';const c=d.querySelector('[data-r="0"]');if(c)c.textContent=o.cancel||'Batal';
+ const ae=document.activeElement;
+ const f=v=>{removeEventListener('keydown',k,true);d.classList.add('out');setTimeout(()=>d.remove(),120);try{ae&&ae.focus&&ae.focus({preventScroll:true})}catch(e){}res(v)},
+  yes=()=>f(inp?inp.value:true),no=()=>f(inp?null:o.cancel===false?true:false),
+  k=e=>{if(!document.body.contains(d)||d!==[...document.querySelectorAll('.ubx:not(.out)')].pop())return;if(e.key==='Escape'){e.stopImmediatePropagation();e.preventDefault();no()}else if(e.key==='Enter'&&!(e.target&&e.target.dataset&&e.target.dataset.r==='0')){e.stopImmediatePropagation();e.preventDefault();yes()}};
+ d.onclick=e=>{if(e.target===d){if(o.cancel!==false)no();return}const r=e.target.closest('[data-r]');if(r)r.dataset.r==='1'?yes():no()};
+ addEventListener('keydown',k,true);document.body.appendChild(d);setTimeout(()=>{if(inp){inp.focus();inp.select()}else d.querySelector(o.danger&&c?'[data-r="0"]':'[data-r="1"]').focus()},30)})}
+const uiAlert=(msg,title)=>uiBox({msg:String(msg==null?'':msg),title,cancel:false});
+const uiConfirm=(msg,ok,danger)=>uiBox({msg,ok:ok||'Ya',danger});
+const uiPrompt=(msg,def,o)=>uiBox(Object.assign({msg,input:def==null?'':String(def),ok:'Simpan'},o||{}));
+window.alert=m=>{uiAlert(m)};
+function askC(msg,ok){return uiConfirm(msg,ok||'Hapus',true)}
 document.addEventListener('change',e=>{if(!e.target.closest||!e.target.closest('#edc'))return;const b=$('edsv'),p=S.products.find(x=>x.id===ed);if(b&&DR&&p)b.disabled=JSON.stringify(p)===DR.snap});
 function pkSide(){const m=$('pk'),a=document.querySelector('aside.fl');m.style.right=(a&&innerWidth>=900?Math.max(0,innerWidth-a.getBoundingClientRect().left):0)+'px'}
 function emptyS(){return{jobs:[],gudang:[],v:2,products:[],sales:[],orders:[],log:[],low:10}}
@@ -290,7 +308,7 @@ async function replaceAll(o){
  KO={};OUT=[];outSave();S=o;busyW--;save();
  if(busyW===0){try{await load(false)}catch(e){}}
  render()}
-function resetAll(){if(confirm('Hapus SEMUA data di spreadsheet (produk, stok, transaksi, pesanan) untuk semua komputer? Tindakan ini tidak bisa dibatalkan.'))replaceAll(emptyS())}
+async function resetAll(){if(await uiConfirm('Hapus SEMUA data di spreadsheet (produk, stok, transaksi, pesanan) untuk semua komputer? Tindakan ini tidak bisa dibatalkan.','Hapus semua',true))replaceAll(emptyS())}
 function vSetup(){
  $('view').innerHTML=`<div class="card"><h2 style="margin:0 0 6px;font-size:26px">Selamat datang di Positif POS</h2><p class="muted" style="margin:0 0 12px">Spreadsheet masih kosong. ${isAdm?'Pilih cara memulai:':'Minta admin untuk mengisi data awal.'}</p>
  ${isAdm?`<div class="row" style="justify-content:flex-start;flex-wrap:wrap"><button class="btn sec" onclick="replaceAll(seed())">Isi dengan data contoh</button><label class="btn sec up">Impor dari berkas cadangan (.json)<input type="file" accept=".json,application/json" hidden onchange="impJ(this)"></label><button class="btn sec" onclick="skipSetup=true;render()">Mulai kosong</button></div>`:''}</div>`}
@@ -311,7 +329,7 @@ function boot(){
  PIN=p;pend=()=>{$('view').innerHTML='<p class="muted">Menghubungkan ke Google Sheets...</p>'};render();setSync('Menghubungkan...');
  load(true).catch(e=>{PIN='';setSync('Belum masuk');vLogin(/AUTH/.test(e.message)?'':'Gagal terhubung: '+e.message)})}
 /* ---------- AKUN, RIWAYAT ORDER ---------- */
-const FIT=['kasir','laporan','riwayat','produk','pesanan','produksi'];
+const FIT=['kasir','laporan','riwayat','pesanan','produksi'];
 function accInit(){const a=$('acc');if(!a)return;a.innerHTML=ready?'<button class="accb" id="accb" onclick="accToggle(event)" aria-haspopup="true" aria-expanded="false">'+esc(ME||'Akun')+' <span style="font-size:12px">&#9662;</span></button>':''}
 function accFill(){const m=$('accm');if(!m)return;
  let h='<div style="padding:10px 14px 6px"><b>'+esc(ME)+'</b><div class="muted" style="font-size:13px">'+(isAdm?'Admin':'Kasir')+'</div></div><hr class="mhr"><a role="menuitem" href="#" onclick="logout();return false">Keluar</a>';
@@ -328,8 +346,8 @@ function closeHm(){$('hm').classList.remove('on')}
 function bmsg(t,bad){const e=$('bmsg');if(e&&$('accm').classList.contains('on')){e.textContent=t;e.className=bad?'bad':'ok'}else if(bad)alert(t)}
 async function mkBackup(){bmsg('Membuat salinan...');try{const r=await api('backupCopy');S.lastBackup=new Date().toISOString();save();accFill();bmsg('Salinan dibuat di Google Drive: '+r.name,0)}catch(e){bmsg('Gagal membuat salinan: '+e.message,1)}}
 function impJ(inp){const f=inp.files[0];inp.value='';if(!f)return;const r=new FileReader();
- r.onload=()=>{let o=null;try{o=migrate(JSON.parse(r.result));if(!o||!Array.isArray(o.products)||!Array.isArray(o.sales)||!Array.isArray(o.orders))throw 0}catch(e){bmsg('Berkas bukan cadangan Positif POS yang valid.',1);return}
-  if(!confirm('Ganti semua data di spreadsheet (semua komputer) dengan isi cadangan? Data saat ini akan hilang.'))return;
+ r.onload=async()=>{let o=null;try{o=migrate(JSON.parse(r.result));if(!o||!Array.isArray(o.products)||!Array.isArray(o.sales)||!Array.isArray(o.orders))throw 0}catch(e){bmsg('Berkas bukan cadangan Positif POS yang valid.',1);return}
+  if(!(await uiConfirm('Ganti semua data di spreadsheet (semua komputer) dengan isi cadangan? Data saat ini akan hilang.','Ganti data',true)))return;
   cart=[];replaceAll(o).then(()=>alert('Data berhasil diimpor.'))};
  r.readAsText(f)}
 document.addEventListener('keydown',e=>{
@@ -344,7 +362,7 @@ const PL={kasir:'Kasir (jual)',riwayat:'Riwayat penjualan',laporan:'Laporan penj
 const RL={admin:'Admin',supervisor:'Supervisor',staf:'Staf'};
 let USR='',ROLE='',PERM=[],USERS=[],ROLEP=null,WEAK=false,WARNED=false;
 const can=k=>PERM.includes(k);
-const TP={kasir:['kasir'],riwayat:['riwayat'],laporan:['laporan'],produk:['produk_edit','harga_edit'],stok:['stok_ubah','kasir'],bahan:['stok_ubah'],produksi:['prod_lihat','prod_buat'],pesanan:['pesanan']};
+const TP={kasir:['kasir'],riwayat:['riwayat'],laporan:['laporan'],produk:['produk_edit','harga_edit','stok_ubah','kasir'],stok:['stok_ubah','kasir'],bahan:['stok_ubah'],produksi:['prod_lihat','prod_buat'],pesanan:['pesanan']};
 const tabOk=t=>t==='beranda'||(t==='pengguna'&&isAdm)||(TP[t]||[]).some(can);
 function pTabOk(k){if(k==='cetak')return can('prod_buat');if(k==='gudang')return can('prod_lihat')||can('gudang');if(k==='petugas')return isAdm||can('prod_buat');return can('prod_lihat')}
 function ACC(r){USR=r.user||USR;ROLE=r.role||'admin';PERM=Array.isArray(r.perm)?r.perm:ALLP.concat(['pengguna']);USERS=r.users||[];ROLEP=r.roles||ROLEP;WEAK=!!r.weak;
@@ -420,7 +438,7 @@ function uPatch(un,p){const x=USERS.find(y=>y.u===un);if(!x)return;const o=Objec
  if(p.role&&p.role!==x.r)o.izin=[];if(!String(o.n).trim()){toast('Nama wajib diisi.',1);return uRef()}return uCall('userSave',o)}
 function togIz(un,k){const x=USERS.find(y=>y.u===un);if(!x||x.r==='admin')return;const base=(ROLEP&&ROLEP[x.r])||[],E=new Set(x.p||[]);E.has(k)?E.delete(k):E.add(k);
  const iz=[];ALLP.forEach(q=>{if(E.has(q)&&!base.includes(q))iz.push('+'+q);if(!E.has(q)&&base.includes(q))iz.push('-'+q)});return uPatch(un,{izin:iz})}
-function uPin(un){const x=USERS.find(y=>y.u===un);if(!x)return;const p=prompt('PIN baru untuk '+x.n+' (4-10 angka)');if(p===null)return;
+async function uPin(un){const x=USERS.find(y=>y.u===un);if(!x)return;const p=await uiPrompt('PIN baru untuk '+x.n+' (4-10 angka)','',{num:1});if(p===null)return;
  if(!/^\d{4,10}$/.test(p.trim())){toast('PIN harus 4-10 angka.',1);return}uCall('userSave',{u:x.u,n:x.n,role:x.r,on:x.on,izin:x.iz||[],pin:p.trim()}).then(ok=>ok&&toast('PIN '+x.n+' diperbarui.'))}
 async function uDel(un){const x=USERS.find(y=>y.u===un);if(!x||!(await askC('Hapus pengguna '+x.n+' (@'+x.u+')? Ia tidak bisa masuk lagi.','Hapus')))return;uCall('userDelete',un)}
 function addU(){const u=$('nu').value.trim().toLowerCase(),n=$('nn').value.trim(),p=$('np').value.trim(),r=$('nr').value;

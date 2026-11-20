@@ -258,6 +258,13 @@ table.t tr:last-child td{border-bottom:0}
   #printArea .page{box-shadow:none;margin:0;width:210mm;min-height:297mm;page-break-after:always}
   #printArea .page:last-child{page-break-after:auto}
 }
+/* ===== HP: sub menu pindah ke bawah layar (sama dengan Positif POS) ===== */
+@media (max-width:760px){
+  .rail{position:fixed;left:8px;right:8px;top:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:30;width:auto;flex-direction:row;justify-content:space-around;overflow-x:auto;scrollbar-width:none;padding:5px;border:1px solid rgba(212,255,63,.45);border-radius:18px;background:rgba(8,8,8,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 0 26px -10px rgba(212,255,63,.5)}
+  .rail::-webkit-scrollbar{display:none}
+  .rail button{flex:1 0 auto;width:auto;min-width:54px;height:52px}
+  .shell{padding-bottom:96px}
+}
 
 </style>
 </head>
@@ -949,7 +956,7 @@ function sizesForItem(o, it) {
    ========================================================= */
 const $app = document.getElementById('app');
 /* ---------- menu utama (sama dengan Positif POS) ---------- */
-const POS_TABS = [['beranda', 'home', 'Beranda'], ['kasir', 'receipt', 'Kasir'], ['@penjualan', 'chart', 'Penjualan'], ['produk', 'shirt', 'Produk'], ['stok', 'box', 'Stok Produk'], ['bahan', 'layers', 'Stok Bahan Baku'], ['produksi', 'factory', 'Produksi'], ['pesanan', 'clipboard', 'Pesanan custom']];
+const POS_TABS = [['kasir', 'receipt', 'Kasir'], ['@penjualan', 'chart', 'Penjualan'], ['produk', 'box', 'Produk'], ['bahan', 'layers', 'Stok Bahan Baku'], ['produksi', 'factory', 'Produksi'], ['pesanan', 'clipboard', 'Pesanan custom']];
 const POS_SALES = [['riwayat', 'Riwayat penjualan'], ['laporan', 'Laporan penjualan']];
 const HUBAPPS = [['Resi Print', 'resi_print.html'], ['Resi Video Packing', 'resi_video_packing.html'], ['Resi Pickup Kurir', 'resi_pickup-kurir.html']];
 function posBase() {
