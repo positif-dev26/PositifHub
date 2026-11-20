@@ -443,7 +443,7 @@ function ddClose(hov){if(hov){if(!matchMedia('(hover:hover)').matches)return;cle
 function hubClose(hov){if(hov){if(!matchMedia('(hover:hover)').matches)return;clearTimeout(hubT);hubT=setTimeout(()=>hubClose(0),150);return}const m=$('hubmenu');if(m)m.classList.remove('on');const c=$('hubcaret');if(c)c.setAttribute('aria-expanded','false')}
 
 let _h0=1;addEventListener('popstate',()=>{const l=location.hash.slice(1);if(TABS.includes(l)&&l!==tab){tab=l;render()}});
-function render(){if(ready&&!tabOk(tab))tab='beranda';$('view').classList.toggle('bahan',tab==='bahan');const hh='#'+tab;if(location.hash!==hh)try{history[_h0?'replaceState':'pushState'](null,'',hh)}catch(e){}_h0=0;
+function render(){if(ready&&!tabOk(tab))tab='beranda';$('view').classList.toggle('bahan',tab==='bahan'||(tab==='pesanan'&&pesananOn()));const hh='#'+tab;if(location.hash!==hh)try{history[_h0?'replaceState':'pushState'](null,'',hh)}catch(e){}_h0=0;
  if(!ready){
   $('nav').innerHTML=navH();$('view').classList.toggle('full',tab==='beranda');
   if(pend)pend();else vBeranda();
@@ -451,13 +451,18 @@ function render(){if(ready&&!tabOk(tab))tab='beranda';$('view').classList.toggle
  $('nav').innerHTML=navH();
  $('view').classList.toggle('full',tab==='beranda');
  $('view').classList.toggle('fit',FIT.includes(tab));accInit();
- if(tab!=='beranda'&&tab!=='bahan'&&tab!=='pengguna'&&!S.products.length&&!S.sales.length&&!S.orders.length&&!skipSetup){vSetup();return}
+ if(tab!=='beranda'&&tab!=='bahan'&&tab!=='pesanan'&&tab!=='pengguna'&&!S.products.length&&!S.sales.length&&!S.orders.length&&!skipSetup){vSetup();return}
  ({beranda:vBeranda,kasir:vKasir,produk:vProduk,stok:vStok,bahan:vBahan,produksi:vProd,pengguna:vPengguna,pesanan:vPesanan,riwayat:vRiwayat,laporan:vLaporan})[tab]();stk();
 }
 /* ---------- STOK BAHAN BAKU (aplikasi terpisah, dibuka di bawah menu) ---------- */
 /* GANTI alamat ini bila file ada di repo/akun GitHub Pages lain, contoh:
    const BAHAN_URL='https://USERNAME.github.io/NAMA-REPO/stok-bahan-baku-v5.html'; */
 const BAHAN_URL='stok-bahan-baku-v8.html';
+/* ---------- PESANAN CUSTOM (aplikasi terpisah, dibuka di bawah menu) ----------
+   Tempel link aplikasi Pesanan Custom (link Apps Script yang berakhiran /exec) di antara tanda kutip.
+   Selama masih kosong, menu Pesanan custom memakai tampilan lama. */
+var PESANAN_URL='https://script.google.com/macros/s/AKfycbw-FqOIohjsjl0z3xcYyAruy3oQ5oGbpXZGYp_pXlFPZ574kyfe78QNDsFY26uyM5dL/exec';
+function pesananOn(){return /^https:\/\//.test(String(PESANAN_URL))}
 /* Setiap tombol dibuka / dimuat ulang, alamat diberi kode waktu baru sehingga browser
    selalu mengambil file TERBARU dari GitHub, bukan salinan lama (cache). */
 const bahanSrc=()=>BAHAN_URL+(BAHAN_URL.includes('?')?'&':'?')+'v='+Date.now();
@@ -661,7 +666,7 @@ function doPrint(){
 /* ---------- PESANAN CUSTOM ---------- */
 const ST=['Desain','Produksi','Selesai','Diambil'];
 let ofq='',ofs='Semua';
-function vPesanan(){
+function vPesanan(){if(pesananOn()){$('view').innerHTML='<iframe id="psn" class="bhn-frame" title="Pesanan Custom" src="'+PESANAN_URL+(PESANAN_URL.includes('?')?'&':'?')+'embed=1" allow="fullscreen; clipboard-read; clipboard-write"></iframe>';stk();return}
  $('view').innerHTML=`<div class="card fl"><h2 class="fn" style="margin:0 0 10px">Pesanan custom baru</h2>
  <div class="form fn"><input id="oc" placeholder="Nama pelanggan / tim"><input id="od" placeholder="Detail (cth: Jersey tim, 12 pcs)"><input id="oq" type="text" inputmode="numeric" data-n placeholder="Jumlah"><input id="ot" type="text" inputmode="numeric" data-n placeholder="Total harga"><input id="op" type="text" inputmode="numeric" data-n placeholder="DP dibayar"><button class="btn" onclick="addO()">Simpan pesanan</button></div>
  <div class="bar fn" style="flex-wrap:wrap;align-items:center"><input id="ofq" placeholder="Cari nama pelanggan atau detail..." value="${esc(ofq)}" oninput="ofq=this.value;obody()" autocomplete="off" style="flex:1;min-width:200px"><select onchange="ofs=this.value;obody()">${['Semua',...ST,'Belum lunas'].map(s=>`<option ${s===ofs?'selected':''}>${s}</option>`).join('')}</select><span id="ocnt" class="muted"></span></div>
