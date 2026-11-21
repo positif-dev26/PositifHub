@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
 <style>
 /* Positif POS — tampilan bersama (dipakai semua halaman) */
 :root{--bg:#ececec;--card:#fff;--text:#262626;--muted:#767676;--line:#d4d4d4;--acc:#cfcfcf;--acc-t:#111;--ok:#2f6f46;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -504,7 +505,7 @@ table.tb tbody tr{cursor:pointer}
 .mdh .x{flex:none}
 #md .card.wide{width:min(980px,100%);max-height:92vh}
 #md .card.mid{width:min(720px,100%);max-height:92vh}
-.sec{margin-top:16px}.sec>h3{margin:0 0 8px;font:700 17px "Barlow Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.sec:not(.btn){margin-top:16px}.sec>h3{margin:0 0 8px;font:700 17px "Barlow Condensed",sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .icard{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px}
 .icard .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:8px}
 .icard label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
@@ -623,12 +624,74 @@ select.mini{padding:2px 8px;height:30px;font-size:13px}
 }
 @media(max-width:600px){#hd{flex-wrap:nowrap}#sync{display:none}#hd .ib{width:34px;height:34px}}
 @media(max-width:520px){.icard .g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ===== v1.2: popup detail dua kolom, tombol file, toolbar sejajar ===== */
+#mdc{position:relative}
+.tbar>.btn,.tbar>select,.tbar>input,.tbar .srch{height:42px;box-sizing:border-box}
+.tbar .srch{padding:0 14px!important;border-width:1px!important}
+.tbar>select{padding:0 10px}
+.tbar>.btn{padding:0 14px}
+.tb2 .btn{height:40px;padding:0 14px;box-sizing:border-box}
+#md .card.wide{width:min(1000px,100%);padding:20px 22px}
+.dB{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:22px}
+.dL{display:flex;flex-direction:column;gap:14px;min-width:0}
+.dR{display:flex;flex-direction:column;gap:14px;border-left:1px solid var(--line);padding-left:20px;min-width:0}
+.dRt{display:flex;justify-content:flex-end}
+.dH{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.dH .no5.big{font-size:34px}
+.lnk0{background:none;border:0;padding:0;color:var(--acc);font:600 13px Barlow,sans-serif;cursor:pointer}
+.lnk0:hover{text-decoration:underline}
+:root:not([data-theme="dark"]) .lnk0{color:#4b6300}
+.lnkred{background:none;border:0;padding:4px 0;color:#ff8a80;font:500 13px Barlow,sans-serif;cursor:pointer;text-align:center}
+.lnkred:hover{text-decoration:underline}
+.lab{font-size:12px;color:var(--muted)}
+.jbox{margin:0;padding:10px 14px;border-radius:14px}
+.jitem+.jitem{border-top:1px dashed rgba(212,255,63,.35);margin-top:6px;padding-top:6px}
+.jrow{font-size:24px}
+.jsub{font:500 13px/1.4 Barlow,sans-serif;color:#c9c9c4;display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:2px}
+:root:not([data-theme="dark"]) .jsub{color:#555}
+.jsub.jx{color:var(--acc)}
+.icard.ic2{border:0!important;box-shadow:none!important;background:none;padding:0;margin:0 0 10px;border-radius:0}
+.ic2 .ndrow{margin-top:6px;gap:8px}
+.ic2 .ndrow input{height:42px;border-color:var(--lmb,var(--line))}
+.btn.h42{height:42px;padding:0 14px}
+.ic2 .ndrow .ib{width:42px;height:42px}
+.iedit{margin-top:8px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px}
+.iedit[hidden]{display:none}
+.fhd2{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.cin{height:38px;box-sizing:border-box;color:var(--text);font-size:14px}
+.fch{gap:10px;padding:10px 12px;border-radius:12px}
+.fch.done{border-color:rgba(77,223,154,.45);background:rgba(77,223,154,.05)}
+.fch .fb{height:34px;padding:0 12px;font-size:13px;border-radius:10px;box-sizing:border-box;white-space:nowrap}
+.fch .fb.lime{color:var(--acc)!important}
+:root:not([data-theme="dark"]) .fch .fb.lime{color:#4b6300!important}
+.fch .fb.okb{color:var(--ok)!important;border:1px solid var(--ok)!important;background:transparent!important;box-shadow:none!important}
+.fch span.fb.okb{display:inline-flex;align-items:center;font-weight:600}
+.fch .fb.dis[disabled]{border:1px dashed var(--line)!important;color:var(--muted)!important;background:transparent!important;box-shadow:none!important;opacity:1}
+.fch .pbtn small{font-size:11px}
+.fch .x.fx{width:28px;height:28px;font-size:15px}
+.vsl{display:flex;flex-direction:column;gap:3px}
+.vsl button{text-align:left;background:none;border:1px solid transparent;color:var(--muted);font:500 14px Barlow,sans-serif;padding:5px 10px;border-radius:8px;cursor:pointer}
+.vsl button.cur{background:var(--acc);color:var(--acc-t);font-weight:700}
+.vsl button.cur.pend{background:#c792ea;color:#111}
+.vsl button.dn{color:var(--text);opacity:.7}
+@media(hover:hover){.vsl button:not(.cur):hover{border-color:var(--line);color:var(--text);opacity:1}}
+.dinfo{display:flex;flex-direction:column;gap:7px;font-size:13px}
+.dinfo .dl2{border-radius:8px;padding:5px 10px;font-size:13px;white-space:normal}
+.dinfo .tko{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dinfo label{display:flex;gap:6px;align-items:center}
+.dFt{display:flex;flex-direction:column;gap:8px}
+.dFt .btn{height:34px;padding:0 12px;font-size:14px;width:100%}
+#dHist .hrow{font-size:12.5px;padding:4px 0;border-top:1px solid var(--line);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:860px){
+ .dB{grid-template-columns:1fr}
+ .dR{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:12px}
+ .dH{padding-right:40px}
+ .dRt{position:absolute;top:12px;right:12px}
+ .fch{flex-wrap:wrap}.fch .fnm{flex:1 1 100%}
+}
 @media print{header,#toasts{display:none!important}}
-/* menu atas Positif POS; tombol akun & kembali ke POS sudah ada di menu atas */
-#accBtn,#btnPos{display:none!important}
-.pbar #sync{margin-left:6px}
 </style>
-<script src="posbar.js"></script>
 </head>
 <body>
 <header id="hd">
@@ -649,13 +712,11 @@ select.mini{padding:2px 8px;height:30px;font-size:13px}
 
 <script>
 'use strict';
-/* menu atas Positif POS (menggantikan header lama) + login ikut akun POS */
-POSBAR.mount({ active: 'rekap', replace: '#hd', id: 'hd', tools: ['#sync', '#btnRef', '#btnTheme', '#btnPos', '#accBtn'] });
 /* =====================================================================
    POSITIF — REKAP ORDER CUSTOM
    Database: Google Sheet + Apps Script (lihat Code.gs & PANDUAN)
    ===================================================================== */
-const APP_VER = '1.1';
+const APP_VER = '1.2';
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzws96uZeH4gZ0XMW7jI2spZsQdia7xSQ5Y5AmmyslZ3MKivzJIFUODB1DZSWsz7gvx/exec'; // URL Web App Apps Script (…/exec)
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -779,8 +840,7 @@ async function api(action, data = {}) {
   if (CONF.demo) return Demo.call(action, { ...data, pin });
   if (!CONF.api) throw new Error('URL server belum diatur');
   let r;
-  const pc = POSBAR.cred(); // tiket login Positif POS
-  try { r = await fetch(CONF.api, { method: 'POST', body: JSON.stringify({ ...data, action, user: pc && pc.u, tok: pc && pc.t }) }); }
+  try { r = await fetch(CONF.api, { method: 'POST', body: JSON.stringify({ ...data, action, pin }) }); }
   catch (e) { throw new Error('Tidak bisa terhubung ke server. Cek internet.'); }
   if (!r.ok) throw new Error('Server error ' + r.status);
   let j;
@@ -974,7 +1034,7 @@ async function sync(full) {
     setSync(true);
     refresh();
   } catch (e) {
-    if (/PIN salah|AUTH|akses Rekap/.test(e.message)) { if (CONF.demo) { toast('PIN tidak berlaku lagi. Silakan masuk ulang.', 1); logout(); } else noAccess(e.message); }
+    if (/PIN salah/.test(e.message)) { toast('PIN tidak berlaku lagi. Silakan masuk ulang.', 1); logout(); }
     else setSync(false, 'Offline — ' + e.message.slice(0, 40));
   } finally { syncBusy = false; }
 }
@@ -1095,7 +1155,6 @@ VW.produksi = {
         <input class="srch" id="q" data-live="1" placeholder="Cari no. pesanan, username, nama desain…" value="${esc(ST.f.q)}">
         <select id="ftoko" data-live="1"><option value="">Semua toko</option>${tk.concat(['WA/Offline']).map(t => `<option ${ST.f.toko === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
         <button class="btn sec" data-act="manual" title="Tambah order manual (WA / di luar export)">${ic('plus')}Manual</button>
-        <button class="btn sec" data-act="csv" title="Unduh daftar yang tampil sebagai CSV">${ic('download')}CSV</button>
       </div>
       <div class="chr bar" id="chips"></div><div class="chr bar" id="chips2"></div></div>
       <div class="stats" id="pstats"></div>
@@ -1172,77 +1231,84 @@ function openOrder(no) {
   $('#mdc').innerHTML = detHTML(o);
   $('#md').classList.add('on');
 }
-function closeMd() { $('#md').classList.remove('on'); DET = null; if (IMP && IMP.type === 'shopee') IMP = null; }
+function closeMd() { $('#md').classList.remove('on'); DET = null; OPEN.clear(); if (IMP && IMP.type === 'shopee') IMP = null; }
 function upInfoHTML() {
   const l = (ST.imports || []).filter(x => x.file && (!ST.f.toko || x.toko === ST.f.toko));
   const x = l[l.length - 1];
   if (!x) return '<b>Belum ada upload</b><small>Upload file export Shopee</small>';
   return `<b title="${esc(x.file)}">${esc(x.file)}</b><small title="${esc(x.toko)}">${fD(parseAny(x.waktu))} · ${esc(x.user)} · ${num(x.baru)} baru${num(x.hilang) ? ` · ${num(x.hilang)} disembunyikan` : ''}</small>`;
 }
+const OPEN = new Set(); // item yang bagian "ubah detail"-nya terbuka
 function jenisHTML(o) {
   const its = itemsOf(o.no);
   if (!its.length) return `<div class="jrow"><span>${o.jasaDesain ? 'Jasa desain — belum ada item cetak' : 'Belum ada item'}</span></div>`;
-  return its.map(i => `<div class="jrow"><span class="jb">${esc(i.bahan)}</span><b>${esc(i.jumlah)}×</b><span>${varS(i.variasi) || '—'}</span>${i.ukuran && !detUkuran(i.variasi) ? `<span class="jm">${esc(i.ukuran)}</span>` : ''}${num(i.harga) ? `<span class="jm">${rp(num(i.harga))}</span>` : ''}${i.tglCetak ? '<span class="jm ok">✓ sudah cetak</span>' : ''}</div>`).join('')
-    + (o.jasaDesain ? '<div class="jrow jx">+ jasa desain</div>' : '');
+  return its.map(i => {
+    const stt = i.tglCetak ? `<span class="ok">✓ sudah cetak ${fD(i.tglCetak)}</span>` : i.pencetak === 'TELASIH' ? (i.tglKeVendor ? `di Telasih sejak ${fD(i.tglKeVendor)}` : 'belum dikirim ke Telasih') : 'belum dicetak';
+    return `<div class="jitem"><div class="jrow"><span class="jb">${esc(i.bahan)}</span><span>${esc(i.jumlah)}× · ${varS(i.variasi) || '—'}</span>${i.ukuran && !detUkuran(i.variasi) ? `<span class="jm">${esc(i.ukuran)}</span>` : ''}</div>
+      <div class="jsub">${i.potong ? esc(POTONG[i.potong]) + ' · ' : ''}dicetak di ${i.pencetak === 'TELASIH' ? 'Telasih' : 'Positif'} · ${stt} · <button class="lnk0" data-act="edit" data-k="${esc(i.kunci)}">${OPEN.has(i.kunci) ? 'tutup detail' : 'ubah detail'}</button></div></div>`;
+  }).join('') + (o.jasaDesain ? '<div class="jsub jx">+ jasa desain</div>' : '');
 }
 function detHTML(o) {
   const its = itemsOf(o.no);
-  const tk = (ST.cfg.toko || []).concat(['WA/Offline']);
-  const lg = langganan(o);
-  return `<div class="dhd"><div class="dt"><span class="no5 big">${esc(o.no5)}</span><span id="dSt">${detStatusBadges(o)}</span>
-      <span class="muted sm">${esc(o.no)} <button class="lnk" style="display:inline;margin:0 0 0 4px;font-size:12px" data-act="copy" data-t="${esc(o.no)}">salin</button></span></div>
-      <button class="x" data-act="close" title="Tutup">×</button></div>
-    <div class="jbox" id="dJenis">${jenisHTML(o)}</div>
-    <div class="stp cp" id="dSteps">${detSteps(o)}</div>
-    <div class="dgrid">
-      <div class="dcol"><div id="dItems">${its.map((i, n) => itemHTML(o, i, n, its.length)).join('') || '<div class="muted sm">Belum ada item.</div>'}</div>
-        <div><button class="btn sec sm" data-act="additem">${ic('plus')}Tambah item</button></div></div>
-      <div class="dcol">
-        <div class="kv">
-          <span>Batas kirim</span><span>${dlb(o)} <span class="sm">${fD(o.deadline)}</span></span>
-          <span>Pembeli</span><span>${esc(o.username || '-')}${lg > 1 ? ` <span class="lgn">langganan ×${lg}</span>` : ''}</span>
-          <span>Toko</span><span><select data-of="toko" class="mini">${tk.map(t => `<option ${o.toko === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}${!tk.includes(o.toko) && o.toko ? `<option selected>${esc(o.toko)}</option>` : ''}</select> <span class="muted sm">dibuat ${fD(o.dibuat)}${num(o.totalBayar) ? ' · ' + rp(num(o.totalBayar)) : ''}</span></span>
-          <span>Jasa desain</span><span><label class="sm"><input type="checkbox" class="cb" data-ofc="jasaDesain" ${o.jasaDesain ? 'checked' : ''}> pembeli bayar jasa desain</label></span>
-        </div>
-        ${o.catatanPembeli ? `<div class="note sm"><b>Catatan pembeli:</b> ${esc(o.catatanPembeli)}</div>` : ''}
-        <textarea data-of="catatan" class="cint" placeholder="Catatan internal (mis. tunggu file, revisi warna)…">${esc(o.catatan || '')}</textarea>
-        <div class="fhd"><b>File cetak</b><button class="btn sm" data-act="pickfile">${ic('upload')}Upload file</button></div>
-        <div id="dFiles" class="dropz">${filesHTML(o, true)}</div>
-        <div id="dHist">${histHTML(o)}</div>
-      </div>
+  return `<div class="dB">
+    <div class="dL">
+      <div class="dH"><span class="no5 big">${esc(o.no5)}</span><span class="muted sm">${esc(o.no)}</span><button class="lnk0" data-act="copy" data-t="${esc(o.no)}">salin</button></div>
+      <div class="jbox" id="dJenis">${jenisHTML(o)}</div>
+      <div id="dItems">${its.map((i, n) => itemHTML(o, i, n, its.length)).join('')}</div>
+      <div><button class="lnk0" data-act="additem">+ Tambah item</button></div>
+      <div><div class="fhd2"><span class="lab">File cetak</span><button class="lnk0" data-act="pickfile">+ Upload file</button></div>
+        <div id="dFiles" class="dropz">${filesHTML(o, true)}</div></div>
+      ${o.catatanPembeli ? `<div class="note sm"><b>Catatan pembeli:</b> ${esc(o.catatanPembeli)}</div>` : ''}
+      <label class="lab" style="display:flex;flex-direction:column;gap:6px">Catatan internal<input data-of="catatan" class="cin" value="${esc(o.catatan || '')}" placeholder="mis. tunggu file, revisi warna"></label>
     </div>
-    <div class="ed-ft" id="dFt">${detFoot(o)}</div>`;
+    <div class="dR">
+      <div class="dRt"><button class="x" data-act="close" title="Tutup">×</button></div>
+      <div class="vsl" id="dSteps">${detSteps(o)}</div>
+      <div class="dinfo" id="dInfo">${detInfo(o)}</div>
+      <div id="dHist">${histHTML(o)}</div>
+      <span style="flex:1"></span>
+      <div class="dFt" id="dFt">${detFoot(o)}</div>
+    </div></div>`;
+}
+function detInfo(o) {
+  const tk = (ST.cfg.toko || []).concat(['WA/Offline']), lg = langganan(o), d = dlInfo(o);
+  return `${d.c ? `<span class="badge ${d.c} dl2">${esc(d.t)} · ${fD(o.deadline)}</span>` : `<span class="muted">Batas kirim ${fD(o.deadline)}</span>`}
+    <span>${esc(o.username || '-')}${lg > 1 ? ` <span class="lgn">langganan ×${lg}</span>` : ''}</span>
+    <span class="tko"><select data-of="toko" class="mini" title="Toko">${tk.map(t => `<option ${o.toko === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}${!tk.includes(o.toko) && o.toko ? `<option selected>${esc(o.toko)}</option>` : ''}</select><span class="muted">dibuat ${fD(o.dibuat, false)}</span></span>
+    <label class="muted"><input type="checkbox" class="cb" data-ofc="jasaDesain" ${o.jasaDesain ? 'checked' : ''}> pembeli bayar jasa desain</label>
+    ${o.cekShopee === 'AUTO' && o.status === 'KIRIM' ? '<span class="muted">Disembunyikan otomatis (tidak ada di export terbaru)</span>' : ''}`;
 }
 function detFoot(o) {
-  return `<div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${o.status !== 'BATAL' ? `<button class="btn sec" data-act="setst" data-st="BATAL" style="color:var(--bad)">Batalkan order</button>` : `<button class="btn sec" data-act="setst" data-st="BARU">Aktifkan lagi</button>`}
-    </div>
-    <div style="display:flex;gap:8px">${o.status !== 'KIRIM' && o.status !== 'BATAL' ? `<button class="btn" data-act="setst" data-st="KIRIM">${ic('box')}Tandai Dikirim</button>` : ''}<button class="btn sec" data-act="close">Tutup</button></div>`;
+  if (o.status === 'BATAL') return `<span class="sbg s-BATAL" style="align-self:flex-start">Batal</span><button class="btn sec" data-act="setst" data-st="BARU">Aktifkan lagi</button>`;
+  return `${o.status !== 'KIRIM' ? `<button class="btn" data-act="setst" data-st="KIRIM">Tandai dikirim</button>` : ''}
+    ${o.status === 'PENDING' ? `<button class="btn sec" data-act="setst" data-st="${liveFiles(o).length ? 'SIAP' : 'PROSES'}">Lanjutkan (keluar dari Pending)</button>` : o.status !== 'KIRIM' ? `<button class="btn sec" data-act="setst" data-st="PENDING" title="Tunggu file / konfirmasi pembeli">Pending</button>` : ''}
+    <button class="lnkred" data-act="setst" data-st="BATAL">Batalkan order</button>`;
 }
-function detStatusBadges(o) { return sbg(o.status) + (o.cekShopee === 'AUTO' && o.status === 'KIRIM' ? ' <span class="muted sm">otomatis (tidak ada di export terbaru)</span>' : ''); }
+function detStatusBadges(o) { return sbg(o.status); }
 function detSteps(o) {
   const cur = ALUR.indexOf(o.status);
-  return ALUR.map((s, i) => `${i ? '<i></i>' : ''}<button class="sti ${i < cur ? 'dn' : ''} ${s === o.status ? 'cur' : ''}" data-act="setst" data-st="${s}" title="Pindah ke ${STAT[s]}"><b>${i < cur ? '✓' : i + 1}</b>${STAT[s]}</button>`).join('')
-    + `<i></i><button class="sti ${o.status === 'PENDING' ? 'cur' : ''}" data-act="setst" data-st="PENDING" title="Tunggu file / konfirmasi pembeli"><b>!</b>Pending</button>`;
+  return (o.status === 'PENDING' ? '<button class="cur pend" data-act="setst" data-st="PENDING">● Pending</button>' : '')
+    + ALUR.map((s, i) => `<button class="${s === o.status ? 'cur' : i < cur ? 'dn' : ''}" data-act="setst" data-st="${s}" title="Pindah ke ${STAT[s]}">${s === o.status ? '●' : i < cur ? '✓' : '○'} ${STAT[s]}</button>`).join('');
 }
 function itemHTML(o, i, n = 0, tot = 1) {
-  const k = esc(i.kunci);
-  return `<div class="icard" data-k="${k}">
-    ${tot > 1 ? `<div class="ihd">${bh(i.bahan)} <span class="sm muted">Item ${n + 1} · ${esc(i.jumlah)}× ${varS(i.variasi)}</span></div>` : ''}
-    <div class="g3">
-      <label>Nama / teks desain<input data-if="label" value="${esc(i.label)}" placeholder="mis. Prime, RA Audio"></label>
-      <label>Ukuran<input data-if="ukuran" value="${esc(i.ukuran)}" placeholder="mis. 8x14cm"></label>
-      <label>Jumlah<input type="number" min="1" data-if="jumlah" value="${esc(i.jumlah)}"></label>
-      <label>Bahan<select data-if="bahan">${BAHAN.concat(BAHAN.includes(i.bahan) ? [] : [i.bahan]).map(b => `<option ${i.bahan === b ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select></label>
-      <label>Potong<select data-if="potong"><option value="">—</option>${Object.entries(POTONG).map(([v, l]) => `<option value="${v}" ${i.potong === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-      <label>Dicetak di<select data-if="pencetak"><option value="POSITIF" ${i.pencetak === 'POSITIF' ? 'selected' : ''}>Positif (sendiri)</option><option value="TELASIH" ${i.pencetak === 'TELASIH' ? 'selected' : ''}>Telasih (vendor)</option></select></label>
-    </div>
-    <label class="lbl">Nama desain / nama file</label>
+  const k = esc(i.kunci), op = OPEN.has(i.kunci);
+  return `<div class="icard ic2" data-k="${k}">
+    <label class="lab">Nama desain / nama file${tot > 1 ? ` — ${esc(i.bahan)} ${esc(i.jumlah)}×` : ''}</label>
     <div class="ndrow"><input data-if="namaDesain" value="${esc(i.namaDesain)}" placeholder="klik tongkat untuk buat otomatis">
-      <button class="ib" data-act="gen" title="Buat nama otomatis">${ic('wand')}</button>
-      <button class="ib" data-act="copynd" title="Salin nama desain">${ic('copy')}</button>
-      ${isOwner() ? `<button class="ib" data-act="delitem" title="Hapus item" style="color:var(--bad)">${ic('trash')}</button>` : ''}</div>
-    <div class="ist" data-k="${k}">${istHTML(i)}</div></div>`;
+      <button class="btn sec h42" data-act="copynd" title="Salin nama desain">Salin</button>
+      <button class="ib" data-act="gen" title="Buat nama otomatis">${ic('wand')}</button></div>
+    <div class="iedit" ${op ? '' : 'hidden'}>
+      <div class="g3">
+        <label>Nama / teks desain<input data-if="label" value="${esc(i.label)}" placeholder="mis. Prime, RA Audio"></label>
+        <label>Ukuran<input data-if="ukuran" value="${esc(i.ukuran)}" placeholder="mis. 8x14cm"></label>
+        <label>Jumlah<input type="number" min="1" data-if="jumlah" value="${esc(i.jumlah)}"></label>
+        <label>Bahan<select data-if="bahan">${BAHAN.concat(BAHAN.includes(i.bahan) ? [] : [i.bahan]).map(b => `<option ${i.bahan === b ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select></label>
+        <label>Potong<select data-if="potong"><option value="">—</option>${Object.entries(POTONG).map(([v, l]) => `<option value="${v}" ${i.potong === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+        <label>Dicetak di<select data-if="pencetak"><option value="POSITIF" ${i.pencetak === 'POSITIF' ? 'selected' : ''}>Positif (sendiri)</option><option value="TELASIH" ${i.pencetak === 'TELASIH' ? 'selected' : ''}>Telasih (vendor)</option></select></label>
+      </div>
+      <div class="ist" data-k="${k}">${istHTML(i)}</div>
+      ${isOwner() ? `<button class="lnkred" data-act="delitem" style="margin-top:6px">Hapus item ini</button>` : ''}
+    </div></div>`;
 }
 function istHTML(i) {
   if (i.tglCetak) return `<span class="ok sm">✓ Sudah cetak ${fD(i.tglCetak)}${i.dicetakOleh ? ' · ' + esc(i.dicetakOleh) : ''}</span><button class="lnk" style="margin:0" data-act="itcetak" data-k="${esc(i.kunci)}" data-v="0">batalkan</button>`;
@@ -1250,36 +1316,41 @@ function istHTML(i) {
   return `<span class="muted sm">${left}</span><button class="btn sec sm" data-act="itcetak" data-k="${esc(i.kunci)}" data-v="1">${ic('check')}${i.pencetak === 'TELASIH' ? 'Sudah jadi / diterima' : 'Tandai sudah cetak'}</button>`;
 }
 const fDT = iso => { const d = new Date(iso); return isNaN(d) ? '' : fD(nowStr(d)); };
+/* baris file cetak: 4 keadaan — belum dicetak / sudah dicetak, PDF-gambar / CDR */
 function filesHTML(o, del) {
   const fs = filesOf(o);
   if (!fs.length) return '<div class="muted sm fnone">Belum ada file cetak. Klik Upload file atau seret file ke sini.</div>';
   return fs.map(f => {
-    const e = ext(f.name), pr = PRINTABLE.includes(e), done = !!f.printedAt;
-    if (f.dihapus) return `<div class="fch gone">${ic('file')}<div class="fnm"><b>${esc(f.name)}</b><small>dihapus otomatis setelah order dikirim</small></div></div>`;
-    const tip = pr ? '' : `title="File ${esc(e.toUpperCase())} tidak bisa dicetak dari browser. Klik Download lalu buka di CorelDraw."`;
-    return `<div class="fch">${ic('file')}<div class="fnm"><b title="${esc(f.name)}">${esc(f.name)}</b><small>${esc(e.toUpperCase())}${f.size ? ' · ' + mb(+f.size) : ''} · ${esc(f.by || '')} ${fDT(f.at)}</small></div>
-      <div class="pbtn"><button class="btn ${done ? 'sec done' : ''}" data-act="fprint" data-no="${esc(o.no)}" data-id="${esc(f.id)}" ${pr ? '' : 'disabled'} ${tip}>${ic(done ? 'check' : 'printer')}${done ? 'Sudah dicetak' : 'Cetak'}</button>${done ? `<small>${fDT(f.printedAt)}${f.printedBy ? ' · ' + esc(f.printedBy) : ''}</small>` : ''}</div>
-      <button class="btn sec" data-act="fdl" data-no="${esc(o.no)}" data-id="${esc(f.id)}" title="Download${pr ? '' : ' (untuk dicetak dari CorelDraw)'}">${ic('download')}</button>
-      ${del ? `<button class="x" data-act="fdel" data-no="${esc(o.no)}" data-id="${esc(f.id)}" title="Hapus file">×</button>` : ''}</div>`;
+    const e = ext(f.name), pr = PRINTABLE.includes(e), done = !!f.printedAt, a = `data-no="${esc(o.no)}" data-id="${esc(f.id)}"`;
+    if (f.dihapus) return `<div class="fch gone"><div class="fnm"><b>${esc(f.name)}</b><small>dihapus otomatis setelah order dikirim</small></div></div>`;
+    const when = done ? `<small>${fDT(f.printedAt)}${f.printedBy ? ' · ' + esc(f.printedBy) : ''}</small>` : '';
+    let btn;
+    if (pr && !done) btn = `<button class="btn fb" data-act="fprint" ${a}>Cetak</button><button class="btn sec fb lime" data-act="fdl" ${a}>Download</button>`;
+    else if (pr) btn = `<div class="pbtn"><button class="btn sec fb okb" data-act="fprint" ${a} title="Sudah dicetak — klik untuk cetak ulang">✓ Sudah dicetak</button>${when}</div><button class="btn sec fb lime" data-act="fdl" ${a}>Download</button>`;
+    else if (!done) btn = `<button class="btn sec fb dis" disabled title="File ${esc(e.toUpperCase())} dicetak dari CorelDraw — klik Download">Cetak</button><button class="btn fb" data-act="fdl" ${a} title="Download lalu cetak dari CorelDraw">Download</button>`;
+    else btn = `<div class="pbtn"><span class="fb okb sp">✓ Sudah dicetak</span>${when}</div><button class="btn sec fb lime" data-act="fdl" ${a}>Download</button>`;
+    return `<div class="fch${done ? ' done' : ''}"><div class="fnm"><b title="${esc(f.name)}">${esc(f.name)}</b><small>${esc(e.toUpperCase())}${f.size ? ' · ' + mb(+f.size) : ''}${pr ? '' : ' · cetak lewat CorelDraw'} · upload ${esc(f.by || '')}, ${fDT(f.at)}</small></div>
+      ${btn}${del ? `<button class="x fx" data-act="fdel" ${a} title="Hapus file">×</button>` : ''}</div>`;
   }).join('');
 }
 function histHTML(o) {
   const u = (o.username || '').trim().toLowerCase();
   const lain = u ? (ST.byUser[u] || []).filter(x => x.no !== o.no).sort((a, b) => String(b.dibuat || b.deadline).localeCompare(String(a.dibuat || a.deadline))) : [];
   if (!lain.length) return '';
-  return `<div class="muted sm" style="margin:2px 0 2px">Riwayat pelanggan (${lain.length})</div>` + lain.slice(0, 3).map(x => `<div class="il hrow" data-act="open" data-no="${esc(x.no)}"><b>${esc(x.no5)}</b> <span class="muted">${fD(x.dibuat || x.deadline, false)}</span> ${itemsOf(x.no).map(i => `${bh(i.bahan)} ${esc(i.namaDesain || i.variasi)}`).join(' ')} ${liveFiles(x).length ? `<span class="ok">${ic('file')}</span>` : ''}</div>`).join('');
+  return `<div class="muted sm" style="margin-bottom:2px">Riwayat pelanggan (${lain.length})</div>` + lain.slice(0, 3).map(x => `<div class="hrow" data-act="open" data-no="${esc(x.no)}"><b>${esc(x.no5)}</b> <span class="muted">${fD(x.dibuat || x.deadline, false)}</span> ${itemsOf(x.no).map(i => esc(i.namaDesain || i.bahan)).join(', ')}</div>`).join('');
 }
 function detRefresh() {
   const o = ST.orders[DET]; if (!o || !$('#md').classList.contains('on')) return;
-  $('#dSt') && ($('#dSt').innerHTML = detStatusBadges(o));
   $('#dJenis') && ($('#dJenis').innerHTML = jenisHTML(o));
   $('#dSteps') && ($('#dSteps').innerHTML = detSteps(o));
   $('#dFiles') && ($('#dFiles').innerHTML = filesHTML(o, true));
   $('#dFt') && ($('#dFt').innerHTML = detFoot(o));
+  const ae = document.activeElement;
+  if ($('#dInfo') && !(ae && $('#dInfo').contains(ae))) $('#dInfo').innerHTML = detInfo(o);
   $$('#mdc .ist').forEach(el => { const i = ST.items[el.dataset.k]; if (i) el.innerHTML = istHTML(i); });
   const known = new Set($$('#mdc .icard').map(e => e.dataset.k));
   const its = itemsOf(o.no);
-  if (its.length !== known.size || its.some(i => !known.has(i.kunci))) $('#dItems').innerHTML = its.map((i, n) => itemHTML(o, i, n, its.length)).join('') || '<div class="muted sm">Belum ada item.</div>';
+  if (its.length !== known.size || its.some(i => !known.has(i.kunci))) $('#dItems').innerHTML = its.map((i, n) => itemHTML(o, i, n, its.length)).join('');
 }
 /* perubahan isian di popup */
 document.addEventListener('change', e => {
@@ -1369,13 +1440,13 @@ VW.telasih = {
     const allOn = rows.every(r => T.sel.has(r.i.kunci));
     const nsel = T.sel.size;
     const tool = T.tab === 'kirim'
-      ? `<button class="btn sec" data-act="wacopy" ${nsel ? '' : 'disabled'}>${ic('copy')}Salin teks WA</button><button class="btn sec" data-act="waopen" ${nsel ? '' : 'disabled'}>${ic('msg')}Buka WhatsApp</button><button class="btn" data-act="tlsent" ${nsel ? '' : 'disabled'}>${ic('truck')}Tandai sudah dikirim ke Telasih</button>`
+      ? `<button class="btn sec" data-act="wacopy" ${nsel ? '' : 'disabled'}>${ic('copy')}Salin teks</button><button class="btn" data-act="wasend" ${nsel ? '' : 'disabled'}>${ic('msg')}Kirim ke WhatsApp</button>`
       : `<button class="btn sec" data-act="tlunsent" ${nsel ? '' : 'disabled'}>Batalkan kirim</button><button class="btn" data-act="tldone" ${nsel ? '' : 'disabled'}>${ic('check')}Tandai sudah jadi / diterima</button>`;
-    $('#tbody').innerHTML = `<div class="card"><div class="row" style="flex-wrap:wrap;margin-top:0"><span><b>${nsel}</b> <span class="muted">dipilih dari ${rows.length} item</span></span><div class="bar" style="margin:0;flex-wrap:wrap">${tool}</div></div>
+    $('#tbody').innerHTML = `<div class="card"><div class="row" style="flex-wrap:wrap;margin-top:0"><span><b>${nsel}</b> <span class="muted">dipilih dari ${rows.length} item</span></span><div class="bar tb2" style="margin:0;flex-wrap:wrap">${tool}</div></div>
       <div class="scroll"><table><thead><tr><th><input type="checkbox" class="cb" data-act="tselall" ${allOn ? 'checked' : ''}></th><th>Deadline</th><th>No.</th><th>Item</th><th>Nama desain</th><th>File</th>${T.tab === 'di' ? '<th>Dikirim</th>' : ''}</tr></thead><tbody>
       ${rows.map(({ o, i }) => { const f = liveFiles(o); return `<tr class="${dlInfo(o).row}"><td><input type="checkbox" class="cb" data-act="tsel" data-k="${esc(i.kunci)}" ${T.sel.has(i.kunci) ? 'checked' : ''}></td><td class="nowrap">${dlb(o)}</td><td class="nowrap"><a href="#" class="no5" style="color:inherit;text-decoration:none" data-act="open" data-no="${esc(o.no)}">${esc(o.no5)}</a></td><td>${bh(i.bahan)} <b>${esc(i.jumlah)}×</b> <span class="sm">${varS(i.variasi)}</span></td><td class="nd sm">${esc(i.namaDesain || '—')}</td><td>${f.length ? `<span class="ok sm">${ic('file')} ${f.length}</span>` : '<span class="bad sm">belum ada</span>'}</td>${T.tab === 'di' ? `<td class="sm nowrap">${fD(i.tglKeVendor)}</td>` : ''}</tr>`; }).join('')}
       </tbody></table></div></div>
-      ${T.tab === 'kirim' && nsel ? `<div class="sec"><h3>Pratinjau pesan WhatsApp</h3><div class="wa">${esc(waText())}</div></div>` : ''}`;
+      ${T.tab === 'kirim' && nsel ? `<div class="sec"><h3>Pratinjau pesan WhatsApp</h3><p class="muted sm" style="margin:0 0 6px">File cetak ikut dikirim: lewat menu berbagi (PDF/gambar) atau sebagai satu file ZIP (bila ada CDR).</p><div class="wa">${esc(waText())}</div></div>` : ''}`;
   },
   rekap() {
     const T = ST.tl, [y, m] = T.bulan.split('-').map(Number);
@@ -1402,13 +1473,65 @@ function waText() {
     L.push(`${n + 1}. *${i.namaDesain || genNama(o, i)}*`);
     L.push(`   ${i.jumlah} pcs · ${String(i.variasi || '').replace(/,\s*/g, ' · ')}${o?.deadline ? ' · deadline ' + fD(o.deadline) : ''}`);
     const f = liveFiles(o);
-    if (f.length) f.forEach(x => L.push(`   File: https://drive.google.com/file/d/${x.id}/view`));
+    if (f.length) f.forEach(x => L.push(`   File: ${x.name}`));
     else L.push('   File: (menyusul)');
     const s = sum[i.bahan] || (sum[i.bahan] = { pcs: 0, m2: 0 }); s.pcs += num(i.jumlah) || 1; s.m2 += luasM2(i);
   });
   L.push('', 'Total: ' + Object.entries(sum).map(([b, s]) => `${b} ${s.pcs} pcs${['SATIN', 'MESH'].includes(b) && s.m2 ? ` (${fx(s.m2)} m²)` : ''}`).join(', '));
   L.push('Terima kasih 🙏');
   return L.join('\n');
+}
+
+/* kirim file ke Telasih: menu berbagi (semua PDF/gambar & didukung perangkat) atau ZIP + WhatsApp */
+function bukaWA(text) {
+  let n = String(ST.cfg.waTelasih || '').replace(/\D/g, ''); if (n.startsWith('0')) n = '62' + n.slice(1);
+  const w = window.open(`https://wa.me/${n}?text=${encodeURIComponent(text)}`, '_blank');
+  if (!w) toast('Popup diblokir browser. Izinkan popup untuk halaman ini.', 1);
+}
+async function kirimWA() {
+  const ks = [...ST.tl.sel].filter(k => ST.items[k]); if (!ks.length) return;
+  const nos = [...new Set(ks.map(k => ST.items[k].no))];
+  const files = nos.flatMap(no => liveFiles(ST.orders[no]).map(f => ({ no, f })));
+  const text = waText();
+  if (!files.length) {
+    if (!await dlg({ title: 'Belum ada file cetak', msg: 'Item yang dipilih belum punya file. Kirim teks daftar order saja?', ok: 'Kirim teks' })) return;
+    bukaWA(text); return sudahTerkirim(ks);
+  }
+  const pg = progOpen('Menyiapkan file…'), got = [];
+  try {
+    for (let n = 0; n < files.length; n++) {
+      const { f } = files[n];
+      pg.set(n / files.length * 85, null, `${n + 1}/${files.length} · ${f.name}`);
+      const v = await ambilFile(f.id);
+      got.push(new File([v.blob], f.name, { type: v.blob.type || MIME[ext(f.name)] || 'application/octet-stream' }));
+    }
+  } catch (e) { pg.close(); return toast('Gagal mengambil file: ' + e.message, 1); }
+  let bisaShare = false;
+  try { bisaShare = got.every(x => PRINTABLE.includes(ext(x.name))) && !!navigator.canShare && navigator.canShare({ files: got }); } catch (e) { }
+  if (bisaShare) {
+    await pg.done('File siap');
+    if (!await dlg({ title: 'Kirim ke WhatsApp', html: `<div class="ubm">${got.length} file siap.\nDi menu berbagi, pilih <b>WhatsApp</b> lalu kontak <b>Telasih</b>. Teks daftar order ikut terkirim.</div>`, ok: 'Bagikan' })) return;
+    try { await navigator.share({ files: got, text }); }
+    catch (e) { if (e && e.name === 'AbortError') return; return toast('Menu berbagi gagal: ' + e.message, 1); }
+  } else {
+    if (!window.JSZip) { pg.close(); return toast('Pembuat ZIP belum termuat. Pastikan terhubung internet lalu muat ulang halaman.', 1); }
+    pg.set(90, 'Membuat ZIP…');
+    const z = new JSZip(), dipakai = {};
+    got.forEach(x => { let nm = x.name; if (dipakai[nm]) { dipakai[nm]++; nm = nm.replace(/(\.[^.]*)?$/, ` (${dipakai[nm]})$1`); } else dipakai[nm] = 1; z.file(nm, x); });
+    const blob = await z.generateAsync({ type: 'blob' }), zn = `Order Telasih ${nowStr().slice(0, 10)}.zip`;
+    await pg.done('ZIP siap');
+    if (!await dlg({ title: 'Kirim ke WhatsApp', html: `<div class="ubm"><b>${esc(zn)}</b> · ${got.length} file · ${mb(blob.size)}\n\n1. Klik <b>Download & buka WhatsApp</b>\n2. Chat Telasih terbuka dengan teks daftar order\n3. Seret file ZIP dari folder Download ke chat, lalu kirim</div>`, ok: 'Download & buka WhatsApp' })) return;
+    const u = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = u; a.download = zn; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 120000);
+    bukaWA(text);
+  }
+  sudahTerkirim(ks);
+}
+async function sudahTerkirim(ks) {
+  if (!await dlg({ title: 'File sudah terkirim ke Telasih?', msg: `${ks.length} item akan pindah ke tab "Sedang di Telasih" dengan tanggal kirim hari ini.`, ok: 'Ya, sudah terkirim', cancel: 'Nanti' })) return;
+  await patch([], ks.filter(k => ST.items[k]).map(k => ({ kunci: k, no: ST.items[k].no, tglKeVendor: nowStr() })), 'kirim ke telasih');
+  ST.tl.sel.clear(); toast(ks.length + ' item ditandai dikirim ke Telasih'); refresh();
 }
 
 /* ---------------- IMPORT (Upload Excel) ---------------- */
@@ -1736,9 +1859,9 @@ VW.atur = {
         <label>URL Web App Apps Script<input id="cApi" value="${esc(CONF.api)}" placeholder="https://script.google.com/macros/s/…/exec"></label>
         <div class="row"><span class="muted sm">${CONF.demo ? '<b style="color:#ffd24a">Sedang mode demo</b> — data hanya di browser ini.' : 'Terhubung ke Google Sheet.'}</span><button class="btn sec sm" data-act="apisave">Simpan URL & muat ulang</button></div></div>
     </div>
-    <div class="card sec"><h3 style="margin-top:0">Pengguna & akses</h3>
-      <p class="muted sm" style="margin:0">Masuk ke Rekap Order memakai akun <b>Positif POS</b>. Atur siapa yang boleh membuka di Positif POS → <b>Pengaturan → Pengguna</b> (atau <b>Peran</b>):</p>
-      <ul class="muted sm" style="margin:8px 0 0;padding-left:18px"><li><b>Admin POS</b> → Owner (semua menu)</li><li>Izin <b>Rekap order: Admin Kedawung</b> → layout & upload file</li><li>Izin <b>Rekap order: Admin Wonodadi</b> → cetak, packing, kirim</li></ul></div>
+    <div class="card sec"><div class="row" style="margin-top:0"><h3 style="margin:0">Pengguna & PIN</h3><div class="bar" style="margin:0"><button class="btn sec sm" data-act="uadd">${ic('plus')}Tambah</button><button class="btn sm" data-act="usave">${ic('check')}Simpan pengguna</button></div></div>
+      <p class="muted sm">Owner: semua menu. Admin Kedawung: layout & upload file. Admin Wonodadi: cetak, packing, kirim. PIN 4–8 angka, tidak boleh sama. Kosongkan nama untuk menghapus.</p>
+      <div class="scroll"><table class="utbl"><thead><tr><th>Nama</th><th>Peran</th><th>PIN baru</th></tr></thead><tbody id="ubody">${ST.users.map(u => userRow(u)).join('')}</tbody></table></div></div>
     <div class="card sec"><h3 style="margin-top:0">Import data lama</h3>
       <p class="muted sm">Pindahkan riwayat dari Google Sheet lama: buka ORDER 2026 › File › Download › Microsoft Excel (.xlsx), lalu pilih sheet DASHBOARD PRODUKSI / DASBOARD PRODUKSI. Order yang sudah ada dilewati.</p>
       <div class="tbar"><label class="sm">Toko <select id="lToko">${(c.toko || []).map(t => `<option ${t === c.tokoDefault ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label><button class="btn sec" data-act="lamapick">${ic('upload')}Pilih file .xlsx</button></div>
@@ -1843,7 +1966,7 @@ async function cetakFile(no, id) {
   const e = ext(f.name);
   if (!PRINTABLE.includes(e)) return toast('File ' + e.toUpperCase() + ' tidak bisa dicetak dari browser. Gunakan Download.', 1);
   let v; try { v = await ambilFile(id); } catch (err) { return toast('Gagal mengambil file: ' + err.message, 1); }
-  const ok = await dlg({ title: 'Siap mencetak', html: `<div class="ubm"><b>${esc(f.name)}</b>\n\nDi jendela cetak, pastikan:\n• Ukuran kertas: <b>A3</b>\n• Skala: <b>Ukuran sebenarnya / Actual size (100%)</b> — bukan "Fit to page"\n• Margin: <b>None / Tidak ada</b></div>`, ok: 'Buka & Cetak' });
+  const ok = await dlg({ title: f.printedAt ? 'Cetak ulang?' : 'Siap mencetak', html: `<div class="ubm"><b>${esc(f.name)}</b>${f.printedAt ? `\n<span style="color:#ffc247">File ini sudah dicetak ${fDT(f.printedAt)}${f.printedBy ? ' oleh ' + esc(f.printedBy) : ''}.</span>` : ''}\n\nDi jendela cetak, pastikan:\n• Ukuran kertas: <b>A3</b>\n• Skala: <b>Ukuran sebenarnya / Actual size (100%)</b> — bukan "Fit to page"\n• Margin: <b>None / Tidak ada</b></div>`, ok: f.printedAt ? 'Cetak ulang' : 'Buka & Cetak' });
   if (!ok) return;
   if (e === 'pdf') {
     const w = window.open(v.url, '_blank');
@@ -1883,7 +2006,7 @@ const ACT = {
   home: () => SES && go(SES.peran === 'WONODADI' ? 'cetak' : 'produksi'),
   refresh: async () => { await sync(true); toast('Data dimuat ulang'); },
   theme: () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; LS.set('theme', t); applyTheme(); },
-  pos: () => { location.href = 'index.html'; },
+  pos: () => { const u = ST.cfg.posUrl; if (u) location.href = u; else if (history.length > 1) history.back(); else toast('Atur link Positif POS di Pengaturan', 1); },
   akun: async () => { if (await dlg({ title: SES.nama, msg: PERAN[SES.peran] + (CONF.demo ? ' · mode demo' : ''), ok: 'Keluar', cancel: 'Tutup', danger: true })) logout(); },
   open: (b, e) => { e.preventDefault(); openOrder(b.dataset.no); },
   close: () => closeMd(),
@@ -1923,8 +2046,9 @@ const ACT = {
   tsel: b => { b.checked ? ST.tl.sel.add(b.dataset.k) : ST.tl.sel.delete(b.dataset.k); VW.telasih.body(); },
   tselall: b => { const rows = VW.telasih.rows(ST.tl.tab); ST.tl.sel = new Set(b.checked ? rows.map(r => r.i.kunci) : []); VW.telasih.body(); },
   wacopy: () => salin(waText()),
-  waopen: () => { let n = String(ST.cfg.waTelasih || '').replace(/\D/g, ''); if (n.startsWith('0')) n = '62' + n.slice(1); window.open(`https://wa.me/${n}?text=${encodeURIComponent(waText())}`, '_blank'); },
-  tlsent: async () => { const ks = [...ST.tl.sel]; const tanpa = ks.filter(k => !liveFiles(ST.orders[ST.items[k].no]).length).length; if (tanpa && !await dlg({ title: 'Ada item tanpa file', msg: `${tanpa} item belum punya file cetak. Tetap tandai sudah dikirim ke Telasih?`, ok: 'Tetap tandai' })) return; await patch([], ks.map(k => ({ kunci: k, no: ST.items[k].no, tglKeVendor: nowStr() })), 'kirim ke telasih'); ST.tl.sel.clear(); toast(ks.length + ' item ditandai dikirim ke Telasih'); refresh(); },
+  wasend: () => kirimWA(),
+  edit: b => { const k = b.dataset.k; OPEN.has(k) ? OPEN.delete(k) : OPEN.add(k); const c = $$('#mdc .icard').find(e => e.dataset.k === k); if (c) $('.iedit', c).hidden = !OPEN.has(k); const o = ST.orders[DET]; if (o) $('#dJenis').innerHTML = jenisHTML(o); },
+  _tlsentLama: async () => { const ks = [...ST.tl.sel]; const tanpa = ks.filter(k => !liveFiles(ST.orders[ST.items[k].no]).length).length; if (tanpa && !await dlg({ title: 'Ada item tanpa file', msg: `${tanpa} item belum punya file cetak. Tetap tandai sudah dikirim ke Telasih?`, ok: 'Tetap tandai' })) return; await patch([], ks.map(k => ({ kunci: k, no: ST.items[k].no, tglKeVendor: nowStr() })), 'kirim ke telasih'); ST.tl.sel.clear(); toast(ks.length + ' item ditandai dikirim ke Telasih'); refresh(); },
   tlunsent: async () => { const ks = [...ST.tl.sel]; await patch([], ks.map(k => ({ kunci: k, no: ST.items[k].no, tglKeVendor: '' })), 'batal kirim telasih'); ST.tl.sel.clear(); refresh(); },
   tldone: async () => { const ks = [...ST.tl.sel]; ST.tl.sel.clear(); await setCetak(ks, true); toast(ks.length + ' item diterima dari Telasih'); },
   cfgsave: () => simpanCfg(),
@@ -1984,9 +2108,7 @@ async function doLogin() {
     start();
   } catch (e) { toast(e.message, 1); b.disabled = false; b.textContent = 'Masuk'; $('#pin').select(); }
 }
-/* login lewat Positif POS: tampilkan alasan bila akun tidak bisa membuka Rekap Order */
-function noAccess(msg) { clearInterval(syncTimer); clearInterval(fullTimer); POSBAR.block(/AUTH/.test(msg) ? 'Sesi Positif POS sudah berakhir. Masuk lagi di Positif POS.' : msg); }
-function logout() { if (!CONF.demo) return POSBAR.logout(); SES = null; LS.del('ses'); clearInterval(syncTimer); clearInterval(fullTimer); ST.orders = {}; ST.items = {}; ST.since = ''; ST.loaded = false; reindex(); closeMd(); showLogin(); }
+function logout() { SES = null; LS.del('ses'); clearInterval(syncTimer); clearInterval(fullTimer); ST.orders = {}; ST.items = {}; ST.since = ''; ST.loaded = false; reindex(); closeMd(); showLogin(); }
 async function start() {
   setSync(true, 'Memuat…');
   const v = LS.get('view', null);
@@ -2000,10 +2122,8 @@ function boot() {
   $('#btnRef').innerHTML = ic('refresh');
   $('#btnPos').innerHTML = ic('home');
   if (!CONF.api && !CONF.demo) return showSetup();
-  if (CONF.demo) { if (!SES) return showLogin(); return start(); }
-  if (!POSBAR.cred()) return POSBAR.block();
-  setSync(true, 'Memeriksa akun…');
-  api('login').then(j => { SES = { ...j.user }; LS.set('ses', SES); start(); }).catch(e => noAccess(e.message));
+  if (!SES) return showLogin();
+  start();
 }
 new ResizeObserver(() => document.documentElement.style.setProperty('--hh', $('#hd').offsetHeight + 'px')).observe($('#hd'));
 setInterval(() => { if (SES && ST.loaded) refresh(); }, 60000); // perbarui label "terlambat / hari ini"
