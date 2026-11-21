@@ -1,4 +1,4 @@
-/* Positif POS — inti bersama: login, server, sinkron, simpan di perangkat, menu utama, akun.
+/* Positif POS — inti bersama (rapi 21-11-2026: fungsi dobel yang tertimpa dihapus): login, server, sinkron, simpan di perangkat, menu utama, akun.
    Dipakai index.html dan produksi.html. Ubah di sini = berlaku di semua halaman. */
 /* ---------- HALAMAN: setiap menu besar punya file HTML sendiri ----------
    Halaman mengisi PAGE_TABS (menu yang ada di file itu) dan PAGE_HOME sebelum memuat inti.js.
@@ -81,15 +81,6 @@ const tabs=[['beranda','POS'],['kasir','Kasir'],['produk','Produk'],['stok','Sto
 const HUBAPPS=[['Resi Print','resi_print.html','app_resi_print'],['Resi Video Packing','resi_video_packing.html','app_resi_video'],['Resi Pickup Kurir','resi_pickup-kurir.html','app_resi_pickup']];
 const hubH=()=>(HUBAPPS.some(a=>can(a[2]))?`<span class="hub" onmouseenter="hubOpen(1)" onmouseleave="hubClose(1)"><button title="Positif Hub" aria-label="Positif Hub" onclick="location.href='PositifHub.html'">${IC('grid')}</button><button class="caret" id="hubcaret" aria-haspopup="true" aria-expanded="false" aria-label="Buka daftar app" onclick="hubToggle(event)">&#9662;</button></span>`:'')+(can('app_layout')?`<button class="stk nv" title="Layout Stiker" aria-label="Layout Stiker" onclick="location.href='LAYOUT_STIKER.html'">${IC('sticker')}</button>`:'');
 let hubT=null;
-function hubOpen(hov){
- if(hov&&!matchMedia('(hover:hover)').matches)return;
- clearTimeout(hubT);const m=$('hubmenu'),h=document.querySelector('.hub');if(!m||!h)return;
- const r=h.getBoundingClientRect();m.style.top=r.bottom+'px';m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px';
- m.classList.add('on');$('hubcaret').setAttribute('aria-expanded','true');
- m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px'}
-function hubClose(hov){
- if(hov){clearTimeout(hubT);hubT=setTimeout(()=>hubClose(0),150);return}
- const m=$('hubmenu');if(m)m.classList.remove('on');const c=$('hubcaret');if(c)c.setAttribute('aria-expanded','false')}
 function hubToggle(e){e.stopPropagation();const m=$('hubmenu');m&&m.classList.contains('on')?hubClose(0):hubOpen(0)}
 document.addEventListener('click',e=>{if(!e.target.closest('.hub'))hubClose(0)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')hubClose(0)});
@@ -109,8 +100,6 @@ const navH=()=>(can('kasir')?nb('kasir','Kasir'):'')
  +(SALES.some(s=>can(s[0]))?`<button class="nv${SALES.some(s=>s[0]===tab)?' on':''}" title="Penjualan" aria-label="Penjualan" onclick="go('${SALES.find(s=>can(s[0]))[0]}')">${IC('chart')}<span class="nl">Penjualan</span></button>`:'')
  +[['produk','Produk'],['bahan','Stok bahan baku'],['produksi','Produksi'],['pesanan','Pesanan custom'],['rekap','Rekap order']].filter(t=>tabOk(t[0])).map(t=>nb(t[0],t[1])).join('')+hubH();
 let ddT=null;
-function ddOpen(hov){if(hov&&!matchMedia('(hover:hover)').matches)return;clearTimeout(ddT);const m=$('ddmenu'),b=document.querySelector('.dd');if(!m||!b)return;const r=b.getBoundingClientRect();m.style.top=r.bottom+'px';m.classList.add('on');m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px'}
-function ddClose(hov){if(hov){clearTimeout(ddT);ddT=setTimeout(()=>ddClose(0),150);return}const m=$('ddmenu');if(m)m.classList.remove('on')}
 function ddToggle(e){e.stopPropagation();const m=$('ddmenu');m&&m.classList.contains('on')?ddClose(0):ddOpen(0)}
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;for(const[id,fn]of[['pm','closePm'],['hm','closeHm'],['pk','closePk'],['ed','edClose'],['modal','closeM']]){const m=$(id),f=window[fn];if(m&&f&&m.classList.contains('on')){f();e.stopImmediatePropagation();e.preventDefault();return}}},true);
 function go(t){tab=t;ddClose(0);render()}
@@ -351,28 +340,9 @@ function vSetup(){
  $('view').innerHTML=`<div class="card"><h2 style="margin:0 0 6px;font-size:26px">Selamat datang di Positif POS</h2><p class="muted" style="margin:0 0 12px">Spreadsheet masih kosong. ${isAdm?'Pilih cara memulai:':'Minta admin untuk mengisi data awal.'}</p>
  ${isAdm?`<div class="row" style="justify-content:flex-start;flex-wrap:wrap"><button class="btn sec" onclick="replaceAll(seed())">Isi dengan data contoh</button><label class="btn sec up">Impor dari berkas cadangan (.json)<input type="file" accept=".json,application/json" hidden onchange="impJ(this)"></label><button class="btn sec" onclick="skipSetup=true;render()">Mulai kosong</button></div>`:''}</div>`}
 function vLogin(msg){pend=()=>vLoginUI(msg);if(tab==='beranda'&&!ready){render();return}vLoginUI(msg)}
-function vLoginUI(msg){
- $('view').innerHTML=`<div class="card" style="max-width:380px;margin:40px auto"><h2 style="margin:0 0 6px;font-size:26px">Masuk ke Positif POS</h2><p class="muted" style="margin:0 0 10px">${API?'Masukkan PIN Anda.':'Isi alamat server satu kali, lalu masukkan PIN Anda.'}</p>${API?'':'<input id="url" autocomplete="off" placeholder="Alamat server (berakhiran /exec)" style="width:100%;margin-bottom:10px">'}<input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN" style="width:100%;margin-bottom:10px" onkeydown="if(event.key==='Enter')doLogin()"><button class="btn big" onclick="doLogin()">Masuk</button><p id="lm" class="bad" style="margin:10px 0 0">${esc(msg||'')}</p></div>`;
- const i=$('pin');if(i)i.focus()}
-async function doLogin(){
- const p=$('pin').value.trim();if(!p)return;
- if(!API){const u=(($('url')||{}).value||'').trim();if(!/^https:\/\/script\.google\.com\/.+\/exec/.test(u)){$('lm').textContent='Isi alamat server yang benar (berakhiran /exec).';return}API=u;try{localStorage.setItem('positif_api',API)}catch(e){}}
- PIN=p;$('lm').className='muted';$('lm').textContent='Memeriksa...';setSync('Menghubungkan...');
- try{await load(true);try{localStorage.setItem('positif_pin',p)}catch(e){}}
- catch(e){PIN='';setSync('Belum masuk');const auth=/AUTH/.test(e.message);if(!auth&&!/^https:\/\//.test(API_URL)){API='';try{localStorage.removeItem('positif_api')}catch(x){}}vLogin(auth?'PIN salah atau akses dikunci sementara.':'Gagal terhubung: '+e.message)}}
-function logout(){try{localStorage.removeItem('positif_pin')}catch(e){}location.reload()}
-function boot(){
- let p='';try{p=localStorage.getItem('positif_pin')||''}catch(e){}
- setSync('Belum masuk');if(!p||!API){vLogin();return}
- PIN=p;pend=()=>{$('view').innerHTML='<p class="muted">Menghubungkan ke Google Sheets...</p>'};render();setSync('Menghubungkan...');
- load(true).catch(e=>{PIN='';setSync('Belum masuk');vLogin(/AUTH/.test(e.message)?'':'Gagal terhubung: '+e.message)})}
 /* ---------- AKUN, RIWAYAT ORDER ---------- */
 const FIT=['kasir','laporan','riwayat','produksi'];
 function accInit(){const a=$('acc');if(!a)return;a.innerHTML=ready?'<button class="accb" id="accb" onclick="accToggle(event)" aria-haspopup="true" aria-expanded="false">'+esc(ME||'Akun')+' <span style="font-size:12px">&#9662;</span></button>':''}
-function accFill(){const m=$('accm');if(!m)return;
- let h='<div style="padding:10px 14px 6px"><b>'+esc(ME)+'</b><div class="muted" style="font-size:13px">'+(isAdm?'Admin':'Kasir')+'</div></div><hr class="mhr"><a role="menuitem" href="#" onclick="logout();return false">Keluar</a>';
- if(isAdm)h+='<hr class="mhr"><div class="muted" style="padding:4px 14px;font-size:13px">Cadangan terakhir: '+(S.lastBackup?fmt(S.lastBackup):'belum pernah')+'</div>'+(SSURL?'<a role="menuitem" href="'+esc(SSURL)+'" target="_blank" rel="noopener">Buka spreadsheet</a>':'')+'<a role="menuitem" href="#" onclick="mkBackup();return false">Buat salinan cadangan</a><label class="mlab">Impor dari berkas .json<input type="file" accept=".json,application/json" hidden onchange="impJ(this);accClose()"></label><hr class="mhr"><a role="menuitem" class="mdanger" href="#" onclick="accClose();resetAll();return false">Hapus semua data</a><p id="bmsg" style="margin:4px 14px 8px;font-size:13px;max-width:260px"></p>';
- m.innerHTML=h}
 function accPos(){const m=$('accm'),b=$('accb');if(!m||!b)return;const r=b.getBoundingClientRect();m.style.top=r.bottom+4+'px';m.style.left=Math.max(4,Math.min(r.right-m.offsetWidth,innerWidth-m.offsetWidth-4))+'px'}
 function accOpen(){accFill();$('accm').classList.add('on');accPos();const b=$('accb');if(b)b.setAttribute('aria-expanded','true')}
 function accClose(){const m=$('accm');if(m)m.classList.remove('on');const b=$('accb');if(b)b.setAttribute('aria-expanded','false')}
@@ -402,7 +372,7 @@ let USR='',ROLE='',PERM=[],USERS=[],ROLEP=null,WEAK=false,WARNED=false;
 const can=k=>ROLE==='admin'||PERM.includes(k);
 const TP={kasir:['kasir'],riwayat:['riwayat'],laporan:['laporan'],produk:['produk_edit','harga_edit','stok_ubah','kasir'],stok:['stok_ubah','kasir'],bahan:['stok_ubah'],produksi:['prod_lihat','prod_buat'],pesanan:[]};
 const tabOk=t=>t==='beranda'||(t==='bahan'&&!!ROLE)||(t==='pesanan'&&(ROLE==='admin'||ROLE==='supervisor'))||((t==='pengguna'||t==='peran')&&isAdm)||(t==='cadangan'&&(isAdm||can('backup')))||(t==='rekap'&&(can('rekap_kedawung')||can('rekap_wonodadi')))||(TP[t]||[]).some(can);
-function pTabOk(k){if(k==='cetak')return can('prod_buat');if(k==='gudang')return can('prod_lihat')||can('gudang');if(k==='petugas')return isAdm||can('prod_buat');return can('prod_lihat')}
+function pTabOk(k){if(k==='cetak'||k==='atur')return can('prod_buat');if(k==='gudang')return can('prod_lihat')||can('gudang');if(k==='petugas')return isAdm||can('prod_buat');return can('prod_lihat')}
 function ACC(r){USR=r.user||USR;ROLE=r.role||'admin';PERM=Array.isArray(r.perm)?r.perm:ALLP.concat(['pengguna']);USERS=r.users||[];ROLEP=r.roles||ROLEP;WEAK=!!r.weak;
  try{localStorage.setItem('positif_me',JSON.stringify({u:USR,name:r.name||ME,role:ROLE,perm:PERM,ss:r.ss||''}))}catch(e){}
  if(WEAK&&!WARNED){WARNED=true;setTimeout(()=>toast('PIN admin masih 123456. Segera ganti lewat menu akun > Ganti PIN.',1),900)}}
@@ -496,10 +466,10 @@ function usersHtml(part){let h='';
   +['supervisor','staf'].map(r=>'<div class="muted" style="font-size:13px;margin:10px 0 4px"><b>'+RL[r]+'</b></div><div class="pgw">'+chipG(k=>((ROLEP&&ROLEP[r])||[]).includes(k),k=>'togR(\''+r+'\',\''+k+'\')')+'</div>').join('')+'</div>'}
  return h}
 function pjHtml(){const dis=(isAdm||can('prod_buat'))?'':' disabled';
-return '<div class="card"><h2 style="margin:0 0 6px">Penanggung jawab per divisi</h2><div class="pjg">'+RS.map(s=>{const o=uAct(s),cur=USERS.find(u=>u.on&&(u.pj||[]).includes(s));return'<label><span>'+STL[s]+'</span><select'+dis+' onchange="setPJ(\''+s+'\',this.value)"><option value="">- belum ditentukan -</option>'+o.map(p=>'<option value="'+p.u+'"'+(cur&&cur.u===p.u?' selected':'')+'>'+esc(p.n)+'</option>').join('')+'</select></label>'}).join('')+'</div><p class="muted" style="margin:8px 0 0">Pilihan berisi pengguna aktif yang punya akses ke tahap tersebut.</p></div>';
+return '<div class="card"><h2 style="margin:0 0 6px">Penanggung jawab per divisi</h2><p class="muted" style="margin:0 0 10px">Nama diambil dari akun pengguna yang sama dengan login.</p><div class="pjg">'+RS.map(s=>{const o=uAct(s),cur=USERS.find(u=>u.on&&(u.pj||[]).includes(s));return'<label><span>'+STL[s]+'</span><select'+dis+' onchange="setPJ(\''+s+'\',this.value)"><option value="">- belum ditentukan -</option>'+o.map(p=>'<option value="'+p.u+'"'+(cur&&cur.u===p.u?' selected':'')+'>'+esc(p.n)+'</option>').join('')+'</select></label>'}).join('')+'</div><p class="muted" style="margin:8px 0 0">Pilihan berisi pengguna aktif yang punya akses ke tahap tersebut.</p></div>';
 }
 function petugasView(){if(tab!=='produksi'||pst!=='petugas'||!$('pbody'))return;
- $('pbody').innerHTML='<div class="pfh"><div><h1 class="pt">Penanggung jawab</h1><p class="muted">Pilih siapa yang bertanggung jawab di tiap divisi. Nama diambil dari akun pengguna yang sama dengan login.</p></div></div>'+pjHtml()}
+ $('pbody').innerHTML=pjHtml()}
 /* tampilan Pengaturan (Pengguna · Peran · Cadangan) ada di pengaturan.html */
 const uRef=()=>{if(tab==='pengguna'||tab==='peran')vPengaturan();else petugasView()};
 
@@ -519,4 +489,3 @@ async function loadSmart(pv,n){
  const vs={};(R.variants||[]).forEach(x=>{vs[x.id]=x.d});
  S.products.forEach(p=>p.variants.forEach(v=>{const d=vs[String(v.id)];if(d)v.stock=+d.stock||0}));
  onData();setSync('Tersinkron')}
-
