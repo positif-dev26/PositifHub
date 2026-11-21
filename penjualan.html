@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tema.css?v=20261121b">
+<link rel="stylesheet" href="tema.css?v=20261121c">
 </head>
 <body>
 <header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
@@ -26,14 +26,14 @@
 <div id="zm" class="modal" onclick="if(event.target===this)zClose()"><div class="card wide" id="zmc"></div></div>
 <div id="plabels"></div>
 <script>window.PAGE_TABS=["riwayat", "laporan"];window.PAGE_HOME="riwayat";</script>
-<script src="inti.js?v=20261121b"></script>
+<script src="inti.js?v=20261121c"></script>
 <script>
 /* ---------- PENJUALAN: sub menu Riwayat · Laporan ---------- */
 const SUBP=[['riwayat','Riwayat','history','Riwayat penjualan'],['laporan','Laporan','chart','Laporan penjualan']];
 function salesShell(){$('view').innerHTML='<div class="prod"><div class="ptabs rl">'+SUBP.filter(x=>can(x[0])).map(([k,l,i,t])=>'<button class="'+(k===tab?'on':'')+'" title="'+t+'" aria-label="'+t+'" onclick="go(\''+k+'\')">'+IC(i)+'<span>'+l+'</span></button>').join('')+'</div><div id="pbody"></div></div>'}
 function vRiwayat(){
  const dt=d=>new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}),tm=d=>new Date(d).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
- const its=s=>{const a=s.items.map(i=>esc(i.name)+' x'+i.qty),n=a.length,pc=s.items.reduce((x,i)=>x+i.qty,0);return `<b>${n} item · ${nf(pc)} pcs</b><br>${a.slice(0,2).join(', ')}`+(n>2?`<span hidden>, ${a.slice(2).join(', ')}</span> <button class="lnk" style="display:inline" onclick="const p=this.previousElementSibling;p.hidden=!p.hidden;this.textContent=p.hidden?'+${n-2} item lainnya':'Ringkas'">+${n-2} item lainnya</button>`:'')+(s.catatan?`<br><small>Catatan: ${esc(s.catatan)}</small>`:'')};
+ const its=s=>{const a=s.items.map(i=>esc(i.name)+' x'+i.qty),n=a.length,pc=s.items.reduce((x,i)=>x+i.qty,0);return `<b>${n} item · ${nf(pc)} pcs</b><br>${a.slice(0,2).join(', ')}`+(n>2?`<span hidden>, ${a.slice(2).join(', ')}</span> <button class="lnk" style="display:inline" onclick="const p=this.previousElementSibling;p.hidden=!p.hidden;this.textContent=p.hidden?'+${n-2} item lainnya':'Ringkas'">+${n-2} item lainnya</button>`:'')};
  salesShell();$('pbody').innerHTML=`<div class="card fl"><h2 class="fn" style="margin:0 0 10px">Riwayat penjualan</h2><div class="scroll fs"><table class="rt"><tr><th>No.</th><th>Waktu</th><th>Item</th><th>Bayar</th><th class="r">Total</th><th></th></tr>
  ${S.sales.length?S.sales.map(s=>`<tr><td class="mo">${s.id}</td><td>${dt(s.date)}<br><small>${tm(s.date)}</small></td><td class="it">${its(s)}</td><td><span class="badge">${s.pay}</span></td><td class="r"><b>${rp(s.total)}</b></td><td><button class="btn sec" onclick="receipt(S.sales.find(x=>x.id==='${s.id}'))">Struk</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">Belum ada transaksi. Selesaikan penjualan pertama di menu Kasir.</td></tr>'}</table></div></div>`;
 }

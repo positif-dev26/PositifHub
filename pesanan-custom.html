@@ -487,6 +487,7 @@ const round500 = n => Math.round(n / 500) * 500;
 const round100 = n => Math.round(n / 100) * 100;
 
 const ICON = {
+  key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/>',
   rekap: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
   list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
   users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -586,10 +587,13 @@ async function post(body, url) {
   const res = await fetch(url || S.api, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
   return res.json();
 }
-async function api(action, data) {
+async function api(action, data, ulang) {
   if (S.demo) return demoApi(action, data || {});
   const j = await post({ action, token: S.token, data: data || {} });
-  if (!j.ok && j.error === 'SESI_HABIS') { logout(true); throw new Error('Sesi habis, silakan masuk lagi.'); }
+  if (!j.ok && j.error === 'SESI_HABIS') {
+    if (!ulang && await posConnect(true)) return api(action, data, true); // sesi dibuat ulang dari login POS
+    S.user = null; S.token = ''; render(); throw new Error('Sesi habis.');
+  }
   if (!j.ok) { setSync('Gagal sinkron', true); throw new Error(j.error || 'Gagal memproses.'); }
   if (action !== 'bootstrap' && action !== 'uploadImage' && action !== 'getVer') setSync('ok');
   if (j.ver != null && WRITE_ACTS.indexOf(action) > -1) { if (j.ver === (S.ver || 0) + 1) S.ver = j.ver; snapSave(); }
@@ -677,28 +681,38 @@ function seedDemo() {
   return db;
 }
 
-/* ---------------- login ---------------- */
-async function doLogin(username, pin) {
-  loading(true);
+/* ---------------- login: ikut akun Positif POS (tidak ada form login) ---------------- */
+const POS_API = 'https://script.google.com/macros/s/AKfycbwUEqf4lS9mn3Gdyo3vpDmTl3u9gxQzIEIf83dJMeopMDDQpHu_-pcG9puoPFHfMOOBkA/exec';
+function posCred() { try { const o = JSON.parse(localStorage.getItem('positif_cred') || sessionStorage.getItem('positif_cred') || 'null'); return o && o.u && o.t ? o : null; } catch (e) { return null; } }
+/* tukar tiket login POS dengan sesi Pesanan custom. silent = tanpa mengubah tampilan */
+async function posConnect(silent) {
+  const c = posCred();
+  if (!c) { S.posErr = ''; S.connecting = false; if (!silent) render(); return false; }
+  if (!silent) { S.connecting = true; S.posErr = ''; render(); }
   try {
-    const j = await post({ action: 'login', data: { username, pin } });
-    if (!j.ok) throw new Error(j.error || 'Gagal masuk.');
-    S.token = j.token; S.user = j.user; S.demo = false;
-    LS.set('ppc_session', { token: S.token, user: S.user, api: S.api });
-    await boot();
-  } catch (e) { toast(e.message === 'Failed to fetch' ? 'Server tidak bisa dihubungi. Cek URL di Pengaturan.' : e.message, true); }
-  finally { loading(false); }
+    const j = await post({ action: 'posLogin', data: { user: c.u, tok: c.t } });
+    if (!j.ok) throw new Error(j.error || 'Gagal menyambungkan akun Positif POS.');
+    S.token = j.token; S.user = j.user; S.demo = false; S.connecting = false;
+    LS.set('ppc_session', { token: S.token, user: S.user, api: S.api, pos: c.u });
+    return true;
+  } catch (e) {
+    S.connecting = false; S.user = null; S.token = '';
+    S.posErr = /AUTH/.test(e.message) ? 'Sesi Positif POS sudah berakhir. Masuk lagi di Positif POS.' : e.message === 'Failed to fetch' ? 'Server tidak bisa dihubungi. Periksa koneksi internet lalu coba lagi.' : e.message;
+    if (!silent) render(); return false;
+  }
 }
-async function demoLogin(role) {
-  S.demo = true; S.token = 'demo'; S.user = { username: role, nama: ROLE_LABEL[role] + ' (coba)', role };
-  LS.set('ppc_session', { token: 'demo', user: S.user, demo: true });
-  await boot();
-}
-async function logout(silent) {
-  if (!silent && S.edit && S.editDirty && !(await ask('Perubahan pesanan belum disimpan. Tetap keluar?'))) return;
+/* keluar = keluar dari Positif POS juga */
+async function logout() {
+  if (S.edit && S.editDirty && !(await ask('Perubahan pesanan belum disimpan. Tetap keluar?'))) return;
+  const c = posCred();
   if (!S.demo && S.token) api('logout').catch(() => {});
+  if (c) { try { fetch(POS_API, { method: 'POST', body: JSON.stringify({ fn: 'logout', tok: c.t }) }).catch(() => {}); } catch (e) {} }
   if (S.user && !S.demo) IDB.del('ppc:' + S.user.username);
-  LS.del('ppc_session'); S.user = null; S.token = ''; S.edit = null; S.view = 'list'; S.ver = null; render();
+  try {
+    LS.del('ppc_session'); localStorage.removeItem('positif_cred'); sessionStorage.removeItem('positif_cred'); localStorage.removeItem('positif_me');
+    if (c) { const q = indexedDB.open('positif-pos', 1); q.onsuccess = () => { try { q.result.transaction('kv', 'readwrite').objectStore('kv').delete('snap:' + c.u); } catch (e) {} }; }
+  } catch (e) {}
+  setTimeout(() => { location.href = 'index.html'; }, 250);
 }
 /* ---------- simpan data terakhir di perangkat (IndexedDB) supaya langsung tampil ---------- */
 const WRITE_ACTS = ['saveOrder', 'saveOrders', 'deleteOrder', 'saveCustomer', 'deleteCustomer', 'saveMaster'];
@@ -964,7 +978,7 @@ function sizesForItem(o, it) {
 const $app = document.getElementById('app');
 /* ---------- menu utama (sama dengan Positif POS) ---------- */
 /* [kunci, ikon, label, file, izin] — izin dibaca dari akun Positif POS di perangkat ini */
-const POS_TABS = [['kasir', 'receipt', 'Kasir', 'kasir.html', ['kasir']], ['penjualan', 'chart', 'Penjualan', 'penjualan.html#riwayat', ['riwayat', 'laporan']], ['produk', 'box', 'Produk', 'produk.html', ['produk_edit', 'harga_edit', 'stok_ubah', 'kasir']], ['bahan', 'layers', 'Stok bahan baku', 'stok-bahan-baku-v8.html', null], ['produksi', 'factory', 'Produksi', 'produksi.html', ['prod_lihat', 'prod_buat']], ['pesanan', 'clipboard', 'Pesanan custom', '', ['pesanan']], ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', ['rekap_kedawung', 'rekap_wonodadi']]];
+const POS_TABS = [['kasir', 'receipt', 'Kasir', 'kasir.html', ['kasir']], ['penjualan', 'chart', 'Penjualan', 'penjualan.html#riwayat', ['riwayat', 'laporan']], ['produk', 'box', 'Produk', 'produk.html', ['produk_edit', 'harga_edit', 'stok_ubah', 'kasir']], ['bahan', 'layers', 'Stok bahan baku', 'stok-bahan-baku-v8.html', null], ['produksi', 'factory', 'Produksi', 'produksi.html', ['prod_lihat', 'prod_buat']], ['pesanan', 'clipboard', 'Pesanan custom', '', null], ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', ['rekap_kedawung', 'rekap_wonodadi']]];
 const HUBAPPS = [['Resi Print', 'resi_print.html', 'app_resi_print'], ['Resi Video Packing', 'resi_video_packing.html', 'app_resi_video'], ['Resi Pickup Kurir', 'resi_pickup-kurir.html', 'app_resi_pickup']];
 function posMe() { try { const c = JSON.parse(localStorage.getItem('positif_cred') || 'null'), m = JSON.parse(localStorage.getItem('positif_me') || 'null'); return c && m && m.u === c.u ? m : null; } catch (e) { return null; } }
 function posCan(ks) { if (!ks) return true; const m = posMe(); if (!m) return true; return m.role === 'admin' || ks.some(k => (m.perm || []).includes(k)); }
@@ -1049,23 +1063,14 @@ addEventListener('resize', closeDrop);
 
 /* ---------- login ---------- */
 function loginView() {
-  const has = !!S.api;
-  return `<div class="login"><div class="card">
-    ${LOGO.indexOf('data:') === 0 ? `<img src="${LOGO}" alt="Positif">` : '<div class="cond" style="text-align:center;font:900 italic 36px Barlow Condensed"><b style="color:var(--acc)">+</b>POSITIF</div>'}
-    <h2 style="text-align:center;margin:8px 0 2px;font-size:26px">Pesanan custom</h2>
-    <div class="muted" style="text-align:center;margin:0 0 18px">Masuk dengan akun Positif POS</div>
-    ${has ? `
-      <form data-form="login" class="grid">
-        <label class="f"><span>Username</span><input name="u" autocomplete="username" required autofocus></label>
-        <label class="f"><span>PIN</span><input name="p" type="password" inputmode="numeric" autocomplete="current-password" required></label>
-        <button class="btn pri" style="justify-content:center">Masuk</button>
-      </form>
-    `
-    : `
-      <div class="info" style="margin-bottom:12px">Alamat server (URL Apps Script /exec) belum diisi. Isi dulu supaya data tersimpan di Google Sheets, atau coba aplikasinya dulu dengan data contoh.</div>
-      <button class="btn pri" style="width:100%;justify-content:center" data-act="setApi">${ic('gear')} Isi alamat server</button>
-      <div class="muted small" style="margin:16px 0 8px">Mode Coba: masuk sebagai</div>
-      <div class="grid g3">${['pemilik', 'admin', 'staf'].map(r => `<button class="btn" style="justify-content:center" data-act="demo" data-r="${r}">${ROLE_LABEL[r]}</button>`).join('')}</div>`}
+  const logo = LOGO.indexOf('data:') === 0 ? `<img src="${LOGO}" alt="Positif">` : '<div class="cond" style="text-align:center;font:900 italic 36px Barlow Condensed"><b style="color:var(--acc)">+</b>POSITIF</div>';
+  if (S.connecting) return `<div class="login"><div class="card" style="text-align:center">${logo}<div class="muted" style="margin:14px 0 4px">Menyambungkan akun Positif POS…</div></div></div>`;
+  const msg = S.posErr || 'Masuk dulu ke Positif POS. Setelah itu Pesanan custom terbuka otomatis.';
+  return `<div class="login"><div class="card" style="text-align:center">${logo}
+    <h2 style="margin:8px 0 10px;font-size:26px">Pesanan custom</h2>
+    <p class="muted" style="margin:0 0 18px;line-height:1.5">${esc(msg)}</p>
+    <a class="btn pri" style="width:100%;justify-content:center;text-decoration:none" href="index.html">Buka Positif POS</a>
+    ${S.posErr && posCred() ? `<button class="btn ghost" style="width:100%;justify-content:center;margin-top:8px" data-act="posRetry">${ic('refresh')} Coba lagi</button>` : ''}
   </div></div>`;
 }
 
@@ -1988,8 +1993,13 @@ const ACT = {
   posTab: el => { closeDrop(); posGo(el.dataset.v === 'beranda' ? 'index.html' : 'index.html#' + el.dataset.v); },
   posFile: el => { closeDrop(); posGo(el.dataset.f); },
   ddHub: el => dropMenu(el, HUBAPPS.filter(a => posCan([a[2]])).map(([l, f]) => `<a href="#" data-act="posFile" data-f="${f}">${l}</a>`).join('')),
-  ddAcc: el => dropMenu(el, `<div style="padding:10px 14px 6px"><b>${esc(S.user.nama)}</b><div class="muted small">${ROLE_LABEL[S.user.role]}${S.demo ? ' · Mode Coba' : ''}</div></div><hr>
-    <div class="accrow">${ibc('syncNow', 'refresh', 'Muat ulang', '', 'sm')}${S.user.role === 'pemilik' ? ibc('exportJson', 'down', 'Cadangan', '', 'sm') : ''}${ibc('logout', 'out', 'Keluar', '', 'sm danger')}</div>`),
+  ddAcc: el => dropMenu(el, `<div style="padding:10px 14px 6px"><b>${esc(S.user.nama)}</b><div class="muted small">${ROLE_LABEL[S.user.role]} · @${esc(S.user.username)}</div></div><hr>
+    <a href="#" data-act="syncNow">${ic('refresh')} Muat ulang</a>
+    ${S.user.role === 'pemilik' ? `<a href="#" data-act="exportJson">${ic('down')} Unduh cadangan</a>` : ''}
+    <a href="#" data-act="posFile" data-f="index.html?gantipin=1">${ic('key')} Ganti PIN</a>
+    ${S.user.role === 'pemilik' ? `<a href="#" data-act="posFile" data-f="pengaturan.html">${ic('gear')} Pengaturan</a>` : ''}
+    <hr><a href="#" data-act="logout" style="color:var(--red,#ff8a8a)">${ic('out')} Keluar</a>`),
+  posRetry: async () => { if (await posConnect()) boot(); },
   syncNow: async () => { closeDrop(); await syncCheck(true); },
   bPick: el => { S.ui.bahan = el.dataset.id; rerenderMain(); },
   bKat: el => { S.ui.bkat = el.dataset.k; rerenderMain(); },
@@ -2114,13 +2124,13 @@ window.addEventListener('beforeunload', e => { if ((S.editDirty && S.view === 'o
   if (GAS && typeof google !== 'undefined' && google.script.url) {
     try { await new Promise(res => { google.script.url.getLocation(l => { if (l && l.parameter && l.parameter.embed === '1') S.embed = true; res(); }); setTimeout(res, 1500); }); } catch (e) {}
   }
-  const ss = LS.get('ppc_session', null);
-  if (ss && ss.user) {
-    S.user = ss.user; S.token = ss.token;
-    if (ss.demo) S.demo = true; else if (ss.api) S.api = S.api || ss.api;
+  const c = posCred(), ss = LS.get('ppc_session', null);
+  if (!c) { LS.del('ppc_session'); render(); return; }               // belum masuk Positif POS
+  if (ss && ss.user && !ss.demo && ss.token && ss.pos === c.u) {     // sesi milik akun POS yang sama
+    S.user = ss.user; S.token = ss.token; if (ss.api) S.api = S.api || ss.api;
     boot(); return;
   }
-  render();
+  if (await posConnect()) boot();
 })();
 </script>
 </body>

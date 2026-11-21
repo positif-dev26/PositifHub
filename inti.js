@@ -400,8 +400,8 @@ const PL={kasir:'Kasir (jual)',riwayat:'Riwayat penjualan',laporan:'Laporan penj
 const RL={admin:'Admin',supervisor:'Supervisor',staf:'Staf'};
 let USR='',ROLE='',PERM=[],USERS=[],ROLEP=null,WEAK=false,WARNED=false;
 const can=k=>ROLE==='admin'||PERM.includes(k);
-const TP={kasir:['kasir'],riwayat:['riwayat'],laporan:['laporan'],produk:['produk_edit','harga_edit','stok_ubah','kasir'],stok:['stok_ubah','kasir'],bahan:['stok_ubah'],produksi:['prod_lihat','prod_buat'],pesanan:['pesanan']};
-const tabOk=t=>t==='beranda'||(t==='bahan'&&!!ROLE)||((t==='pengguna'||t==='peran')&&isAdm)||(t==='cadangan'&&(isAdm||can('backup')))||(t==='rekap'&&(can('rekap_kedawung')||can('rekap_wonodadi')))||(TP[t]||[]).some(can);
+const TP={kasir:['kasir'],riwayat:['riwayat'],laporan:['laporan'],produk:['produk_edit','harga_edit','stok_ubah','kasir'],stok:['stok_ubah','kasir'],bahan:['stok_ubah'],produksi:['prod_lihat','prod_buat'],pesanan:[]};
+const tabOk=t=>t==='beranda'||(t==='bahan'&&!!ROLE)||(t==='pesanan'&&(ROLE==='admin'||ROLE==='supervisor'))||((t==='pengguna'||t==='peran')&&isAdm)||(t==='cadangan'&&(isAdm||can('backup')))||(t==='rekap'&&(can('rekap_kedawung')||can('rekap_wonodadi')))||(TP[t]||[]).some(can);
 function pTabOk(k){if(k==='cetak')return can('prod_buat');if(k==='gudang')return can('prod_lihat')||can('gudang');if(k==='petugas')return isAdm||can('prod_buat');return can('prod_lihat')}
 function ACC(r){USR=r.user||USR;ROLE=r.role||'admin';PERM=Array.isArray(r.perm)?r.perm:ALLP.concat(['pengguna']);USERS=r.users||[];ROLEP=r.roles||ROLEP;WEAK=!!r.weak;
  try{localStorage.setItem('positif_me',JSON.stringify({u:USR,name:r.name||ME,role:ROLE,perm:PERM,ss:r.ss||''}))}catch(e){}
@@ -483,7 +483,7 @@ function addU(){const u=$('nu').value.trim().toLowerCase(),n=$('nn').value.trim(
 function togR(r,k){const b=((ROLEP&&ROLEP[r])||[]).slice(),i=b.indexOf(k);i<0?b.push(k):b.splice(i,1);uCall('roleSave',r,b)}
 function setPJ(s,un){uCall('setPJ',s,un)}
 /* izin dikelompokkan supaya mudah dibaca */
-const PGRP=[['Penjualan & stok',['kasir','riwayat','laporan','void','produk_edit','harga_edit','stok_ubah','hapus']],['Produksi',['prod_lihat','prod_buat','prod_cetak','prod_bahan','prod_cutting','prod_jahit','prod_finishing','gudang']],['Pesanan & rekap order',['pesanan','rekap_kedawung','rekap_wonodadi']],['Aplikasi Hub',['app_resi_print','app_resi_video','app_resi_pickup','app_layout']],['Sistem',['backup','pengaturan']]];
+const PGRP=[['Penjualan & stok',['kasir','riwayat','laporan','void','produk_edit','harga_edit','stok_ubah','hapus']],['Produksi',['prod_lihat','prod_buat','prod_cetak','prod_bahan','prod_cutting','prod_jahit','prod_finishing','gudang']],['Rekap order',['rekap_kedawung','rekap_wonodadi']],['Aplikasi Hub',['app_resi_print','app_resi_video','app_resi_pickup','app_layout']],['Sistem',['backup','pengaturan']]];
 const chipG=(has,fn)=>PGRP.map(([g,ks])=>'<div class="pgl">'+g+'</div><div class="chs">'+ks.map(k=>'<button class="chp'+(has(k)?' on':'')+'" onclick="'+fn(k)+'">'+PL[k]+'</button>').join('')+'</div>').join('');
 function usersHtml(part){let h='';
  if(isAdm){
