@@ -45,7 +45,7 @@
       ['kasir', 'receipt', 'Kasir', 'kasir.html', can('kasir')],
       ['penjualan', 'chart', 'Penjualan', jual, any(['riwayat', 'laporan'])],
       ['produk', 'box', 'Produk', 'produk.html', any(['produk_edit', 'harga_edit', 'stok_ubah', 'kasir'])],
-      ['bahan', 'layers', 'Stok bahan baku', 'stok-bahan-baku-v8.html', !!me()],
+      ['bahan', 'layers', 'Stok bahan baku', 'stok-bahan-baku-v9.html', !!me()],
       ['produksi', 'factory', 'Produksi', 'produksi.html', any(['prod_lihat', 'prod_buat'])],
       ['pesanan', 'clipboard', 'Pesanan custom', 'pesanan-custom.html', !!me() && (me().role === 'admin' || me().role === 'supervisor')],
       ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', any(['rekap_kedawung', 'rekap_wonodadi'])]
