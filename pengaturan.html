@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="id" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pengaturan · Positif POS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060606">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Positif POS">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tema.css?v=20261121b">
+</head>
+<body>
+<header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
+<main id="view"></main>
+<div id="modal" class="modal"><div class="card"><div id="rc" class="rc"></div>
+<div class="row noprint"><button class="btn sec" onclick="closeM()">Tutup</button><select id="rw" onchange="setRW(this.value)" title="Lebar kertas"><option value="58">58 mm</option><option value="80">80 mm</option><option value="100">100 mm</option></select><button class="btn" onclick="printRc()">Cetak struk</button></div></div></div>
+<div id="pk" class="modal" onclick="if(event.target===this)closePk()"><div class="card wide" id="pkc"></div></div>
+<div id="pm" class="modal" onclick="if(event.target===this)closePm()"><div class="card wide" id="pmc"></div></div>
+<div id="ed" class="modal" onclick="if(event.target===this)edClose()"><div class="card wide mf" id="edc" style="width:min(1100px,100%)"></div></div>
+<div class="hubmenu" id="accm" role="menu"></div>
+<div id="hm" class="modal" onclick="if(event.target===this)closeHm()"><div class="card wide mf" id="hmc"></div></div>
+<div id="zm" class="modal" onclick="if(event.target===this)zClose()"><div class="card wide" id="zmc"></div></div>
+<div id="plabels"></div>
+<script>window.PAGE_TABS=["pengguna", "peran", "cadangan"];window.PAGE_HOME="pengguna";</script>
+<script src="inti.js?v=20261121b"></script>
+<script>
+/* ---------- PENGATURAN: Pengguna · Peran · Cadangan ---------- */
+const SUBA=[['pengguna','Pengguna','users','Pengguna'],['peran','Peran','shield','Akses per peran'],['cadangan','Cadangan','db','Cadangan data']];
+const saOk=k=>k==='cadangan'?(isAdm||can('backup')):isAdm;
+function vPengaturan(){if(!saOk(tab)){const f=SUBA.find(x=>saOk(x[0]));if(!f){tab='beranda';render();return}tab=f[0];try{history.replaceState(null,'','#'+tab)}catch(e){}}
+ $('view').innerHTML='<div class="prod"><div class="ptabs rl">'+SUBA.filter(x=>saOk(x[0])).map(([k,l,i,t])=>'<button class="'+(k===tab?'on':'')+'" title="'+t+'" aria-label="'+t+'" onclick="go(\''+k+'\')">'+IC(i)+'<span>'+l+'</span></button>').join('')+'</div><div id="pbody"></div></div>';
+ const P=$('pbody');
+ if(tab==='pengguna')P.innerHTML='<div class="pfh"><h1 class="pt">Pengguna</h1></div><div id="ubody">'+usersHtml('u')+'</div>';
+ else if(tab==='peran')P.innerHTML='<div class="pfh"><h1 class="pt">Akses per peran</h1></div>'+usersHtml('r')+'<p class="muted" style="margin:10px 2px">Admin selalu bisa membuka semua menu. Akses tambahan untuk satu orang bisa diatur di sub menu Pengguna.</p>';
+ else{const row=(ic,l,d,on,cls)=>'<button class="cdr'+(cls?' '+cls:'')+'" onclick="'+on+'">'+IC(ic)+'<span><b>'+l+'</b><small>'+d+'</small></span></button>';
+  P.innerHTML='<div class="pfh"><h1 class="pt">Cadangan data</h1></div><div class="card cdg"><p class="muted" style="margin:0 0 10px">Cadangan terakhir: <b>'+(S.lastBackup?fmt(S.lastBackup):'belum pernah')+'</b></p>'
+  +(can('backup')?row('copy','Buat salinan cadangan','Menyalin seluruh spreadsheet ke Google Drive','mkBackup()'):'')
+  +(can('backup')&&SSURL?'<a class="cdr" href="'+esc(SSURL)+'" target="_blank" rel="noopener">'+IC('sheet')+'<span><b>Buka Google Sheet</b><small>Lihat data langsung di spreadsheet</small></span></a>':'')
+  +(isAdm?'<label class="cdr">'+IC('upload')+'<span><b>Pulihkan dari berkas .json</b><small>Mengganti semua data dengan isi berkas cadangan</small></span><input type="file" accept=".json,application/json" hidden onchange="impJ(this)"></label>':'')
+  +(isAdm?row('trash','Hapus semua data','Mengosongkan produk, stok, transaksi, dan pesanan untuk semua komputer','resetAll()','dg'):'')
+  +'<p id="bmsg" style="margin:10px 2px 0"></p></div>'}
+ stk()}
+boot();
+</script></body></html>

@@ -437,3 +437,47 @@ body:has(#sdm) #toasts{top:14px;bottom:auto}
  #pdt .pdt input,#pdt .pdt select{padding:6px 10px}
  #pdt .pdt label{margin:4px 0 2px;font-size:13px}
 }
+
+/* =====================================================================
+   REVISI TAHAP 4: halaman per menu, jam di kanan atas, login & menu akun simpel
+   ===================================================================== */
+/* jam, hari, tanggal di kiri status sinkron */
+.clk{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.clk b{color:var(--text);font-weight:700;font-size:14px}
+header .clk+#sync{margin-left:14px}
+@media(max-width:860px){header .clk{order:1;margin-left:auto}header .clk .cd{display:none}header .clk+#sync{margin-left:10px}}
+/* login */
+.lgn{min-height:calc(100dvh - var(--hh,60px) - 40px);display:grid;place-items:center;padding:20px}
+.lgc{width:min(340px,100%);display:flex;flex-direction:column;gap:10px;padding:28px 24px 22px;border-radius:22px;background:var(--card);border:1.5px solid var(--lmb);box-shadow:0 0 44px -14px rgba(212,255,63,.55)}
+.lgl{width:72%;margin:0 auto 12px;display:block}
+.lgc input{width:100%;font-size:16px;padding:12px 14px;border-radius:12px}
+.lgc .btn.big{margin-top:6px;border-radius:12px}
+.lgc #lm{margin:2px 0 0;min-height:1.2em;text-align:center;font-size:14px}
+/* menu akun: daftar ikon + tulisan */
+#accm{min-width:230px;padding:6px}
+.acch{padding:8px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:4px;display:flex;flex-direction:column}
+.acch b{font-size:16px}.acch span{font-size:13px;color:var(--muted)}
+.accw{margin:2px 8px 6px;padding:6px 10px;border-radius:10px;font-size:13px;color:#ffc247;background:rgba(255,194,71,.1);border:1px solid rgba(255,194,71,.4)}
+.acci{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border:0;border-radius:10px;background:transparent;color:var(--text);font:600 15px Barlow,sans-serif;text-align:left;text-decoration:none;cursor:pointer}
+.acci .ico{width:19px;height:19px;color:var(--acc)}
+.acci:hover{background:rgba(212,255,63,.1)}
+.acci.dg,.acci.dg .ico{color:#ff8a8a}.acci.dg:hover{background:rgba(255,107,107,.1)}
+#accm .mhr{margin:4px 2px}
+/* pengaturan: izin dikelompokkan */
+.pgw{display:flex;flex-direction:column;gap:2px}
+.pgl{font-size:12px;color:var(--muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.06em}
+.pgw .chs .chp{font-size:13px;padding:5px 11px}
+/* pengaturan: cadangan */
+.cdg{max-width:620px;padding:16px}
+.cdr{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;margin:0 0 8px;border:1px solid var(--lmw);border-radius:14px;background:transparent;color:var(--text);font:inherit;text-align:left;text-decoration:none;cursor:pointer}
+.cdr .ico{width:22px;height:22px;color:var(--acc);flex:none}
+.cdr span{display:flex;flex-direction:column}.cdr b{font-size:15px}.cdr small{color:var(--muted);font-size:13px}
+.cdr:hover{border-color:var(--acc);background:rgba(212,255,63,.05)}
+.cdr.dg{border-color:rgba(255,107,107,.45)}.cdr.dg .ico,.cdr.dg b{color:#ff8a8a}.cdr.dg:hover{background:rgba(255,107,107,.08);border-color:#ff6b6b}
+#accm a.acci{display:flex}
+@media(max-width:860px){header .clk{order:0;margin-left:auto}header .clk+#sync{margin-left:8px!important}}
+@media(max-width:400px){header #sync{display:none}}
+/* kasir di HP: kolom cari & pilihan kategori tidak melebihi layar */
+.bar.fn #q{min-width:0;flex:1}
+@media(max-width:600px){.bar.fn #cat{max-width:38%;min-width:0}}
+@media(max-width:860px){.pos{grid-template-columns:minmax(0,1fr)!important}.pos>*{min-width:0}}

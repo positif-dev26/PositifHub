@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="id" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Penjualan · Positif POS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060606">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Positif POS">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tema.css?v=20261121b">
+</head>
+<body>
+<header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
+<main id="view"></main>
+<div id="modal" class="modal"><div class="card"><div id="rc" class="rc"></div>
+<div class="row noprint"><button class="btn sec" onclick="closeM()">Tutup</button><select id="rw" onchange="setRW(this.value)" title="Lebar kertas"><option value="58">58 mm</option><option value="80">80 mm</option><option value="100">100 mm</option></select><button class="btn" onclick="printRc()">Cetak struk</button></div></div></div>
+<div id="pk" class="modal" onclick="if(event.target===this)closePk()"><div class="card wide" id="pkc"></div></div>
+<div id="pm" class="modal" onclick="if(event.target===this)closePm()"><div class="card wide" id="pmc"></div></div>
+<div id="ed" class="modal" onclick="if(event.target===this)edClose()"><div class="card wide mf" id="edc" style="width:min(1100px,100%)"></div></div>
+<div class="hubmenu" id="accm" role="menu"></div>
+<div id="hm" class="modal" onclick="if(event.target===this)closeHm()"><div class="card wide mf" id="hmc"></div></div>
+<div id="zm" class="modal" onclick="if(event.target===this)zClose()"><div class="card wide" id="zmc"></div></div>
+<div id="plabels"></div>
+<script>window.PAGE_TABS=["riwayat", "laporan"];window.PAGE_HOME="riwayat";</script>
+<script src="inti.js?v=20261121b"></script>
+<script>
+/* ---------- PENJUALAN: sub menu Riwayat · Laporan ---------- */
+const SUBP=[['riwayat','Riwayat','history','Riwayat penjualan'],['laporan','Laporan','chart','Laporan penjualan']];
+function salesShell(){$('view').innerHTML='<div class="prod"><div class="ptabs rl">'+SUBP.filter(x=>can(x[0])).map(([k,l,i,t])=>'<button class="'+(k===tab?'on':'')+'" title="'+t+'" aria-label="'+t+'" onclick="go(\''+k+'\')">'+IC(i)+'<span>'+l+'</span></button>').join('')+'</div><div id="pbody"></div></div>'}
+function vRiwayat(){
+ const dt=d=>new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}),tm=d=>new Date(d).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+ const its=s=>{const a=s.items.map(i=>esc(i.name)+' x'+i.qty),n=a.length,pc=s.items.reduce((x,i)=>x+i.qty,0);return `<b>${n} item · ${nf(pc)} pcs</b><br>${a.slice(0,2).join(', ')}`+(n>2?`<span hidden>, ${a.slice(2).join(', ')}</span> <button class="lnk" style="display:inline" onclick="const p=this.previousElementSibling;p.hidden=!p.hidden;this.textContent=p.hidden?'+${n-2} item lainnya':'Ringkas'">+${n-2} item lainnya</button>`:'')};
+ salesShell();$('pbody').innerHTML=`<div class="card fl"><h2 class="fn" style="margin:0 0 10px">Riwayat penjualan</h2><div class="scroll fs"><table class="rt"><tr><th>No.</th><th>Waktu</th><th>Item</th><th>Bayar</th><th class="r">Total</th><th></th></tr>
+ ${S.sales.length?S.sales.map(s=>`<tr><td class="mo">${s.id}</td><td>${dt(s.date)}<br><small>${tm(s.date)}</small></td><td class="it">${its(s)}</td><td><span class="badge">${s.pay}</span></td><td class="r"><b>${rp(s.total)}</b></td><td><button class="btn sec" onclick="receipt(S.sales.find(x=>x.id==='${s.id}'))">Struk</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">Belum ada transaksi. Selesaikan penjualan pertama di menu Kasir.</td></tr>'}</table></div></div>`;
+}
+/* ---------- LAPORAN ---------- */
+function vLaporan(){
+ const td=S.sales.filter(s=>today(s.date)),sum=a=>a.reduce((x,s)=>x+s.total,0);
+ const cnt={};S.sales.forEach(s=>s.items.forEach(i=>cnt[i.name]=(cnt[i.name]||0)+i.qty));
+ const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+ const piutang=S.orders.reduce((a,o)=>a+(o.total-o.dp),0),low=allV().filter(x=>!isJ(x.v)&&x.v.stock<=S.low);
+ salesShell();$('pbody').innerHTML=`<div class="stats fn">
+ <div class="card stat"><span>Omzet hari ini</span><div class="num">${rp(sum(td))}</div></div>
+ <div class="card stat"><span>Transaksi hari ini</span><div class="num">${td.length}</div></div>
+ <div class="card stat"><span>Total omzet semua</span><div class="num">${rp(sum(S.sales))}</div></div>
+ <div class="card stat"><span>Sisa bayar pesanan custom</span><div class="num ${piutang?'bad':''}">${rp(piutang)}</div></div></div>
+ <div class="two"><div class="card fl"><h2 class="fn" style="margin:0 0 8px">Produk terlaris</h2><div class="fs"><div class="lh"><span>#</span><span>Produk</span><span>Terjual</span></div>${top.length?top.map((t,i)=>`<div class="lr"><span class="muted">${i+1}</span><div><div>${esc(t[0])}</div><div class="bar2"><i style="width:${Math.round(t[1]/top[0][1]*100)}%"></i></div></div><b>${t[1]} terjual</b></div>`).join(''):'<p class="muted">Belum ada data penjualan.</p>'}</div></div>
+ <div class="card fl"><h2 class="fn" style="margin:0 0 8px">Stok menipis atau habis</h2><div class="fs"><div class="lh" style="grid-template-columns:minmax(0,1fr) auto"><span>Produk</span><span>Sisa stok</span></div>${low.length?low.map(x=>`<div class="lr" style="grid-template-columns:minmax(0,1fr) auto"><span>${esc(cn(x.p,x.v))}</span><span class="badge ${x.v.stock<1?'bad':'mid'}">${nf(x.v.stock)}</span></div>`).join(''):'<p class="muted">Semua stok aman.</p>'}</div></div></div>
+ `;
+}
+boot();
+</script></body></html>

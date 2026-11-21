@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="id" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kasir · Positif POS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060606">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Positif POS">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tema.css?v=20261121b">
+</head>
+<body>
+<header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
+<main id="view"></main>
+<div id="modal" class="modal"><div class="card"><div id="rc" class="rc"></div>
+<div class="row noprint"><button class="btn sec" onclick="closeM()">Tutup</button><select id="rw" onchange="setRW(this.value)" title="Lebar kertas"><option value="58">58 mm</option><option value="80">80 mm</option><option value="100">100 mm</option></select><button class="btn" onclick="printRc()">Cetak struk</button></div></div></div>
+<div id="pk" class="modal" onclick="if(event.target===this)closePk()"><div class="card wide" id="pkc"></div></div>
+<div id="pm" class="modal" onclick="if(event.target===this)closePm()"><div class="card wide" id="pmc"></div></div>
+<div id="ed" class="modal" onclick="if(event.target===this)edClose()"><div class="card wide mf" id="edc" style="width:min(1100px,100%)"></div></div>
+<div class="hubmenu" id="accm" role="menu"></div>
+<div id="hm" class="modal" onclick="if(event.target===this)closeHm()"><div class="card wide mf" id="hmc"></div></div>
+<div id="zm" class="modal" onclick="if(event.target===this)zClose()"><div class="card wide" id="zmc"></div></div>
+<div id="plabels"></div>
+<script>window.PAGE_TABS=["kasir"];window.PAGE_HOME="kasir";</script>
+<script src="inti.js?v=20261121b"></script>
+<script>
+/* ---------- KASIR ---------- */
+/* keranjang disimpan di perangkat: pindah menu atau refresh tidak menghapus isinya */
+const CK=()=>'positif_cart:'+USR;let cartLd=false;
+function cartSave(){try{localStorage.setItem(CK(),JSON.stringify(cart))}catch(e){}}
+function cartLoad(){if(cartLd||!USR)return;cartLd=true;try{const c=JSON.parse(localStorage.getItem(CK())||'[]');if(Array.isArray(c)&&!cart.length)cart=c.filter(x=>x&&findV(x.id))}catch(e){}}
+function vKasir(){cartLoad();
+ $('view').innerHTML=`<div class="pos"><section class="fl">
+ <div class="bar fn"><input id="q" placeholder="Scan barcode atau cari produk..." value="${esc(q)}" oninput="q=this.value;grid()" onkeydown="scanKey(event)" autocomplete="off" autofocus><select id="cat" onchange="cat=this.value;grid()">${[HID,...cats()].map(c=>`<option ${c===cat?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
+ <div id="msg" class="muted fn" style="min-height:22px;margin:-4px 0 8px"></div><div id="grid" class="grid fs"></div></section>
+ <aside class="card fl"><h2 class="fn" style="margin:0 0 4px;font-size:24px">Keranjang</h2><div id="lines" class="fs"></div><div class="fn">
+ <div class="row"><span>Diskon (Rp)</span><input id="disc" type="text" inputmode="numeric" data-n min="0" value="0" style="width:130px" oninput="calc()"></div>
+ <div class="row"><span>Pembayaran</span><select id="pay" onchange="calc()"><option>Transfer</option><option>Tunai</option><option>QRIS</option></select></div>
+ <div class="row" id="paidrow"><span>Uang diterima</span><input id="paid" type="text" inputmode="numeric" data-n min="0" style="width:130px" oninput="calc()"></div>
+ <div class="row"><span class="muted">Total bayar</span><span id="tot" class="num total">Rp0</span></div>
+ <div class="row"><span class="muted">Kembalian</span><b id="chg">Rp0</b></div>
+ <button class="btn big" id="go" onclick="checkout()">Bayar</button></div></aside></div>`;
+ grid();lines();$('q').focus();
+}
+function grid(){
+ const ql=q.toLowerCase();
+ if(cat===HID&&!q.trim()){$('grid').innerHTML='<p class="muted">Produk disembunyikan. Pilih kategori di kanan atas, atau ketik nama produk / scan barcode.</p>';return}
+ const l=S.products.filter(p=>p.variants.length&&(cat===HID||cat==='Semua'||p.cat===cat)&&(p.name.toLowerCase().includes(ql)||p.variants.some(v=>vl(v).toLowerCase().includes(ql)||bcv(v).includes(q))));
+ $('grid').innerHTML=l.length?l.map(p=>{const im=(p.variants.find(v=>v.img)||{}).img,iv=(p.variants.find(v=>v.img)||{}).id,st=p.variants.reduce((a,v)=>a+v.stock,0),n=p.variants.length,pr=p.variants.map(v=>vp(p,v)),lo=Math.min(...pr);
+ return `<button class="p" ${st<1?'disabled':''} onclick="pick(${p.id})">${im?`<img src="${im}" alt="">`+zb(p.id,iv):''}<b>${esc(p.name)}</b><small>${n>1?n+' varian, ':''}${st>=9999?'jasa':'stok '+st}</small><span class="num">${Math.max(...pr)!==lo?'mulai ':''}${rp(lo)}</span></button>`}).join(''):'<p class="muted">Produk tidak ditemukan. Tambahkan di menu Produk.</p>';
+}
+function beep(ok){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=ok?880:220;g.gain.value=.08;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.12)}catch(e){}}
+function scanKey(e){
+ if(e.key!=='Enter')return;const code=$('q').value.trim();if(!code)return;
+ let x=allV().find(a=>bcv(a.v)===code);
+ if(!x){const m=allV().filter(a=>(a.p.name+' '+vl(a.v)).toLowerCase().includes(code.toLowerCase()));if(m.length===1)x=m[0]}
+ if(!x){if(/^\d{6,}$/.test(code)){note('Barcode '+code+' belum terdaftar. Tambahkan di menu Produk.',1);beep(0)}return}
+ if(x.v.stock<1){note(cn(x.p,x.v)+' stok habis.',1);beep(0);return}
+ addV(x.v.id);q='';$('q').value='';grid();note(cn(x.p,x.v)+' masuk keranjang.');beep(1)}
+function pick(pid){const p=S.products.find(x=>x.id===pid);if(p.variants.length===1)addV(p.variants[0].id);else{pk=pid;renderPk();$('pk').classList.add('on')}}
+function closePk(){pk=null;$('pk').classList.remove('on');const i=$('q');if(i)i.focus()}
+function renderPk(){pkSide();const p=S.products.find(x=>x.id===pk);if(!p)return;
+ $('pkc').innerHTML=`<h2 style="margin:0 0 4px;font-size:24px">${esc(p.name)}</h2><p class="muted" style="margin:0 0 10px">Pilih varian. Klik beberapa kali untuk menambah jumlah.</p><div class="grid">${p.variants.map(v=>{const c=cart.find(c=>c.id===v.id);return `<button class="p" ${v.stock<1?'disabled':''} onclick="addV(${v.id})">${v.img?`<img src="${v.img}" alt="">`+zb(p.id,v.id):''}<b>${esc(vl(v))}</b><small>${v.stock>=9999?'jasa':'stok '+nf(v.stock)}${c?', di keranjang '+c.qty:''}</small><span class="num">${rp(vp(p,v))}</span></button>`}).join('')}</div><div class="row"><span></span><button class="btn" onclick="closePk()">Selesai</button></div>`}
+function addV(id){const x=findV(id);if(!x)return;const c=cart.find(c=>c.id===id);
+ if(c){if(c.qty<x.v.stock)c.qty++}else if(x.v.stock>0)cart.push({id,name:cn(x.p,x.v),price:vp(x.p,x.v),qty:1});
+ lines();if(pk)renderPk();else{const i=$('q');if(i)i.focus()}}
+function setQty(id,v){const c=cart.find(x=>x.id===id),x=findV(id);v=Math.floor(+v||0);if(!c)return;if(x&&v>x.v.stock){note('Stok hanya '+nf(x.v.stock),1);v=x.v.stock}if(v<1)cart=cart.filter(y=>y.id!==id);else c.qty=v;lines();const q=$('q');if(q)q.focus()}
+function chg(id,d){const c=cart.find(x=>x.id===id),x=findV(id);c.qty+=d;if(x&&c.qty>x.v.stock)c.qty=x.v.stock;if(c.qty<1)cart=cart.filter(x=>x.id!==id);lines()}
+function lines(){
+ cart=cart.filter(c=>findV(c.id));cartSave();
+ $('lines').innerHTML=cart.length?cart.map(c=>`<div class="line"><b>${esc(c.name)}</b><span>${rp(c.price*c.qty)}</span><div class="qty"><button onclick="chg(${c.id},-1)" aria-label="Kurangi">-</button><input type="text" inputmode="numeric" data-n value="${c.qty}" style="width:52px;text-align:center;height:30px" onchange="setQty(${c.id},this.value)" aria-label="Jumlah"><button onclick="chg(${c.id},1)" aria-label="Tambah">+</button></div><span class="muted">@ ${rp(c.price)}</span></div>`).join(''):'<p class="muted">Scan barcode atau pilih produk untuk mulai transaksi.</p>';
+ calc();
+}
+function calc(){
+ const sub=cart.reduce((a,c)=>a+c.price*c.qty,0),d=Math.min(Math.max(+$('disc').value||0,0),sub),t=sub-d,cash=$('pay').value==='Tunai';
+ $('tot').textContent=rp(t);$('paidrow').style.display=cash?'flex':'none';
+ const paid=+$('paid').value||0;
+ $('chg').textContent=cash?rp(Math.max(paid-t,0)):'-';$('chg').className=cash&&paid<t?'bad':'ok';
+ $('go').disabled=!cart.length;return{sub,d,t,cash,paid}
+}
+function checkout(){
+ const{sub,d,t,cash,paid}=calc();if(!cart.length)return;
+ if(cash&&paid<t){alert('Uang diterima masih kurang dari total.');return}
+ const s={id:invId(),date:new Date().toISOString(),items:cart.map(c=>({...c})),sub,disc:d,total:t,pay:$('pay').value,paid:cash?paid:t};
+ cart.forEach(c=>{const x=findV(c.id);if(x&&!isJ(x.v)){logS(x,'Penjualan',x.v.stock,x.v.stock-c.qty,s.id);x.v.stock-=c.qty}});
+ S.sales.unshift(s);save();cart=[];receipt(s);render();
+}
+function setCS(v){CS=v;document.documentElement.dataset.cs=v;try{localStorage.setItem('positif_cs',v)}catch(e){}}
+function csCtl(){if($('cs'))return;const h=`<label class="si" title="Ukuran thumbnail">${IC('thumb')}<select id="cs" onchange="setCS(this.value)" aria-label="Ukuran thumbnail"><option value="l">Large thumbnail</option><option value="m">Medium thumbnail</option><option value="s">Small thumbnail</option></select></label>`;let a=$('cat')||($('pfq')&&$('pfq').nextElementSibling);if(a){a.insertAdjacentHTML('afterend',h);$('cs').value=CS}}
+const _r=render;render=function(){_r();csCtl()};
+boot();
+</script></body></html>

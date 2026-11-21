@@ -191,7 +191,10 @@ input,select{border-color:rgba(212,255,63,.28)}
  .app{margin-left:0;padding-bottom:92px}
  #toast{bottom:96px}
 }
+/* menu atas Positif POS di atas aplikasi */
+@media(min-width:761px){#rail{top:var(--pbh,60px)}}
 </style>
+<script src="posbar.js"></script>
 </head>
 <body>
 <nav id="rail"></nav>
@@ -213,6 +216,8 @@ input,select{border-color:rgba(212,255,63,.28)}
 <div id="toast"></div>
 
 <script>
+/* menu atas Positif POS + login ikut akun POS (tidak perlu login lagi) */
+POSBAR.mount({active:'bahan'});
 // ====== PENGATURAN ======
 // Tempel URL Web App Google Apps Script di sini. Kosong = mode demo (data di browser, PIN kantor 1234).
 var API="https://script.google.com/macros/s/AKfycbxIEy8C4YY0H_DJJHRWjAA38YvpD2M01Kb7H-zcvaXqnFWJk0HWnIgg2Vtj0MMivl41/exec";
@@ -306,7 +311,9 @@ function local(p){var L;try{L=JSON.parse(localStorage.getItem(LK))}catch(e){}L=L
   r.data=strip(L,ro);return r}
 var OPT=["upsert","del","adjust","editambil","ambil"];
 function send(p){return API?fetch(API,{method:"POST",body:JSON.stringify(p)}).then(function(x){return x.json()}):Promise.resolve(local(p))}
-async function call(op,p){p=p||{};p.op=op;p.auth=me?{name:me.name,pin:me.pin}:{};
+/* identitas: pakai tiket login Positif POS; mode demo (tanpa API) tetap pakai nama + PIN */
+function AUTH(){if(API){var c=POSBAR.cred();return c?{user:c.u,tok:c.t,name:me&&me.name}:{}}return me?{name:me.name,pin:me.pin}:{}}
+async function call(op,p){p=p||{};p.op=op;p.auth=AUTH();
   if(OPT.indexOf(op)>=0){ // tampil langsung, simpan di latar belakang
     var c=JSON.parse(JSON.stringify(S)),r0=run(c,p,me&&me.role,p.auth);
     if(!r0.ok){toast(r0.err);return r0}
@@ -317,7 +324,7 @@ async function call(op,p){p=p||{};p.op=op;p.auth=me?{name:me.name,pin:me.pin}:{}
   var r;try{r=await send(p)}catch(e){r={ok:0,err:"Gagal terhubung ke Google Sheets"}}
   if(r.data)S=r.data;if(!r.ok)toast(r.err||"Gagal");else if(op=="register"||op=="setuser")toast("✓ Perubahan berhasil disimpan");
   $("sync").textContent=API?"Tersinkron":"Mode demo";render();return r}
-async function refresh(){if(pend)return;try{var p={op:"load",auth:me?{name:me.name,pin:me.pin}:{}},r=await send(p);if(r.data&&!pend){S=r.data;$("sync").textContent=API?"Tersinkron":"Mode demo";render()}}catch(e){$("sync").textContent="Offline"}}
+async function refresh(){if(pend)return;try{var p={op:"load",auth:AUTH()},r=await send(p);if(r.data&&!pend){S=r.data;$("sync").textContent=API?"Tersinkron":"Mode demo";render()}}catch(e){$("sync").textContent="Offline"}}
 
 // ---- turunan ----
 var gb=function(id){return S.Bahan[idx(S.Bahan,id)]};
@@ -342,7 +349,7 @@ function setW(w){W=w;fd="Semua";cart={};ad=null;try{localStorage.setItem("ws",w)
 function render(){
     $("w1").className=W=="1"?"on":"";$("w2").className=W=="2"?"on":"";
   var rl=me?(me.role=="kantor"?"Kantor":me.role=="editor"?"Editor":"Pengambil"):"";
-  $("who").innerHTML='<button class="acb'+(view=="lap"||view=="riwayat"?" on":"")+'" onclick="tgAcc(event)">'+IC("user")+'<b>'+(me?esc(me.name):"Masuk")+'</b>'+IC("chev")+'</button><div class="ddm" id="accm">'+(me?'<div class="whoi">Masuk sebagai <b>'+esc(me.name)+'</b> · '+rl+'</div>':"")+'<button onclick="dPeng()">'+IC("users")+'Daftar pengambil</button><button onclick="go(\'lap\')">'+IC("chart")+'Laporan</button><button onclick="go(\'riwayat\')">'+IC("hist")+'Riwayat</button><hr>'+(me?'<button onclick="me=null;render()">'+IC("out")+'Keluar</button>':'<button onclick="dLogin()">'+IC("inn")+'Masuk</button>')+'</div>';
+  $("who").innerHTML='<button class="acb'+(view=="lap"||view=="riwayat"?" on":"")+'" onclick="tgAcc(event)">'+IC("user")+'<b>Laporan</b>'+IC("chev")+'</button><div class="ddm" id="accm">'+(me?'<div class="whoi">Masuk sebagai <b>'+esc(me.name)+'</b> · '+rl+'</div>':"")+'<button onclick="go(\'lap\')">'+IC("chart")+'Laporan</button><button onclick="go(\'riwayat\')">'+IC("hist")+'Riwayat</button></div>';
   var lv=leaves(),c={habis:0,tipis:0,aman:0},ns=0,nk=0;lv.forEach(function(b){var s=sts(b);c[s]++;if(s!="aman"){if(isK(b))nk++;else ns++}});
   var cn={stok:ns,kain:nk,order:ordW().filter(open_).length};
   $("rail").innerHTML=NV.map(function(v){var n=cn[v[0]];return'<button class="ri'+(v[0]==view?" on":"")+'" data-tip="'+v[1]+'" aria-label="'+v[1]+'" onclick="go(\''+v[0]+'\')">'+IC(v[2])+'<span class="rlb">'+v[3]+'</span>'+(n?'<span class="bg">'+n+'</span>':"")+'</button>'}).join("");
@@ -634,7 +641,14 @@ async function camOn(){try{var st=await navigator.mediaDevices.getUserMedia({vid
 function camOff(){clearInterval(scTimer);if(scStream){scStream.getTracks().forEach(function(t){t.stop()});scStream=null}}
 $("dlg").addEventListener("close",camOff);
 
-refresh();render();setInterval(function(){if(!$("dlg").open&&!document.hidden)refresh()},60000);
+(async function(){
+  if(API){var c=POSBAR.cred();if(!c){POSBAR.block();return}
+    var m=POSBAR.me()||{};me={name:m.name||c.u,role:null};render();
+    var r=await send({op:"login",auth:AUTH()}).catch(function(){return{ok:0,err:"Tidak bisa terhubung ke server"}});
+    if(r.ok){me.role=r.role;if(r.name)me.name=r.name}
+    else{me=null;POSBAR.block(/AUTH|sesi|PIN/i.test(r.err||"")||!r.err?"Sesi Positif POS sudah berakhir. Masuk lagi di Positif POS.":r.err);return}}
+  else me={name:"Kantor",pin:"1234",role:"kantor"};
+  refresh();render();setInterval(function(){if(!$("dlg").open&&!document.hidden)refresh()},60000)})();
 </script>
 </body>
 </html>
