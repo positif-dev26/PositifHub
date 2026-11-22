@@ -8,7 +8,7 @@ const PAGE_HOME=window.PAGE_HOME||'beranda';
 /* menu yang punya file HTML sendiri */
 const PAGE_OF={beranda:'index.html',kasir:'kasir.html',riwayat:'penjualan.html',laporan:'penjualan.html',produk:'produk.html',stok:'produk.html',produksi:'produksi.html',pengguna:'pengaturan.html',peran:'pengaturan.html',cadangan:'pengaturan.html'};
 /* aplikasi terpisah (punya server sendiri) */
-const EXT={bahan:'stok-bahan-baku-v8.html',pesanan:'pesanan-custom.html',rekap:'rekap-order-custom.html'};
+const EXT={bahan:'stok-bahan-baku-v9.html',pesanan:'pesanan-custom.html',rekap:'rekap-order-custom.html'};
 let LEAVING=false;
 async function goPage(t){if(LEAVING)return;LEAVING=true;
  /* tunggu kiriman yang sedang jalan selesai dulu, supaya perubahan tidak terkirim dua kali */
