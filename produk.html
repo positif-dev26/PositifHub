@@ -12,6 +12,41 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tema.css?v=20261121c">
+<style>
+/* ===== Menu Produk > Stok: satu kotak per varian + tahapan produksi (hanya berlaku di halaman ini) ===== */
+.chsep{width:1px;height:26px;background:var(--line);align-self:center}
+.chp.cprod{border-style:dashed;border-color:#4da3ff;color:#9ccaff}.chp.cprod.on{background:#4da3ff;color:#0a0a0a;border-style:solid}
+.chp.ckrit{border-style:dashed;border-color:#ff6b6b;color:#ffb3b3}.chp.ckrit.on{background:#ff6b6b;color:#0a0a0a;border-style:solid}
+.sk3 .rh{margin-top:4px}
+.sk3s{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.sk3w{display:flex;flex-direction:column;gap:8px;min-width:var(--mw,600px)}
+.sk3 .hd3,.sk3 .ph3,.sk3 .vr3{display:grid;grid-template-columns:var(--gc);gap:14px;align-items:center;padding:10px 16px}
+.sk3 .hd3{padding-top:0;padding-bottom:0;color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.sk3 .hd3 .r,.sk3 .q{text-align:right}
+.sk3 .ph3{margin-top:8px;border-radius:12px;background:color-mix(in srgb,var(--text) 7%,var(--card))}
+.sk3 .pn3{grid-column:span 4;min-width:0}.sk3 .pn3 b{display:block;font-size:16px}.sk3 .pn3 small{color:var(--muted);font-size:13px}
+.sk3 .lnk3{background:none;border:0;padding:0;color:var(--muted);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}.sk3 .lnk3:hover{color:var(--text)}
+.sk3 .tt{font-size:13px}
+.sk3 .vr3{border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.sk3 .vr3.kr{border:1px dashed #ff6b6b;background:color-mix(in srgb,#ff6b6b 9%,var(--card))}
+.sk3 .vr3 .v{font-size:16px}.sk3 .mu{color:var(--muted)}
+.sk3 .q{font-size:18px}.sk3 .q.mid2{color:#e8a734}.sk3 .q.bad{color:var(--bad)}
+.sk3 .tp{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.sk3 .tp>div{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.sk3 .tp i{display:block;width:100%;height:6px;border-radius:3px;background:var(--line)}
+.sk3 .tp i.on{background:var(--c)}
+.sk3 .tp span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sk3 .tp span.on{color:var(--t);font-weight:700}
+.sk3 .tp .bad i.on{background:#ff6b6b}.sk3 .tp .bad span.on{color:#ff8a80}
+.sk3 .tp [title]{cursor:help}
+.sk3 .nk{padding:8px 12px;border-radius:10px;border:1px dashed #ff6b6b;color:#ff9a9a;font-weight:600;font-size:13px;text-align:center}
+.sk3 .ub{display:flex;gap:6px;align-items:center}
+.sk3 .ub input{width:56px;height:46px;padding:0 8px;box-sizing:border-box;min-width:0}
+.sk3 .ib3{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:58px;height:48px;padding:0;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--text);font:600 11px Barlow,sans-serif;cursor:pointer;flex:none}
+.sk3 .ib3 .ico{width:18px;height:18px;stroke-width:2.4}
+.sk3 .ib3:hover{border-color:var(--text)}
+.sk3 .ib3.pri{background:#d4ff3f;border-color:#d4ff3f;color:#0a0a0a;font-weight:700}.sk3 .ib3.pri:hover{filter:brightness(1.08)}
+</style>
 </head>
 <body>
 <header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
@@ -82,45 +117,63 @@ let sc='Semua',ssel=0,SCN=[];
 const pcat=p=>String(p.cat||'').trim()||'Lainnya';
 const CI=n=>/stiker|sticker/i.test(n)?'sticker':/jersey|kaos|baju|kemeja|jaket|polo|hoodie|seragam|celana/i.test(n)?'shirt':'box';
 const cvl=v=>{const s=stt(v);return s==='Habis'?'bad':s==='Menipis'?'mid2':''};
+/* ---------- STOK PRODUK: satu kotak per varian + tahapan produksi ----------
+   Urutan kolom: Variasi · Warna · Status · Stok · Tahapan produksi · Tambah / Kurangi / Ubah jadi
+   Tahapan diambil dari order produksi yang masih berjalan (Cetak vendor s.d. Finishing).
+   Hanya tampil untuk akun yang boleh melihat produksi (data order produksi hanya dikirim ke akun itu). */
+const PST=[['cetak','Cetak','#4da3ff','#9ccaff'],['bahan','Rak bahan','#a78bfa','#c4b5fd'],['cutting','Cutting','#ff9f43','#ffb877'],['jahit','Jahit','#f472b6','#f9a8d4'],['finishing','Finishing','#2dd4bf','#5fe3d1']];
+const PLIM={cetak:7,bahan:3,cutting:2,jahit:3,finishing:2};
+const canProd=()=>can('prod_lihat')||can('prod_buat');
+/* idVarian -> {tot, cetak:{q,late,tip[]}, ...}. Batas hari per tahap ikut Pengaturan produksi. */
+function prodMap(){const M={};if(!canProd())return M;
+ const cf=(S.jobs||[]).find(j=>j.id==='pcfg')||{};let lim={};try{lim=typeof cf.lim==='string'?JSON.parse(cf.lim):(cf.lim||{})}catch(e){lim={}}lim=Object.assign({},PLIM,lim||{});
+ const now=Date.now(),fd=d=>new Date(d+'T00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+ (S.jobs||[]).forEach(j=>{const st=j.stage;if(!PLIM[st])return;
+  const hs=j.hist||[],h=hs.slice().reverse().find(x=>x&&!x.kind)||hs[0]||{date:j.date},age=Math.max(0,Math.floor((now-new Date(h.date||j.date))/864e5)),l=+lim[st]||99;
+  const lewat=!!j.due&&new Date(j.due+'T23:59')<now,late=age>=l||lewat;
+  (j.items||[]).forEach(it=>{const q=+it.qty||0;if(q<=0)return;const m=M[it.vid]=M[it.vid]||{tot:0},s=m[st]=m[st]||{q:0,late:false,tip:[]};
+   s.q+=q;m.tot+=q;if(late)s.late=true;
+   s.tip.push((j.no||'Order')+': '+q+' pcs · '+age+' hari (batas '+l+')'+(j.vendor?' · '+j.vendor:'')+(j.due?' · butuh '+fd(j.due):'')+(lewat?' · LEWAT TANGGAL BUTUH':age>=l?' · TERTAHAN':''))})});
+ return M}
+/* lima garis tahapan; tip=false untuk baris total produk */
+function tahapH(m,tip){return '<div class="tp">'+PST.map(([k,l,c,t])=>{const s=m&&m[k],q=s?s.q:0;
+ if(!q)return '<div><i></i><span>'+l+'</span></div>';
+ return '<div'+(tip&&s.tip?' title="'+esc(s.tip.join('\n'))+'"':'')+(s.late?' class="bad"':'')+' style="--c:'+c+';--t:'+t+'"><i class="on"></i><span class="on">'+(s.late?'&#9888; ':'')+l+' '+nf(q)+'</span></div>'}).join('')+'</div>'}
+const sbtn=(id,k,ic,l)=>'<button class="ib3'+(k==='add'?' pri':'')+'" onclick="adj('+id+',\''+k+'\')" title="'+l+'" aria-label="'+l+' stok">'+IC(ic)+'<small>'+l+'</small></button>';
 function stokNow(){
- const tr=allV().filter(x=>!isJ(x.v)),lo=tr.filter(x=>x.v.stock>0&&x.v.stock<=S.low).length,ou=tr.filter(x=>x.v.stock<1).length,ok=tr.filter(x=>x.v.stock>S.low).length;
- const chip=(k,t,n)=>`<button class="chp ${sf===k?'on':''}" onclick="sf='${k}';stokNow()">${t}<b>${n}</b></button>`;
+ const cp=canProd(),PM=prodMap(),tr=allV().filter(x=>!isJ(x.v)),pq=x=>(PM[x.v.id]||{}).tot||0;
+ const lo=tr.filter(x=>x.v.stock>0&&x.v.stock<=S.low).length,ou=tr.filter(x=>x.v.stock<1).length,ok=tr.filter(x=>x.v.stock>S.low).length,
+  np=tr.filter(x=>pq(x)>0).length,nk=tr.filter(x=>x.v.stock<=S.low&&!pq(x)).length;
+ if(!cp&&(sf==='prod'||sf==='krit'))sf='all';
+ const chip=(k,t,n,cls)=>`<button class="chp${cls?' '+cls:''} ${sf===k?'on':''}" onclick="sf='${k}';stokNow()">${t}<b>${n}</b></button>`;
  const cm={};tr.forEach(x=>{const n=pcat(x.p);cm[n]=(cm[n]||0)+x.v.stock});
  SCN=Object.keys(cm).sort((a,b)=>a==='Lainnya'?1:b==='Lainnya'?-1:a.localeCompare(b,'id'));
  if(sc!=='Semua'&&!SCN.includes(sc))sc='Semua';
- const cchip=(n,i,t,u)=>`<button class="chp ${sc===n?'on':''}" onclick="sc=${i<0?"'Semua'":'SCN['+i+']'};ssel=0;stokNow()">${esc(t)}<b>${nf(u)}</b></button>`;
+ const cchip=(n,i,t,u)=>`<button class="chp ${sc===n?'on':''}" onclick="sc=${i<0?"'Semua'":'SCN['+i+']'};stokNow()">${esc(t)}<b>${nf(u)}</b></button>`;
  $('pbody').innerHTML=`<div class="sk2"><div class="pfh"><h1 class="pt">Stok produk</h1><input id="sq" class="srch" placeholder="Cari produk atau varian" value="${esc(sq)}" oninput="sq=this.value;stokFill()" autocomplete="off"></div>
- <div class="bar chr">${chip('all','Semua',tr.length)}${chip('low','Menipis',lo)}${chip('out','Habis',ou)}${chip('ok','Aman',ok)}</div>
+ <div class="bar chr">${chip('all','Semua',tr.length)}${chip('low','Menipis',lo)}${chip('out','Habis',ou)}${chip('ok','Aman',ok)}${cp?'<span class="chsep"></span>'+chip('prod','Sedang diproduksi',np,'cprod')+chip('krit','Kritis tanpa restok',nk,'ckrit'):''}</div>
  <div class="bar chr">${cchip('Semua',-1,'Semua jenis',tr.reduce((a,x)=>a+x.v.stock,0))}${SCN.map((n,i)=>cchip(n,i,n,cm[n])).join('')}</div></div>
- <div class="pf"><div><div class="rh"><h2>Rak stok</h2><span class="muted" id="skn"></span></div><div class="sbs" id="sbs"></div></div><div id="pdt"></div></div>`;
+ <div class="sk3"><div class="rh"><h2>Stok per varian</h2><span class="muted" id="skn"></span></div><div class="sk3s"><div class="sk3w" id="sbs"></div></div></div>`;
  stokFill()}
 function stokFill(){
- const ql=sq.trim().toLowerCase(),fo=v=>sf==='all'||(sf==='low'&&v.stock>0&&v.stock<=S.low)||(sf==='out'&&v.stock<1)||(sf==='ok'&&v.stock>S.low),by={};
- S.products.forEach(p=>{const vs=p.variants.filter(v=>!isJ(v)&&(!ql||(p.name+' '+vl(v)+' '+bcv(v)).toLowerCase().includes(ql))&&fo(v));if(vs.length)(by[pcat(p)]=by[pcat(p)]||[]).push({p,vs})});
- const names=Object.keys(by).sort((a,b)=>a==='Lainnya'?1:b==='Lainnya'?-1:a.localeCompare(b,'id')),shown=sc==='Semua'?names:names.filter(n=>n===sc);
- let sel=null;shown.forEach(n=>by[n].forEach(({p,vs})=>vs.forEach(v=>{if(v.id===ssel)sel={p,v}})));
- if(!sel&&shown.length){const f=by[shown[0]].slice().sort((a,b)=>a.p.name.localeCompare(b.p.name,'id'))[0];sel={p:f.p,v:f.vs[0]}}
- ssel=sel?sel.v.id:0;
- const box=n=>{const L=by[n].slice().sort((a,b)=>a.p.name.localeCompare(b.p.name,'id')),tot=L.reduce((a,x)=>a+x.vs.reduce((s,v)=>s+v.stock,0),0),low=L.reduce((a,x)=>a+x.vs.filter(v=>v.stock<=S.low).length,0);
-  return '<section class="sb'+(sel&&pcat(sel.p)===n?' cur':'')+'"><div class="sbh"><span class="sbi">'+IC(CI(n))+'</span><div><b>'+esc(n)+'</b><small>'+L.length+' produk · '+nf(tot)+' unit</small>'+(low?'<small class="mid2">'+low+' varian menipis/habis</small>':'')+'</div></div><div class="sbl">'
-  +L.map(({p,vs})=>'<div class="vg"><div class="vgn">'+esc(p.name)+'</div>'+vs.map(v=>{const c=cvl(v);return '<button class="vr'+(v.id===ssel?' on':'')+'" onclick="ssl('+v.id+')"><span class="vs">'+esc(vl(v))+(c?'<small class="'+c+'"> · '+stt(v)+'</small>':'')+'</span><span class="vq '+c+'">'+nf(v.stock)+'</span></button>'}).join('')+'</div>').join('')+'</div></section>'};
- $('sbs').innerHTML=shown.length?shown.map(box).join(''):'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>';
- $('skn').textContent=shown.reduce((a,n)=>a+by[n].length,0)+' produk';
- $('pdt').innerHTML=narrow()?'':stokDet(sel);stk()}
-const narrow=()=>innerWidth<900;
-function ssl(id){ssel=id;stokFill();if(narrow()){const x=findV(id);if(x)sdmOpen(x)}}
-/* HP: ubah stok tampil sebagai popup */
-function sdmOpen(x){sdmClose();const d=document.createElement('div');d.id='sdm';d.className='modal on sdm';d.innerHTML=stokDet(x).replace('<div class="card pdt">','<div class="card pdt"><button class="ib sdx" title="Tutup" aria-label="Tutup" onclick="sdmClose()">&times;</button>');d.onclick=e=>{if(e.target===d)sdmClose()};document.body.appendChild(d)}
+ const cp=canProd(),ed=can('stok_ubah'),PM=prodMap(),ql=sq.trim().toLowerCase(),pq=v=>(PM[v.id]||{}).tot||0;
+ const fo=v=>sf==='all'||(sf==='low'&&v.stock>0&&v.stock<=S.low)||(sf==='out'&&v.stock<1)||(sf==='ok'&&v.stock>S.low)||(sf==='prod'&&pq(v)>0)||(sf==='krit'&&v.stock<=S.low&&!pq(v));
+ const L=[];S.products.forEach(p=>{if(sc!=='Semua'&&pcat(p)!==sc)return;const vs=p.variants.filter(v=>!isJ(v)&&(!ql||(p.name+' '+vl(v)+' '+bcv(v)).toLowerCase().includes(ql))&&fo(v));if(vs.length)L.push({p,vs})});
+ L.sort((a,b)=>{const x=pcat(a.p),y=pcat(b.p);return x===y?a.p.name.localeCompare(b.p.name,'id'):x==='Lainnya'?1:y==='Lainnya'?-1:x.localeCompare(y,'id')});
+ const gc='70px 90px 96px 60px'+(cp?' minmax(340px,1fr)':'')+(ed?' 250px':''),mw=(cp?340:0)+(ed?264:0)+400;
+ const w=$('sbs');if(!w)return;w.style.setProperty('--gc',gc);w.style.setProperty('--mw',mw+'px');
+ const hd='<div class="hd3"><span>Variasi</span><span>Warna</span><span>Status</span><span class="r">Stok</span>'+(cp?'<span>Tahapan produksi (pcs)</span>':'')+(ed?'<span>Ubah stok</span>':'')+'</div>';
+ const row=(p,v)=>{const m=PM[v.id],kr=cp&&v.stock<=S.low&&!(m&&m.tot),va=v.size||(v.color?'–':'Standar');
+  return '<div class="vr3'+(kr?' kr':'')+'"><b class="v">'+esc(va)+'</b><span class="'+(v.color?'':'mu')+'">'+esc(v.color||'–')+'</span><span>'+sbadge(v)+'</span><b class="q '+cvl(v)+'">'+nf(v.stock)+'</b>'
+  +(cp?(kr?'<div class="nk">&#9888; Belum ada order produksi</div>':tahapH(m,true)):'')
+  +(ed?'<div class="ub"><input type="text" inputmode="numeric" data-n id="a'+v.id+'" placeholder="Jml" aria-label="Jumlah '+esc(cn(p,v))+'" autocomplete="off">'+sbtn(v.id,'add','plus','Tambah')+sbtn(v.id,'sub','minus','Kurangi')+sbtn(v.id,'set','equal','Ubah jadi')+'</div>':'')+'</div>'};
+ const grp=({p,vs})=>{const ag={tot:0};PST.forEach(([k])=>{vs.forEach(v=>{const s=(PM[v.id]||{})[k];if(s){const a=ag[k]=ag[k]||{q:0,late:false};a.q+=s.q;if(s.late)a.late=true;ag.tot+=s.q}})});
+  const un=vs.reduce((a,v)=>a+v.stock,0);
+  return '<div class="ph3"><div class="pn3"><b>'+esc(p.name)+'</b><small>'+esc(pcat(p))+' · '+vs.length+' varian · '+nf(un)+' unit'+(can('produk_edit')?' · <button class="lnk3" onclick="edFromStok('+p.id+')">Edit produk</button>':'')+'</small></div>'
+  +(cp?tahapH(ag,false):'')+(ed?'<span class="mu tt">'+(cp&&ag.tot?'Total diproduksi '+nf(ag.tot)+' pcs':'')+'</span>':'')+'</div>'+vs.map(v=>row(p,v)).join('')};
+ w.innerHTML=L.length?hd+L.map(grp).join(''):'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>';
+ $('skn').textContent=L.length+' produk · '+L.reduce((a,x)=>a+x.vs.length,0)+' varian';stk()}
 function sdmClose(){const d=$('sdm');if(d)d.remove()}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('sdm')&&!document.querySelector('.ubx')){sdmClose();e.stopPropagation()}},true);
-addEventListener('resize',()=>{if(tab==='produk'&&psub==='stok'&&$('pdt')){const w=narrow();if(w!==window._nw){window._nw=w;sdmClose();stokFill()}}});
-function stokDet(s){
- if(!s)return '<div class="card pdt"><h2 style="margin:0 0 6px">Detail stok</h2><p class="muted">Pilih varian di rak untuk melihat dan mengubah stok.</p></div>';
- const {p,v}=s,c=cvl(v),lg=(S.log||[]).filter(e=>e.name===cn(p,v)).slice(0,4);
- return '<div class="card pdt"><div style="display:flex;gap:14px;align-items:center"><div class="thumb pdimg" '+(v.img?'onclick="zoomP('+p.id+','+v.id+')" title="Perbesar foto" style="cursor:zoom-in"':'style="cursor:default"')+'>'+(v.img?'<img src="'+v.img+'" alt="">':'')+'</div><div style="min-width:0"><div class="pn">'+esc(p.name)+'</div><div class="muted">'+esc(vl(v))+' · '+esc(pcat(p))+'</div></div></div>'
- +'<div style="display:flex;align-items:baseline;gap:10px;margin:14px 0 4px"><span class="sn2 '+c+'">'+nf(v.stock)+'</span><span class="muted">unit</span>'+sbadge(v)+'</div><div class="muted" style="font-size:13px">Kode: '+esc(bcv(v))+'</div>'+(can('produk_edit')?'<button class="lnk" onclick="edFromStok('+p.id+')">'+IC('expand')+' Edit produk ini</button>':'')
- +(can('stok_ubah')?'<div style="margin-top:14px;display:grid;gap:8px"><input type="text" inputmode="numeric" data-n min="0" id="a'+v.id+'" placeholder="Jumlah" autocomplete="off"><input type="text" id="t'+v.id+'" placeholder="Catatan (opsional)" autocomplete="off"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="adj('+v.id+',\'add\')">'+IC('plus')+' Tambah</button><button class="btn sec" onclick="adj('+v.id+',\'sub\')">'+IC('minus')+' Kurangi</button><button class="btn sec" onclick="adj('+v.id+',\'set\')">'+IC('equal')+' Ubah jadi</button></div></div>':'')
- +(lg.length?'<div class="muted" style="margin:14px 0 4px;font-size:13px">Perubahan terakhir</div>'+lg.map(e=>{const d=e.after-e.before;return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:3px 0"><span class="muted">'+fmt(e.date)+' · '+esc(e.type)+'</span><b class="'+(d<0?'bad':'ok')+'">'+(d>0?'+':'')+d+'</b></div>'}).join(''):'')+'</div>'}
 function stokLog(){
  $('pbody').innerHTML=`<div class="pfh"><h1 class="pt">Riwayat stok</h1><div class="bar" style="align-items:center;margin:0"><select onchange="lt=this.value;logFill()">${['all','Tambah','Kurangi','Ubah','Penjualan','Hapus'].map(t=>`<option value="${t}" ${lt===t?'selected':''}>${t==='all'?'Semua jenis':t}</option>`).join('')}</select><input id="sq" placeholder="Cari produk atau catatan" value="${esc(sq)}" oninput="sq=this.value;logFill()" style="min-width:160px" autocomplete="off"></div></div><div class="card"><div id="sbody" class="scroll"></div></div>`;logFill()}
 function logFill(){
