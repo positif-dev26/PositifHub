@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tema.css?v=20261122a">
+<link rel="stylesheet" href="tema.css?v=20261122b">
 </head>
 <body>
 <header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
@@ -26,11 +26,40 @@
 <div id="zm" class="modal" onclick="if(event.target===this)zClose()"><div class="card wide" id="zmc"></div></div>
 <div id="plabels"></div>
 <script>window.PAGE_TABS=["beranda"];window.PAGE_HOME="beranda";</script>
-<script src="inti.js?v=20261122a"></script>
+<script src="inti.js?v=20261122b"></script>
 <script>
-/* ---------- BERANDA (jam) ---------- */
+/* ---------- BERANDA: papan ringkas (bahan, restok, produk, produksi) ---------- */
 function vBeranda(){
- $('view').innerHTML='<div class="dash"><div class="dclk" id="dclk"><div class="dclk-t"></div><div class="dclk-w"></div><div class="dclk-d"></div></div></div>';startClock()}
+ const card=(ic,t,sub,body,link)=>'<section class="sb dcd"><div class="sbh"><span class="sbi">'+IC(ic)+'</span><div><b>'+t+'</b><small>'+sub+'</small></div></div><div class="dcb">'+body+'</div>'+(link||'')+'</section>';
+ const more=(n,k)=>n>k?'<div class="dmore">+'+(n-k)+' lainnya</div>':'';
+ const lk=(href,l,onclick)=>'<a class="dlk" href="'+href+'"'+(onclick?' onclick="'+onclick+'"':'')+'>'+l+' ›</a>';
+ const num=(n,l,c)=>'<div class="dn '+c+'"><b>'+n+'</b><span>'+l+'</span></div>';
+ const wait=BHE?'<p class="dem bad">'+esc(BHE)+'</p>':'<p class="dem">Memuat data bahan...</p>';
+ /* 1. bahan */
+ const lo=bhLow(),nh=lo.filter(b=>b.s<=0).length;
+ const c1=card('layers','Stok bahan baku',BH?'Bahan menipis & habis':'Stok Bahan Baku',
+  BH?'<div class="dns">'+num(nh,'Habis','r')+num(lo.length-nh,'Menipis','y')+num((BH.b||[]).length-lo.length,'Aman','g')+'</div>'+(lo.length?'<div class="bhls">'+lo.slice(0,6).map(bhRow).join('')+'</div>'+more(lo.length,6):'<p class="dem ok">Semua bahan aman.</p>'):wait,
+  lk(bhLink('stok'),'Buka Stok bahan baku'));
+ /* 2. restok */
+ const op=bhOpen(),ur=op.filter(o=>o.ur==='Mendesak').length,bc={};op.forEach(o=>bc[o.st]=(bc[o.st]||0)+1);
+ const c2=card('cart','Restok berjalan',op.length+' order'+(ur?' · <span class="bad">'+ur+' mendesak</span>':''),
+  BH?'<div class="dst">'+BST.map(s=>'<span class="'+(bc[s]?'on':'')+'"><b>'+(bc[s]||0)+'</b>'+s+'</span>').join('')+'</div>'+(op.length?'<div class="bhls">'+op.slice(0,6).map(o=>'<div class="bhr'+(o.ur==='Mendesak'?' habis':'')+'"><span class="bhd"></span><span class="bhn"><b>'+esc(o.n)+'</b><small>'+esc(o.st)+(o.p?' · '+esc(o.p):'')+'</small></span><span class="bhq">'+(o.ur==='Mendesak'?'<i class="urg">Mendesak</i> ':'')+esc(o.q)+'</span></div>').join('')+'</div>'+more(op.length,6):'<p class="dem">Tidak ada restok berjalan.</p>'):wait,
+  lk(bhLink('order'),'Buka Order restok'));
+ /* 3. produk */
+ let c3='';
+ if(ready){const tr=allV().filter(x=>!isJ(x.v)),hb=tr.filter(x=>x.v.stock<1),tp=tr.filter(x=>x.v.stock>=1&&x.v.stock<=S.low),L=hb.concat(tp);
+  const vn=v=>[v.color,v.size].filter(Boolean).join(' ');
+  c3=card('box','Stok produk','Produk habis & menipis',
+   '<div class="dns">'+num(hb.length,'Habis','r')+num(tp.length,'Menipis','y')+num(tr.length-L.length,'Aman','g')+'</div>'+(L.length?'<div class="bhls">'+L.slice(0,6).map(x=>'<div class="bhr '+(x.v.stock<1?'habis':'tipis')+'"><span class="bhd"></span><span class="bhn"><b>'+esc(x.p.name)+'</b><small>'+esc(vn(x.v)||'Standar')+'</small></span><span class="bhq">'+x.v.stock+' <small>pcs</small></span></div>').join('')+'</div>'+more(L.length,6):'<p class="dem ok">Semua stok produk aman.</p>'),
+   tabOk('produk')?lk('#','Buka Stok produk',"go('stok');return false"):'')}
+ /* 4. produksi */
+ let c4='';
+ if(ready){const ps={};RS.forEach(s=>ps[s]={n:0,q:0});(S.jobs||[]).forEach(j=>{if(!ps[j.stage])return;const q=(j.items||[]).reduce((a,i)=>a+Math.max(0,+i.qty||0),0);if(q>0){ps[j.stage].n++;ps[j.stage].q+=q}});
+  const tot=RS.reduce((a,s)=>a+ps[s].q,0);
+  c4=card('factory','Produksi',tot+' pcs sedang diproduksi',
+   '<div class="dpr">'+RS.map(s=>'<div class="'+(ps[s].q?'on':'')+'"><span>'+STL[s]+'</span><b>'+ps[s].q+' <small>pcs</small></b><small>'+ps[s].n+' order</small></div>').join('')+'</div>',
+   tabOk('produksi')?lk('#','Buka Produksi',"go('produksi');return false"):'')}
+ $('view').innerHTML='<div class="dsh" id="dsh"><div class="dtop"><div class="dclk2" id="dclk"><span class="dclk-t"></span><span class="dclk-x"><b class="dclk-w"></b><span class="dclk-d"></span></span></div><span class="muted">'+(BH&&BH.t?'Bahan diperbarui '+new Date(BH.t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'')+'</span></div><div class="dgr">'+c1+c2+c3+c4+'</div></div>';startClock()}
 let clkT=null;
 function startClock(){clearInterval(clkT);const tick=()=>{const e=$('dclk');if(!e){clearInterval(clkT);return}const n=new Date(),p=x=>String(x).padStart(2,'0');
  e.querySelector('.dclk-t').innerHTML=p(n.getHours())+':'+p(n.getMinutes())+'<span class="sec">:'+p(n.getSeconds())+'</span>';

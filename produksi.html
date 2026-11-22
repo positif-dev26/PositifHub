@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tema.css?v=20261122a">
+<link rel="stylesheet" href="tema.css?v=20261122b">
 </head>
 <body>
 <header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
@@ -26,7 +26,7 @@
 <div id="zm" class="modal" onclick="if(event.target===this)zClose()"><div class="card wide" id="zmc"></div></div>
 <div id="plabels"></div>
 <script>window.PAGE_TABS=["produksi"];window.PAGE_HOME="produksi";</script>
-<script src="inti.js?v=20261122a"></script>
+<script src="inti.js?v=20261122b"></script>
 <script>
 /* ---------- MENU PRODUKSI ---------- */
 /* ---------- GUDANG PRODUKSI ---------- */
@@ -89,7 +89,7 @@ function flowView(){const q=pq.trim().toLowerCase(),all=groups().filter(g=>!q||g
  const box=s=>{const L=all.filter(g=>g.st===s),tot=L.reduce((a,g)=>a+g.qty,0),by={};
   L.forEach(g=>{const n=splitN(g.name);(by[n.b]=by[n.b]||[]).push({g,s:n.s})});
   const names=Object.keys(by).sort((a,b)=>a.localeCompare(b,'id'));
-  return '<section class="sb'+(sel&&sel.st===s?' cur':'')+'"><div class="sbh"><span class="sbi">'+IC(SI2[s])+'</span><div><b>'+STL[s]+'</b><small>'+L.length+' item · '+dz(tot)+'</small>'+(pjName(s)?'<small class="pjn">PJ: '+esc(pjName(s))+'</small>':'')+'</div></div><div class="sbl">'
+  return '<section class="sb'+(sel&&sel.st===s?' cur':'')+'"><div class="sbh"><span class="sbi">'+IC(SI2[s])+'</span><div><b>'+STL[s]+'</b><small>'+L.length+' item · '+dz(tot)+'</small>'+(pjName(s)?'<small class="pjn">PJ: '+esc(pjName(s))+'</small>':'')+'</div></div>'+(BHS.includes(s)?bhStage(L):'')+'<div class="sbl">'
   +(names.map(b=>'<div class="vg"><div class="vgn">'+esc(b)+'</div>'+by[b].sort((x,y)=>x.s.localeCompare(y.s,'id',{numeric:true})).map(x=>'<button class="vr'+(x.g.k===psel?' on':'')+'" onclick="psel=\''+esc(x.g.k)+'\';flowView()"><span class="vs">'+esc(x.s||'Standar')+(multi?'<small> · '+esc(gname(x.g.loc))+'</small>':'')+'</span><span class="vq">'+dzf(x.g.qty)+'</span></button>').join('')+'</div>').join('')||'<div class="sbe">Kosong</div>')+'</div></section>'};
  $('pbody').innerHTML='<div class="sk2"><div class="pfh"><div><h1 class="pt">Alur produksi</h1><p class="muted">Pantau posisi setiap produk dari vendor sampai siap dikirim.</p></div><div class="bar" style="align-items:center;margin:0">'+(gl.length>1?'<select onchange="pg=this.value;flowView()"><option value="Semua"'+(pg==='Semua'?' selected':'')+'>Semua gudang</option>'+gl.map(g=>'<option value="'+esc(g.id)+'"'+(g.id===pg?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select>':'')+'<input id="pq" placeholder="Cari produk" value="'+esc(pq)+'" oninput="pfs(this.value)" style="min-width:160px"><button class="ib" title="Cetak A4 tahap ini" aria-label="Cetak A4 tahap ini" onclick="printStage(\''+(sel&&sel.st!=='cetak'?sel.st:'bahan')+'\')">'+IC('printer')+'</button></div></div>'
  +'<div class="stp">'+RS.map((s,i)=>'<div class="sti'+(i<ci?' dn':i===ci?' cur':'')+'"><b>'+(i<ci?'&#10003;':i+1)+'</b>'+STL[s]+'</div>').join('<i></i>')+'</div></div>'
@@ -97,12 +97,23 @@ function flowView(){const q=pq.trim().toLowerCase(),all=groups().filter(g=>!q||g
  if(sel&&sel.st!=='cetak')prc(sel.k);stk()}
 function panel(G){const nx=RS[RS.indexOf(G.st)+1]||'selesai',dy=Math.floor((Date.now()-new Date(G.date))/864e5),oth=GL().filter(x=>x.id!==G.loc),k=esc(G.k),r=(a,b)=>'<div class="dr2"><span>'+a+'</span><b>'+b+'</b></div>',ni='type="text" inputmode="numeric" data-n';
  let h='<div class="card pdt"><h2 style="margin:0">Detail produk</h2><div class="pn">'+esc(G.name)+'</div><div class="muted">'+(G.n>1?'Gabungan '+G.n+' order':'1 order')+(G.vendor?' · Vendor: '+esc(G.vendor):'')+'</div><hr class="mhr">'+r('Jumlah',dzf(G.qty))+r('Tahap',STL[G.st])+r('Masuk tahap',fmt(G.date)+' ('+dy+' hari)')+(G.st==='cetak'?'':r('Petugas sebelumnya',esc(G.prev)));
+ h+=bhPanel(G);
  if(!can('prod_'+G.st))h+='<p class="muted" style="margin:10px 0">Akun Anda tidak punya akses untuk memproses tahap ini.</p>';else if(G.st==='cetak')h+='<label class="muted">Masuk ke gudang</label><select id="tg">'+GL().map(g=>'<option value="'+esc(g.id)+'"'+(g.id===(pg!=='Semua'?pg:GL()[0].id)?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select><button class="btn wide" onclick="pdone(\''+k+'\')">Tandai sudah dicetak</button>';
  else h+='<label class="muted">Sudah jadi</label><div class="f2"><input '+ni+' id="dl" value="'+Math.floor(G.qty/12)+'" oninput="prc(\''+k+'\')"><span>lusin</span><input '+ni+' id="dp" value="'+G.qty%12+'" oninput="prc(\''+k+'\')"><span>pcs</span></div><label class="muted">Reject (pcs)</label><input '+ni+' id="rj" placeholder="0" oninput="prc(\''+k+'\')"><div id="sisa" class="muted" style="margin-bottom:6px"></div><div class="bynt"><input id="by" list="pdl" autocomplete="off" placeholder="Petugas (wajib)" value="'+esc(lby(G.st)||pjName(G.st)||(can('prod_'+G.st)?ME:''))+'">'+pdl(G.st)+'<input id="nt" placeholder="Catatan (opsional)"></div><button class="btn wide" onclick="padv(\''+k+'\')">'+(nx==='selesai'?'Selesai: masuk stok POS':'Pindahkan ke '+STL[nx])+'</button>'
  +(oth.length?'<label class="muted">Kirim ke gudang lain (kosong = semua)</label><div class="f2"><select id="kt">'+oth.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'</select><input '+ni+' id="sl" placeholder="lusin" style="width:70px"><input '+ni+' id="sp" placeholder="pcs" style="width:70px"></div><button class="btn sec wide" onclick="psend(\''+k+'\')">Kirim</button>':'');
  h+='<hr class="mhr"><div class="muted">Isi gabungan</div>'+G.parts.map(p=>'<div class="dr2"><span>'+esc(p.j.no||'')+'</span><span>'+dz(p.it.qty)+' <button type="button" class="jh" onclick="showHist(\''+p.j.id+'\')" title="Riwayat" aria-label="Riwayat">'+HIC+'</button></span></div>').join('');
  if(can('hapus'))h+='<button class="btn sec wide" onclick="pdel(\''+k+'\')">'+(G.st==='cetak'?'Batalkan order':'Hapus permanen')+'</button>';
  return h+'</div>'}
+/* ----- pengingat bahan dari Stok Bahan Baku (Rak bahan & Cutting) + resep bahan opsional ----- */
+const BHS=['bahan','cutting'];
+function bhStage(L){if(!BH||!L.length)return'';const ids=new Set();L.forEach(g=>bhRes(g.name).forEach(i=>ids.add(i)));
+ let bs=[...ids].map(bhGet).filter(Boolean);const res=bs.length>0;if(!res)bs=(BH.b||[]).filter(b=>/potong|kain|cutting/i.test(b.d));if(!bs.length)return'';
+ const lo=bs.filter(b=>bhSt(b)!=='aman'),hb=lo.filter(b=>b.s<=0).length,rs=bs.filter(b=>bhOrd(b.id)).length,w=res?'untuk produk di sini':'potong';
+ return '<a class="bhw'+(hb?' bad':lo.length?' warn':'')+'" href="'+bhLink('stok')+'" title="'+esc(lo.map(b=>b.n+' ('+b.s+' '+(b.u||'')+')').join(', '))+'">'+IC('layers')+(lo.length?'<b>'+lo.length+'</b> bahan '+w+(hb?' habis/menipis':' menipis'):'Bahan '+w+' aman')+(rs?' · '+rs+' sedang direstok':'')+'</a>'}
+function bhPanel(G){if(!BH)return'';const ids=bhRes(G.name),bs=ids.map(bhGet).filter(Boolean);
+ return '<div class="bhrs"><h4>'+IC('layers')+'Bahan produk'+(bhCanRes()?'<button class="btn sec" style="padding:4px 10px;font-size:13px" data-n="'+esc(G.name)+'" onclick="bhEditRes(this.dataset.n)">'+(ids.length?'Ubah':'Atur bahan')+'</button>':'')+'</h4>'
+  +(bs.length?bs.map(bhRow).join(''):'<p class="muted" style="margin:0;font-size:13px">'+(ids.length?'Bahan di resep sudah dihapus dari Stok Bahan Baku.':'Belum ada resep bahan (opsional).')+'</p>')+'</div><hr class="mhr">'}
+window.bhProd=()=>{if(tab==='produksi'&&pst==='alur'&&$('pbody')&&!isBusy()&&!document.querySelector('.ubx'))flowView()};
 /* ringkasan untuk kotak konfirmasi pindah tahap */
 function mvSum(G,rows,from,to){return '<div class="mvs"><div class="mvn">'+esc(G.name)+'</div><div class="mvf"><span>'+esc(from)+'</span><b>&rarr;</b><span class="to">'+esc(to)+'</span></div>'+rows.map(r=>'<div class="dr2"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('')+'</div>'}
 function prc(k){const G=groups().find(x=>x.k===k),e=$('sisa');if(!G||!e)return;const s=G.qty-((Math.floor(+$('dl').value)||0)*12+(Math.floor(+$('dp').value)||0))-(Math.floor(+$('rj').value)||0);e.textContent=s<0?'Melebihi jumlah ('+dz(-s)+')':'Sisa di tahap ini: '+dzf(s);e.style.color=s<0?'var(--bad)':''}

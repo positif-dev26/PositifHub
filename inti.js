@@ -1,4 +1,4 @@
-/* Positif POS — inti bersama (rapi 21-11-2026: fungsi dobel yang tertimpa dihapus): login, server, sinkron, simpan di perangkat, menu utama, akun.
+/* Positif POS — inti bersama: login, server, sinkron, simpan di perangkat, menu utama, akun.
    Dipakai index.html dan produksi.html. Ubah di sini = berlaku di semua halaman. */
 /* ---------- HALAMAN: setiap menu besar punya file HTML sendiri ----------
    Halaman mengisi PAGE_TABS (menu yang ada di file itu) dan PAGE_HOME sebelum memuat inti.js.
@@ -8,7 +8,7 @@ const PAGE_HOME=window.PAGE_HOME||'beranda';
 /* menu yang punya file HTML sendiri */
 const PAGE_OF={beranda:'index.html',kasir:'kasir.html',riwayat:'penjualan.html',laporan:'penjualan.html',produk:'produk.html',stok:'produk.html',produksi:'produksi.html',pengguna:'pengaturan.html',peran:'pengaturan.html',cadangan:'pengaturan.html'};
 /* aplikasi terpisah (punya server sendiri) */
-const EXT={bahan:'stok-bahan-baku-v9.html',pesanan:'pesanan-custom.html',rekap:'rekap-order-custom.html'};
+const EXT={bahan:'stok-bahan-baku-v8.html',pesanan:'pesanan-custom.html',rekap:'rekap-order-custom.html'};
 let LEAVING=false;
 async function goPage(t){if(LEAVING)return;LEAVING=true;
  /* tunggu kiriman yang sedang jalan selesai dulu, supaya perubahan tidak terkirim dua kali */
@@ -55,6 +55,7 @@ receipt:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1
 shirt:'<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>',
 box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
 layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+cart:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
 factory:'<path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/>',
 clipboard:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
 grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
@@ -81,6 +82,15 @@ const tabs=[['beranda','POS'],['kasir','Kasir'],['produk','Produk'],['stok','Sto
 const HUBAPPS=[['Resi Print','resi_print.html','app_resi_print'],['Resi Video Packing','resi_video_packing.html','app_resi_video'],['Resi Pickup Kurir','resi_pickup-kurir.html','app_resi_pickup']];
 const hubH=()=>(HUBAPPS.some(a=>can(a[2]))?`<span class="hub" onmouseenter="hubOpen(1)" onmouseleave="hubClose(1)"><button title="Positif Hub" aria-label="Positif Hub" onclick="location.href='PositifHub.html'">${IC('grid')}</button><button class="caret" id="hubcaret" aria-haspopup="true" aria-expanded="false" aria-label="Buka daftar app" onclick="hubToggle(event)">&#9662;</button></span>`:'')+(can('app_layout')?`<button class="stk nv" title="Layout Stiker" aria-label="Layout Stiker" onclick="location.href='LAYOUT_STIKER.html'">${IC('sticker')}</button>`:'');
 let hubT=null;
+function hubOpen(hov){
+ if(hov&&!matchMedia('(hover:hover)').matches)return;
+ clearTimeout(hubT);const m=$('hubmenu'),h=document.querySelector('.hub');if(!m||!h)return;
+ const r=h.getBoundingClientRect();m.style.top=r.bottom+'px';m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px';
+ m.classList.add('on');$('hubcaret').setAttribute('aria-expanded','true');
+ m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px'}
+function hubClose(hov){
+ if(hov){clearTimeout(hubT);hubT=setTimeout(()=>hubClose(0),150);return}
+ const m=$('hubmenu');if(m)m.classList.remove('on');const c=$('hubcaret');if(c)c.setAttribute('aria-expanded','false')}
 function hubToggle(e){e.stopPropagation();const m=$('hubmenu');m&&m.classList.contains('on')?hubClose(0):hubOpen(0)}
 document.addEventListener('click',e=>{if(!e.target.closest('.hub'))hubClose(0)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')hubClose(0)});
@@ -95,11 +105,13 @@ const fmt=d=>new Date(d).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'s
 $('lg').src=LOGO;
 let pend=null;
 const SALES=[['riwayat','Riwayat penjualan'],['laporan','Laporan penjualan']];
-const nb=(k,l)=>{const n=k==='produksi'?lowN():0;return `<button class="nv${k===tab?' on':''}" title="${l}" aria-label="${l}" onclick="tab='${k}';render()">${IC(NI[k])}${k==='beranda'?'':`<span class="nl">${l}</span>`}${n?'<span class="bgn">'+n+'</span>':''}</button>`};
+const nb=(k,l)=>{const n=k==='produksi'?lowN():k==='bahan'?bhN():0;return `<button class="nv${k===tab?' on':''}" title="${l}" aria-label="${l}" onclick="tab='${k}';render()">${IC(NI[k])}${k==='beranda'?'':`<span class="nl">${l}</span>`}${n?'<span class="bgn">'+n+'</span>':''}</button>`};
 const navH=()=>(can('kasir')?nb('kasir','Kasir'):'')
  +(SALES.some(s=>can(s[0]))?`<button class="nv${SALES.some(s=>s[0]===tab)?' on':''}" title="Penjualan" aria-label="Penjualan" onclick="go('${SALES.find(s=>can(s[0]))[0]}')">${IC('chart')}<span class="nl">Penjualan</span></button>`:'')
  +[['produk','Produk'],['bahan','Stok bahan baku'],['produksi','Produksi'],['pesanan','Pesanan custom'],['rekap','Rekap order']].filter(t=>tabOk(t[0])).map(t=>nb(t[0],t[1])).join('')+hubH();
 let ddT=null;
+function ddOpen(hov){if(hov&&!matchMedia('(hover:hover)').matches)return;clearTimeout(ddT);const m=$('ddmenu'),b=document.querySelector('.dd');if(!m||!b)return;const r=b.getBoundingClientRect();m.style.top=r.bottom+'px';m.classList.add('on');m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px'}
+function ddClose(hov){if(hov){clearTimeout(ddT);ddT=setTimeout(()=>ddClose(0),150);return}const m=$('ddmenu');if(m)m.classList.remove('on')}
 function ddToggle(e){e.stopPropagation();const m=$('ddmenu');m&&m.classList.contains('on')?ddClose(0):ddOpen(0)}
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;for(const[id,fn]of[['pm','closePm'],['hm','closeHm'],['pk','closePk'],['ed','edClose'],['modal','closeM']]){const m=$(id),f=window[fn];if(m&&f&&m.classList.contains('on')){f();e.stopImmediatePropagation();e.preventDefault();return}}},true);
 function go(t){tab=t;ddClose(0);render()}
@@ -128,8 +140,8 @@ function render(){if(tab==='stok'){tab='produk';window.PSUB_REQ='stok'}if(ready&
 }
 /* ---------- STOK BAHAN BAKU (aplikasi terpisah, dibuka di bawah menu) ---------- */
 /* GANTI alamat ini bila file ada di repo/akun GitHub Pages lain, contoh:
-   const BAHAN_URL='https://USERNAME.github.io/NAMA-REPO/stok-bahan-baku-v9.html'; */
-const BAHAN_URL='stok-bahan-baku-v9.html';
+   const BAHAN_URL='https://USERNAME.github.io/NAMA-REPO/stok-bahan-baku-v5.html'; */
+const BAHAN_URL='stok-bahan-baku-v8.html';
 /* ---------- PESANAN CUSTOM (aplikasi terpisah, dibuka di bawah menu) ----------
    PESANAN_FILE = nama file aplikasi yang diunggah ke repo GitHub yang sama dengan Positif POS.
    PESANAN_API  = link server Apps Script Pesanan Custom (berakhiran /exec), tempel di antara tanda kutip.
@@ -317,7 +329,7 @@ async function loadPart(ns,want){
  ns.forEach(k=>{Object.keys(KO).forEach(p=>{if(p.startsWith(k+'/'))delete KO[p]});(R[k]||[]).forEach(x=>{KO[k+'/'+x.id]=x.d})});
  VER=r.ver;rebuild();onData();snapSave();setSync('Tersinkron')}
 function startPoll(){
- if(POLL)return;POLL=true;
+ if(POLL)return;POLL=true;setTimeout(()=>bhPull(),50);
  const chk=()=>{if(document.hidden||!ready)return;syncCheck(false)};
  setInterval(chk,10000);document.addEventListener('visibilitychange',chk);addEventListener('pageshow',e=>{if(e.persisted)chk()});addEventListener('focus',chk)}
 function isBusy(){const a=document.activeElement;return !!a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)}
@@ -340,9 +352,28 @@ function vSetup(){
  $('view').innerHTML=`<div class="card"><h2 style="margin:0 0 6px;font-size:26px">Selamat datang di Positif POS</h2><p class="muted" style="margin:0 0 12px">Spreadsheet masih kosong. ${isAdm?'Pilih cara memulai:':'Minta admin untuk mengisi data awal.'}</p>
  ${isAdm?`<div class="row" style="justify-content:flex-start;flex-wrap:wrap"><button class="btn sec" onclick="replaceAll(seed())">Isi dengan data contoh</button><label class="btn sec up">Impor dari berkas cadangan (.json)<input type="file" accept=".json,application/json" hidden onchange="impJ(this)"></label><button class="btn sec" onclick="skipSetup=true;render()">Mulai kosong</button></div>`:''}</div>`}
 function vLogin(msg){pend=()=>vLoginUI(msg);if(tab==='beranda'&&!ready){render();return}vLoginUI(msg)}
+function vLoginUI(msg){
+ $('view').innerHTML=`<div class="card" style="max-width:380px;margin:40px auto"><h2 style="margin:0 0 6px;font-size:26px">Masuk ke Positif POS</h2><p class="muted" style="margin:0 0 10px">${API?'Masukkan PIN Anda.':'Isi alamat server satu kali, lalu masukkan PIN Anda.'}</p>${API?'':'<input id="url" autocomplete="off" placeholder="Alamat server (berakhiran /exec)" style="width:100%;margin-bottom:10px">'}<input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN" style="width:100%;margin-bottom:10px" onkeydown="if(event.key==='Enter')doLogin()"><button class="btn big" onclick="doLogin()">Masuk</button><p id="lm" class="bad" style="margin:10px 0 0">${esc(msg||'')}</p></div>`;
+ const i=$('pin');if(i)i.focus()}
+async function doLogin(){
+ const p=$('pin').value.trim();if(!p)return;
+ if(!API){const u=(($('url')||{}).value||'').trim();if(!/^https:\/\/script\.google\.com\/.+\/exec/.test(u)){$('lm').textContent='Isi alamat server yang benar (berakhiran /exec).';return}API=u;try{localStorage.setItem('positif_api',API)}catch(e){}}
+ PIN=p;$('lm').className='muted';$('lm').textContent='Memeriksa...';setSync('Menghubungkan...');
+ try{await load(true);try{localStorage.setItem('positif_pin',p)}catch(e){}}
+ catch(e){PIN='';setSync('Belum masuk');const auth=/AUTH/.test(e.message);if(!auth&&!/^https:\/\//.test(API_URL)){API='';try{localStorage.removeItem('positif_api')}catch(x){}}vLogin(auth?'PIN salah atau akses dikunci sementara.':'Gagal terhubung: '+e.message)}}
+function logout(){try{localStorage.removeItem('positif_pin')}catch(e){}location.reload()}
+function boot(){
+ let p='';try{p=localStorage.getItem('positif_pin')||''}catch(e){}
+ setSync('Belum masuk');if(!p||!API){vLogin();return}
+ PIN=p;pend=()=>{$('view').innerHTML='<p class="muted">Menghubungkan ke Google Sheets...</p>'};render();setSync('Menghubungkan...');
+ load(true).catch(e=>{PIN='';setSync('Belum masuk');vLogin(/AUTH/.test(e.message)?'':'Gagal terhubung: '+e.message)})}
 /* ---------- AKUN, RIWAYAT ORDER ---------- */
 const FIT=['kasir','laporan','riwayat','produksi'];
 function accInit(){const a=$('acc');if(!a)return;a.innerHTML=ready?'<button class="accb" id="accb" onclick="accToggle(event)" aria-haspopup="true" aria-expanded="false">'+esc(ME||'Akun')+' <span style="font-size:12px">&#9662;</span></button>':''}
+function accFill(){const m=$('accm');if(!m)return;
+ let h='<div style="padding:10px 14px 6px"><b>'+esc(ME)+'</b><div class="muted" style="font-size:13px">'+(isAdm?'Admin':'Kasir')+'</div></div><hr class="mhr"><a role="menuitem" href="#" onclick="logout();return false">Keluar</a>';
+ if(isAdm)h+='<hr class="mhr"><div class="muted" style="padding:4px 14px;font-size:13px">Cadangan terakhir: '+(S.lastBackup?fmt(S.lastBackup):'belum pernah')+'</div>'+(SSURL?'<a role="menuitem" href="'+esc(SSURL)+'" target="_blank" rel="noopener">Buka spreadsheet</a>':'')+'<a role="menuitem" href="#" onclick="mkBackup();return false">Buat salinan cadangan</a><label class="mlab">Impor dari berkas .json<input type="file" accept=".json,application/json" hidden onchange="impJ(this);accClose()"></label><hr class="mhr"><a role="menuitem" class="mdanger" href="#" onclick="accClose();resetAll();return false">Hapus semua data</a><p id="bmsg" style="margin:4px 14px 8px;font-size:13px;max-width:260px"></p>';
+ m.innerHTML=h}
 function accPos(){const m=$('accm'),b=$('accb');if(!m||!b)return;const r=b.getBoundingClientRect();m.style.top=r.bottom+4+'px';m.style.left=Math.max(4,Math.min(r.right-m.offsetWidth,innerWidth-m.offsetWidth-4))+'px'}
 function accOpen(){accFill();$('accm').classList.add('on');accPos();const b=$('accb');if(b)b.setAttribute('aria-expanded','true')}
 function accClose(){const m=$('accm');if(m)m.classList.remove('on');const b=$('accb');if(b)b.setAttribute('aria-expanded','false')}
@@ -372,7 +403,7 @@ let USR='',ROLE='',PERM=[],USERS=[],ROLEP=null,WEAK=false,WARNED=false;
 const can=k=>ROLE==='admin'||PERM.includes(k);
 const TP={kasir:['kasir'],riwayat:['riwayat'],laporan:['laporan'],produk:['produk_edit','harga_edit','stok_ubah','kasir'],stok:['stok_ubah','kasir'],bahan:['stok_ubah'],produksi:['prod_lihat','prod_buat'],pesanan:[]};
 const tabOk=t=>t==='beranda'||(t==='bahan'&&!!ROLE)||(t==='pesanan'&&(ROLE==='admin'||ROLE==='supervisor'))||((t==='pengguna'||t==='peran')&&isAdm)||(t==='cadangan'&&(isAdm||can('backup')))||(t==='rekap'&&(can('rekap_kedawung')||can('rekap_wonodadi')))||(TP[t]||[]).some(can);
-function pTabOk(k){if(k==='cetak'||k==='atur')return can('prod_buat');if(k==='gudang')return can('prod_lihat')||can('gudang');if(k==='petugas')return isAdm||can('prod_buat');return can('prod_lihat')}
+function pTabOk(k){if(k==='cetak')return can('prod_buat');if(k==='gudang')return can('prod_lihat')||can('gudang');if(k==='petugas')return isAdm||can('prod_buat');return can('prod_lihat')}
 function ACC(r){USR=r.user||USR;ROLE=r.role||'admin';PERM=Array.isArray(r.perm)?r.perm:ALLP.concat(['pengguna']);USERS=r.users||[];ROLEP=r.roles||ROLEP;WEAK=!!r.weak;
  try{localStorage.setItem('positif_me',JSON.stringify({u:USR,name:r.name||ME,role:ROLE,perm:PERM,ss:r.ss||''}))}catch(e){}
  if(WEAK&&!WARNED){WARNED=true;setTimeout(()=>toast('PIN admin masih 123456. Segera ganti lewat menu akun > Ganti PIN.',1),900)}}
@@ -466,10 +497,10 @@ function usersHtml(part){let h='';
   +['supervisor','staf'].map(r=>'<div class="muted" style="font-size:13px;margin:10px 0 4px"><b>'+RL[r]+'</b></div><div class="pgw">'+chipG(k=>((ROLEP&&ROLEP[r])||[]).includes(k),k=>'togR(\''+r+'\',\''+k+'\')')+'</div>').join('')+'</div>'}
  return h}
 function pjHtml(){const dis=(isAdm||can('prod_buat'))?'':' disabled';
-return '<div class="card"><h2 style="margin:0 0 6px">Penanggung jawab per divisi</h2><p class="muted" style="margin:0 0 10px">Nama diambil dari akun pengguna yang sama dengan login.</p><div class="pjg">'+RS.map(s=>{const o=uAct(s),cur=USERS.find(u=>u.on&&(u.pj||[]).includes(s));return'<label><span>'+STL[s]+'</span><select'+dis+' onchange="setPJ(\''+s+'\',this.value)"><option value="">- belum ditentukan -</option>'+o.map(p=>'<option value="'+p.u+'"'+(cur&&cur.u===p.u?' selected':'')+'>'+esc(p.n)+'</option>').join('')+'</select></label>'}).join('')+'</div><p class="muted" style="margin:8px 0 0">Pilihan berisi pengguna aktif yang punya akses ke tahap tersebut.</p></div>';
+return '<div class="card"><h2 style="margin:0 0 6px">Penanggung jawab per divisi</h2><div class="pjg">'+RS.map(s=>{const o=uAct(s),cur=USERS.find(u=>u.on&&(u.pj||[]).includes(s));return'<label><span>'+STL[s]+'</span><select'+dis+' onchange="setPJ(\''+s+'\',this.value)"><option value="">- belum ditentukan -</option>'+o.map(p=>'<option value="'+p.u+'"'+(cur&&cur.u===p.u?' selected':'')+'>'+esc(p.n)+'</option>').join('')+'</select></label>'}).join('')+'</div><p class="muted" style="margin:8px 0 0">Pilihan berisi pengguna aktif yang punya akses ke tahap tersebut.</p></div>';
 }
 function petugasView(){if(tab!=='produksi'||pst!=='petugas'||!$('pbody'))return;
- $('pbody').innerHTML=pjHtml()}
+ $('pbody').innerHTML='<div class="pfh"><div><h1 class="pt">Penanggung jawab</h1><p class="muted">Pilih siapa yang bertanggung jawab di tiap divisi. Nama diambil dari akun pengguna yang sama dengan login.</p></div></div>'+pjHtml()}
 /* tampilan Pengaturan (Pengguna · Peran · Cadangan) ada di pengaturan.html */
 const uRef=()=>{if(tab==='pengguna'||tab==='peran')vPengaturan();else petugasView()};
 
@@ -489,3 +520,53 @@ async function loadSmart(pv,n){
  const vs={};(R.variants||[]).forEach(x=>{vs[x.id]=x.d});
  S.products.forEach(p=>p.variants.forEach(v=>{const d=vs[String(v.id)];if(d)v.stock=+d.stock||0}));
  onData();setSync('Tersinkron')}
+
+/* ===================================================================
+   STOK BAHAN BAKU di Positif POS: ringkasan bahan + restok
+   (Beranda, angka merah di menu, pengingat & resep bahan di Produksi)
+   Data diambil dari server Stok Bahan Baku (perintah 'ringkas'),
+   disimpan di perangkat supaya langsung tampil, lalu diperbarui di belakang layar.
+   =================================================================== */
+const BAHAN_API='https://script.google.com/macros/s/AKfycbxIEy8C4YY0H_DJJHRWjAA38YvpD2M01Kb7H-zcvaXqnFWJk0HWnIgg2Vtj0MMivl41/exec';
+const BGN={'1':'Gudang Pusat','2':'Gudang Kedawung'},BST=['Diminta','Dibelanjakan','Dalam perjalanan','Sampai gudang','Unboxing'];
+let BH=null,BHT=0,BHL=false,BHE='';
+try{BH=JSON.parse(localStorage.getItem('positif_bahan_rk')||'null')}catch(e){}
+BHT=BH&&BH.t||0;
+const bhSt=b=>b.s<=0?'habis':b.s<=b.m?'tipis':'aman';
+const bhLow=()=>(BH&&BH.b||[]).filter(b=>bhSt(b)!=='aman').sort((a,b)=>(a.s>0)-(b.s>0)||a.s/(a.m||1)-b.s/(b.m||1));
+const bhOpen=()=>(BH&&BH.o||[]).slice().sort((a,b)=>(b.ur==='Mendesak')-(a.ur==='Mendesak')||String(b.t).localeCompare(String(a.t)));
+const bhN=()=>bhLow().length+bhOpen().filter(o=>o.ur==='Mendesak').length;
+const bhOrd=id=>bhOpen().find(o=>o.b===id);
+const bhKey=n=>String(n||'').replace(/\s*\([^()]*\)\s*$/,'').trim().toLowerCase();
+const bhRes=n=>{const r=(BH&&BH.r||[]).find(x=>x.id===bhKey(n));return r?String(r.bahan).split(',').filter(Boolean):[]};
+const bhGet=id=>(BH&&BH.b||[]).find(b=>b.id===id);
+async function bhPull(force){const c=getCred();if(!c||!c.t||!BAHAN_API||BHL)return;if(!force&&Date.now()-BHT<45000)return;BHL=true;BHT=Date.now();
+ try{const r=await fetch(BAHAN_API,{method:'POST',body:JSON.stringify({op:'ringkas',auth:{user:c.u,tok:c.t}})}).then(x=>x.json());
+  if(r&&r.ok&&r.data){BH=Object.assign(r.data,{t:Date.now()});BHE='';try{localStorage.setItem('positif_bahan_rk',JSON.stringify(BH))}catch(e){}}
+  else BHE=/tidak dikenal/i.test(r&&r.err||'')?'Server Stok Bahan Baku belum diperbarui (Code-StokBahanBaku.gs).':(r&&r.err)||'Gagal memuat data bahan.'}
+ catch(e){BHE='Tidak bisa terhubung ke server Stok Bahan Baku.'}
+ finally{BHL=false;bhUpd()}}
+function bhUpd(){if(!ready)return;const n=$('nav');if(n&&!document.querySelector('#nav .hubmenu.on'))n.innerHTML=navH();
+ if(tab==='beranda'&&$('dsh')&&window.vBeranda)vBeranda();if(window.bhProd)bhProd()}
+setInterval(()=>{if(!document.hidden)bhPull()},60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)bhPull()});
+setTimeout(()=>bhPull(),400);
+const bhLink=v=>EXT.bahan+(v?'#'+v:'');
+/* kartu kecil daftar bahan (dipakai Beranda & Produksi) */
+const bhRow=b=>{const s=bhSt(b),o=bhOrd(b.id);return '<div class="bhr '+s+'"><span class="bhd"></span><span class="bhn"><b>'+esc(b.n)+'</b><small>'+esc(b.d)+(BGN[b.w]&&b.w!=='1'?' · '+BGN[b.w]:'')+(o?' · <i class="bho">Restok: '+esc(o.st)+'</i>':'')+'</small></span><span class="bhq">'+(+b.s.toFixed(3))+' <small>'+esc(b.u||'')+'</small></span></div>'};
+/* ---------- resep bahan (opsional): produk -> bahan yang dipakai ---------- */
+const bhCanRes=()=>ROLE==='admin'||ROLE==='supervisor';
+let BRS=null;
+async function bhEditRes(name){if(!BH){toast('Data bahan belum termuat.',1);return}
+ const base=String(name).replace(/\s*\([^()]*\)\s*$/,'').trim();BRS=new Set(bhRes(name));
+ const L=(BH.b||[]).slice().sort((a,b)=>a.n.localeCompare(b.n,'id'));
+ const html='<p class="muted" style="margin:0 0 8px">Pilih bahan yang dipakai untuk <b>'+esc(base)+'</b>. Opsional: produk tanpa resep (misal jersey dari vendor) tidak diperiksa.</p><input class="bhs" placeholder="Cari bahan" oninput="bhFl(this.value)"><div class="bhl">'
+  +L.map(b=>'<label class="bhc" data-n="'+esc(b.n.toLowerCase()+' '+b.d.toLowerCase())+'"><input type="checkbox" value="'+esc(b.id)+'"'+(BRS.has(b.id)?' checked':'')+' onchange="this.checked?BRS.add(this.value):BRS.delete(this.value)"><span><b>'+esc(b.n)+'</b><small>'+esc(b.d)+' · '+(BGN[b.w]||'Gudang '+b.w)+'</small></span></label>').join('')+'</div>';
+ if(!(await uiBox({title:'Resep bahan',html,ok:'Simpan',cancel:'Batal'})))return;
+ const c=getCred(),ids=[...BRS];toast('Menyimpan resep...');
+ try{const r=await fetch(BAHAN_API,{method:'POST',body:JSON.stringify({op:'resep',nama:base,bahan:ids,auth:{user:c.u,tok:c.t}})}).then(x=>x.json());
+  if(!r.ok)throw new Error(r.err||'Gagal');
+  BH.r=(BH.r||[]).filter(x=>x.id!==bhKey(base));if(ids.length)BH.r.push({id:bhKey(base),nama:base,bahan:ids.join(',')});
+  try{localStorage.setItem('positif_bahan_rk',JSON.stringify(BH))}catch(e){}toast(ids.length?'Resep bahan disimpan.':'Resep bahan dihapus.');bhUpd();bhPull(true)}
+ catch(e){toast('Gagal menyimpan resep: '+e.message,1)}}
+function bhFl(q){q=q.trim().toLowerCase();document.querySelectorAll('.bhl .bhc').forEach(l=>{l.style.display=!q||l.dataset.n.includes(q)?'':'none'})}

@@ -511,3 +511,45 @@ header .clk+#sync{margin-left:14px}
 .spn{font-size:12px;margin-top:6px}
 .spd .lnk{margin-top:4px}
 .modal.sdm .pdt>div:first-child{padding-right:40px}
+/* ===== Beranda: papan ringkas ===== */
+.dsh{padding:16px;max-width:1500px;margin:0 auto;min-height:var(--avh);background:radial-gradient(900px 420px at 15% 0%,rgba(212,255,63,.07),transparent 65%)}
+.dtop{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:4px 2px 16px}
+.dclk2{display:flex;align-items:flex-end;gap:14px;line-height:1}
+.dclk2 .dclk-t{font:700 clamp(44px,7vw,76px) "Barlow Condensed",Impact,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-shadow:0 0 40px rgba(212,255,63,.25)}
+.dclk2 .dclk-t .sec{color:var(--acc)}
+.dclk2 .dclk-x{display:flex;flex-direction:column;gap:4px;padding-bottom:6px}
+.dclk2 .dclk-w{font:600 20px Barlow,sans-serif;color:var(--acc)}.dclk2 .dclk-d{color:var(--muted);font-size:15px}
+.dgr{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;align-items:start}
+.dcd .dcb{display:flex;flex-direction:column;gap:10px}
+.dns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dn{border:1px solid var(--line);border-radius:14px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.dn b{font:700 30px/1 "Barlow Condensed",Impact,sans-serif}.dn span{font-size:12px;color:var(--muted)}
+.dn.r b{color:#f08a8a}.dn.y b{color:#e8a734}.dn.g b{color:#2fc24f}
+.bhls{display:flex;flex-direction:column;gap:6px}
+.bhr{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.bhd{width:8px;height:8px;border-radius:50%;flex:none;background:#2fc24f}.bhr.tipis .bhd{background:#e8a734}.bhr.habis .bhd{background:#f05252;box-shadow:0 0 8px #f05252}
+.bhn{flex:1;min-width:0;display:flex;flex-direction:column}.bhn b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bhn small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bhq{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}.bhq small{color:var(--muted);font-weight:400}
+.bho{color:#7cc4ff;font-style:normal}.urg{font-style:normal;font-size:11px;color:#f08a8a;border:1px solid rgba(240,82,82,.5);border-radius:99px;padding:1px 6px;margin-right:4px}
+.dst{display:flex;flex-wrap:wrap;gap:6px}
+.dst span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:3px 10px 3px 4px}
+.dst b{min-width:22px;height:22px;border-radius:99px;display:grid;place-items:center;background:rgba(255,255,255,.06);color:var(--text);font-size:12px}
+.dst span.on{color:var(--text);border-color:rgba(212,255,63,.45)}.dst span.on b{background:var(--acc);color:var(--acc-t)}
+.dpr{display:flex;flex-direction:column;gap:6px}
+.dpr>div{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid var(--line);color:var(--muted)}
+.dpr>div.on{color:var(--text);border-color:rgba(212,255,63,.4);background:rgba(212,255,63,.04)}
+.dpr b{font-variant-numeric:tabular-nums}.dpr b small{font-weight:400;color:var(--muted)}.dpr>div>small{font-size:12px;color:var(--muted);min-width:56px;text-align:right}
+.dmore{font-size:12px;color:var(--muted);padding-left:4px}
+.dem{margin:0;color:var(--muted)}.dem.ok{color:#2fc24f}.dem.bad{color:#f08a8a}
+.dlk{align-self:flex-start;color:var(--acc);font-weight:600;text-decoration:none;font-size:14px}.dlk:hover{text-decoration:underline}
+@media(max-width:600px){.dsh{padding:12px}.dgr{grid-template-columns:minmax(0,1fr)}.dclk2 .dclk-t{font-size:48px}.dclk2 .dclk-w{font-size:17px}}
+/* ===== Produksi: pengingat bahan + resep ===== */
+.bhw{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;padding:7px 10px;border-radius:12px;border:1px solid var(--line);color:var(--muted);text-decoration:none}
+.bhw b{color:var(--text)}.bhw.warn{border-color:rgba(232,167,52,.55);color:#e8a734;background:rgba(232,167,52,.06)}.bhw.bad{border-color:rgba(240,82,82,.55);color:#f08a8a;background:rgba(240,82,82,.06)}
+.bhrs{margin-top:10px;display:flex;flex-direction:column;gap:6px}.bhrs h4{margin:0;font-size:14px;display:flex;align-items:center;gap:8px}
+.bhrs h4 button{margin-left:auto}
+.bhs{width:100%;margin-bottom:8px}
+.bhl{max-height:50vh;overflow:auto;display:flex;flex-direction:column;gap:4px;text-align:left}
+.bhc{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;border:1px solid var(--line);cursor:pointer}
+.bhc input{width:18px;height:18px;accent-color:var(--acc)}.bhc span{display:flex;flex-direction:column}.bhc small{color:var(--muted);font-size:12px}

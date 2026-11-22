@@ -193,6 +193,27 @@ input,select{border-color:rgba(212,255,63,.28)}
 }
 /* menu atas Positif POS di atas aplikasi */
 @media(min-width:761px){#rail{top:var(--pbh,60px)}}
+.kgr{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+/* ===== tampilan HP: kartu bahan menyesuaikan lebar layar ===== */
+@media(max-width:760px){
+ header{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+ header .seg{flex:1 1 100%;display:flex}header .seg button{flex:1;padding:8px 6px}
+ header .sp{display:none}header #sync{margin-right:auto}
+ .dvg,.kgr,.dvgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+ .tbar{flex-wrap:wrap;gap:8px}
+ .tbar input[type=search]{flex:1 1 100%;width:100%;min-width:0}
+ .tbar select{flex:1 1 0;min-width:0;width:auto!important}
+ .tbar .sp{display:none}
+ .tbar button{flex:0 0 auto;white-space:nowrap}
+ .pills{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:-2px;padding:2px}
+ .pills::-webkit-scrollbar{display:none}.pills button{flex:0 0 auto;white-space:nowrap}
+ .dvh h3{font-size:20px}
+}
+@media(max-width:520px){
+ .dvg,.kgr{grid-template-columns:minmax(0,1fr)!important}
+ .tbar select{flex:1 1 100%}.tbar button{flex:1 1 0}
+ .dvb{padding:14px 12px;border-radius:20px}
+}
 </style>
 <script src="posbar.js"></script>
 </head>
@@ -318,13 +339,26 @@ async function call(op,p){p=p||{};p.op=op;p.auth=AUTH();
     var c=JSON.parse(JSON.stringify(S)),r0=run(c,p,me&&me.role,p.auth);
     if(!r0.ok){toast(r0.err);return r0}
     S=c;render();pend++;
-    sq=sq.then(function(){return send(p)}).then(function(x){pend--;if(x.ok)toast("✓ Perubahan berhasil disimpan");else{toast(x.err||"Gagal menyimpan");refresh()}})
+    sq=sq.then(function(){return send(p)}).then(function(x){pend--;if(x.ok){toast("✓ Perubahan berhasil disimpan");if(!pend)ssave()}else{toast(x.err||"Gagal menyimpan");refresh()}})
       .catch(function(){pend--;toast("Gagal terhubung ke Google Sheets");refresh()});
     return r0}
   var r;try{r=await send(p)}catch(e){r={ok:0,err:"Gagal terhubung ke Google Sheets"}}
-  if(r.data)S=r.data;if(!r.ok)toast(r.err||"Gagal");else if(op=="register"||op=="setuser")toast("✓ Perubahan berhasil disimpan");
+  if(r.data)setData(r.data);if(!r.ok)toast(r.err||"Gagal");else if(op=="register"||op=="setuser")toast("✓ Perubahan berhasil disimpan");
   $("sync").textContent=API?"Tersinkron":"Mode demo";render();return r}
-async function refresh(){if(pend)return;try{var p={op:"load",auth:AUTH()},r=await send(p);if(r.data&&!pend){S=r.data;$("sync").textContent=API?"Tersinkron":"Mode demo";render()}}catch(e){$("sync").textContent="Offline"}}
+/* ---- simpanan data di perangkat: aplikasi langsung tampil, lalu diperbarui di belakang layar ---- */
+var RH=null,RHL=false,LR=0;
+function SK(){var c=API&&POSBAR.cred();return c?"bahan-snap:"+c.u:""}
+function lsnap(){try{var v=JSON.parse(localStorage.getItem(SK())||"null");return v&&v.S&&v.S.Bahan?v:null}catch(e){return null}}
+function ssave(){var k=SK();if(!k)return;try{localStorage.setItem(k,JSON.stringify({S:S,role:me&&me.role,name:me&&me.name,t:Date.now()}))}catch(e){}}
+function mergeR(a,b){var m={},o=[];a.concat(b).forEach(function(h){if(!(h.id in m))o.push(h);m[h.id]=h});return o.map(function(h){return m[h.id]})}
+function setData(d){S=d;if(RH)S.Riwayat=mergeR(RH,S.Riwayat||[]);ssave()}
+/* riwayat lengkap hanya diambil saat membuka Laporan / Riwayat */
+async function fullR(){if(!API||RH||RHL)return;RHL=true;$("sync").textContent="Memuat riwayat...";
+  try{var r=await send({op:"riwayat",auth:AUTH()});if(r.ok&&r.data){RH=r.data;S.Riwayat=mergeR(RH,S.Riwayat);render()}}catch(e){}
+  RHL=false;$("sync").textContent="Tersinkron"}
+async function refresh(){if(pend)return;LR=Date.now();try{var p={op:"load",auth:AUTH()},r=await send(p);
+  if(r.data&&!pend){if(r.role&&me)me.role=r.role;setData(r.data);$("sync").textContent=API?"Tersinkron":"Mode demo";render()}
+  else if(!r.ok&&/AUTH|sesi/i.test(r.err||"")){POSBAR.block("Sesi Positif POS sudah berakhir. Masuk lagi di Positif POS.")}}catch(e){$("sync").textContent="Offline"}}
 
 // ---- turunan ----
 var gb=function(id){return S.Bahan[idx(S.Bahan,id)]};
@@ -339,7 +373,7 @@ var actOrder=function(id){return S.Order.filter(function(o){return o.bahanId==id
 var fmt=function(s){var d=new Date(s);return isNaN(d)?"":d.toLocaleString("id-ID",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})};
 var LB={habis:"Habis",tipis:"Menipis",aman:"Aman"};
 
-function go(v){view=v;qs="";ad=null;if(v=="stok"&&isKd(S.Divisi[idx(S.Divisi,fd)]))fd="Semua";render()}
+function go(v){view=v;qs="";ad=null;if(v=="lap"||v=="riwayat")fullR();try{history.replaceState(null,"","#"+v)}catch(e){}if(v=="stok"&&isKd(S.Divisi[idx(S.Divisi,fd)]))fd="Semua";render()}
 function goItem(id){view="order";qs="";ot=actOrder(id)?"jalan":"perlu";foc=id;render()}
 function tg(id){ex[id]=!ex[id];render()}
 var wsOf=function(b){var d=S.Divisi[idx(S.Divisi,b.divisi)];return d?(d.ws||"1"):"1"};
@@ -397,13 +431,13 @@ function vStok(){var its=items(false),filt=!!qs||fs!="Semua",
     return'<section class="dvb"><div class="dvh"><h3>'+esc(nm)+'</h3><span class="mu">'+l.length+' bahan</span><span class="sp"></span>'+(nh?'<span class="bd habis">'+nh+' habis</span>':"")+(nt?'<span class="bd tipis">'+nt+' menipis</span>':"")+(!nh&&!nt&&l.length?'<span class="bd aman">Semua aman</span>':"")+'</div><div class="gr dvg">'+(l.map(function(it){return stCard(it.m)}).join("")||'<div class="mu">Belum ada bahan di divisi ini.</div>')+'</div></section>'},
   out=dvs.map(function(d){return box(d.name||d.nama,its.filter(function(it){return it.m.divisi==d.id}))}).join("");
   if(fd=="Semua"){var rest=its.filter(function(it){return!dvs.some(function(d){return d.id==it.m.divisi})});if(rest.length)out+=box("Lainnya",rest)}
-  return'<div class="bar">'+sbox()+dsel()+'<span class="sp"></span>'+(ed()?'<button class="pri" onclick="dBahan()">+ Bahan</button><button onclick="dDiv()">Kelola divisi</button>':"")+'</div>'
-  +'<div class="bar">'+spills(false)+'</div>'
+  return'<div class="bar tbar">'+sbox()+dsel()+'<span class="sp"></span>'+(ed()?'<button class="pri" onclick="dBahan()">+ Bahan</button><button onclick="dDiv()">Kelola divisi</button>':"")+'</div>'
+  +'<div class="bar pills">'+spills(false)+'</div>'
   +(out||'<div class="mu">Belum ada bahan di '+GN()+(fd!="Semua"?" untuk divisi ini":"")+'.</div>')}
 function vKain(){var its=items(true);
-  return'<div class="bar">'+sbox("Cari kain atau warna...")+'<span class="sp"></span>'+(ed()?'<button class="pri" onclick="dKain()">+ Kain</button>':"")+'</div>'
-  +'<div class="bar">'+spills(true)+'</div>'
-  +'<div class="gr" style="grid-template-columns:repeat(auto-fill,minmax(270px,1fr))">'+(its.map(function(it){return stCard(it.m)}).join("")||'<div class="mu">Belum ada stok kain di '+GN()+'.'+(ed()?' Klik "+ Kain" untuk menambah.':"")+'</div>')+'</div>'}
+  return'<div class="bar tbar">'+sbox("Cari kain atau warna...")+'<span class="sp"></span>'+(ed()?'<button class="pri" onclick="dKain()">+ Kain</button>':"")+'</div>'
+  +'<div class="bar pills">'+spills(true)+'</div>'
+  +'<div class="gr kgr">'+(its.map(function(it){return stCard(it.m)}).join("")||'<div class="mu">Belum ada stok kain di '+GN()+'.'+(ed()?' Klik "+ Kain" untuk menambah.':"")+'</div>')+'</div>'}
 function setD(i){fd=i;render()}function setS(i){fs=i;render()}
 function dIco(n){n=String(n).toLowerCase();return/resi/.test(n)?"receipt":/stiker/.test(n)?"sticker":/potong|cutting/.test(n)?"scissors":/jahit/.test(n)?"shirt":/dtf|pres|cetak|print/.test(n)?"printer":/packing|kemas/.test(n)?"box":/kain/.test(n)?"layers":"tag"}
 function findCode(v){v=String(v||"").trim().toLowerCase();if(!v)return null;return leaves().filter(function(b){return String(b.id).toLowerCase()==v})[0]||null}
@@ -642,13 +676,25 @@ function camOff(){clearInterval(scTimer);if(scStream){scStream.getTracks().forEa
 $("dlg").addEventListener("close",camOff);
 
 (async function(){
+  var hv=location.hash.slice(1);if(NV.some(function(v){return v[0]==hv})||hv=="lap"||hv=="riwayat")view=hv;
   if(API){var c=POSBAR.cred();if(!c){POSBAR.block();return}
-    var m=POSBAR.me()||{};me={name:m.name||c.u,role:null};render();
-    var r=await send({op:"login",auth:AUTH()}).catch(function(){return{ok:0,err:"Tidak bisa terhubung ke server"}});
-    if(r.ok){me.role=r.role;if(r.name)me.name=r.name}
+    var m=POSBAR.me()||{},sv=lsnap();me={name:(sv&&sv.name)||m.name||c.u,role:sv?sv.role:null};
+    if(sv){S=sv.S;$("sync").textContent="Memperbarui..."}else $("sync").textContent="Memuat data...";
+    render();if(view=="lap"||view=="riwayat")fullR();
+    LR=Date.now();var r=await send({op:"load",auth:AUTH()}).catch(function(){return{ok:0,net:1,err:"Tidak bisa terhubung ke server"}});
+    if(r.ok&&r.data){if(r.name)me.name=r.name;
+      if(r.role)me.role=r.role;
+      else{var l=await send({op:"login",auth:AUTH()}).catch(function(){return{ok:0}});if(l.ok){me.role=l.role;if(l.name)me.name=l.name}} /* server lama */
+      if(!me.role){me=null;POSBAR.block("Sesi Positif POS sudah berakhir. Masuk lagi di Positif POS.");return}
+      setData(r.data);$("sync").textContent="Tersinkron";render()}
+    else if(r.net&&sv){$("sync").textContent="Offline · data tersimpan"}
     else{me=null;POSBAR.block(/AUTH|sesi|PIN/i.test(r.err||"")||!r.err?"Sesi Positif POS sudah berakhir. Masuk lagi di Positif POS.":r.err);return}}
-  else me={name:"Kantor",pin:"1234",role:"kantor"};
-  refresh();render();setInterval(function(){if(!$("dlg").open&&!document.hidden)refresh()},60000)})();
+  else{me={name:"Kantor",pin:"1234",role:"kantor"};refresh()}
+  render();
+  setInterval(function(){if(!$("dlg").open&&!document.hidden)refresh()},60000);
+  /* kembali ke aplikasi: langsung sinkron */
+  var back=function(){if(!document.hidden&&!$("dlg").open&&Date.now()-LR>15000)refresh()};
+  document.addEventListener("visibilitychange",back);addEventListener("focus",back);addEventListener("pageshow",function(e){if(e.persisted)back()})})();
 </script>
 </body>
 </html>
