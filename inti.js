@@ -519,4 +519,3 @@ async function loadSmart(pv,n){
  const vs={};(R.variants||[]).forEach(x=>{vs[x.id]=x.d});
  S.products.forEach(p=>p.variants.forEach(v=>{const d=vs[String(v.id)];if(d)v.stock=+d.stock||0}));
  onData();setSync('Tersinkron')}
-
