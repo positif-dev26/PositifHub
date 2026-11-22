@@ -55,7 +55,6 @@ receipt:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1
 shirt:'<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>',
 box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
 layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
-cart:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
 factory:'<path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/>',
 clipboard:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
 grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
@@ -105,7 +104,7 @@ const fmt=d=>new Date(d).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'s
 $('lg').src=LOGO;
 let pend=null;
 const SALES=[['riwayat','Riwayat penjualan'],['laporan','Laporan penjualan']];
-const nb=(k,l)=>{const n=k==='produksi'?lowN():k==='bahan'?bhN():0;return `<button class="nv${k===tab?' on':''}" title="${l}" aria-label="${l}" onclick="tab='${k}';render()">${IC(NI[k])}${k==='beranda'?'':`<span class="nl">${l}</span>`}${n?'<span class="bgn">'+n+'</span>':''}</button>`};
+const nb=(k,l)=>{const n=k==='produksi'?lowN():0;return `<button class="nv${k===tab?' on':''}" title="${l}" aria-label="${l}" onclick="tab='${k}';render()">${IC(NI[k])}${k==='beranda'?'':`<span class="nl">${l}</span>`}${n?'<span class="bgn">'+n+'</span>':''}</button>`};
 const navH=()=>(can('kasir')?nb('kasir','Kasir'):'')
  +(SALES.some(s=>can(s[0]))?`<button class="nv${SALES.some(s=>s[0]===tab)?' on':''}" title="Penjualan" aria-label="Penjualan" onclick="go('${SALES.find(s=>can(s[0]))[0]}')">${IC('chart')}<span class="nl">Penjualan</span></button>`:'')
  +[['produk','Produk'],['bahan','Stok bahan baku'],['produksi','Produksi'],['pesanan','Pesanan custom'],['rekap','Rekap order']].filter(t=>tabOk(t[0])).map(t=>nb(t[0],t[1])).join('')+hubH();
@@ -329,7 +328,7 @@ async function loadPart(ns,want){
  ns.forEach(k=>{Object.keys(KO).forEach(p=>{if(p.startsWith(k+'/'))delete KO[p]});(R[k]||[]).forEach(x=>{KO[k+'/'+x.id]=x.d})});
  VER=r.ver;rebuild();onData();snapSave();setSync('Tersinkron')}
 function startPoll(){
- if(POLL)return;POLL=true;setTimeout(()=>bhPull(),50);
+ if(POLL)return;POLL=true;
  const chk=()=>{if(document.hidden||!ready)return;syncCheck(false)};
  setInterval(chk,10000);document.addEventListener('visibilitychange',chk);addEventListener('pageshow',e=>{if(e.persisted)chk()});addEventListener('focus',chk)}
 function isBusy(){const a=document.activeElement;return !!a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)}
@@ -521,52 +520,3 @@ async function loadSmart(pv,n){
  S.products.forEach(p=>p.variants.forEach(v=>{const d=vs[String(v.id)];if(d)v.stock=+d.stock||0}));
  onData();setSync('Tersinkron')}
 
-/* ===================================================================
-   STOK BAHAN BAKU di Positif POS: ringkasan bahan + restok
-   (Beranda, angka merah di menu, pengingat & resep bahan di Produksi)
-   Data diambil dari server Stok Bahan Baku (perintah 'ringkas'),
-   disimpan di perangkat supaya langsung tampil, lalu diperbarui di belakang layar.
-   =================================================================== */
-const BAHAN_API='https://script.google.com/macros/s/AKfycbxIEy8C4YY0H_DJJHRWjAA38YvpD2M01Kb7H-zcvaXqnFWJk0HWnIgg2Vtj0MMivl41/exec';
-const BGN={'1':'Gudang Pusat','2':'Gudang Kedawung'},BST=['Diminta','Dibelanjakan','Dalam perjalanan','Sampai gudang','Unboxing'];
-let BH=null,BHT=0,BHL=false,BHE='';
-try{BH=JSON.parse(localStorage.getItem('positif_bahan_rk')||'null')}catch(e){}
-BHT=BH&&BH.t||0;
-const bhSt=b=>b.s<=0?'habis':b.s<=b.m?'tipis':'aman';
-const bhLow=()=>(BH&&BH.b||[]).filter(b=>bhSt(b)!=='aman').sort((a,b)=>(a.s>0)-(b.s>0)||a.s/(a.m||1)-b.s/(b.m||1));
-const bhOpen=()=>(BH&&BH.o||[]).slice().sort((a,b)=>(b.ur==='Mendesak')-(a.ur==='Mendesak')||String(b.t).localeCompare(String(a.t)));
-const bhN=()=>bhLow().length+bhOpen().filter(o=>o.ur==='Mendesak').length;
-const bhOrd=id=>bhOpen().find(o=>o.b===id);
-const bhKey=n=>String(n||'').replace(/\s*\([^()]*\)\s*$/,'').trim().toLowerCase();
-const bhRes=n=>{const r=(BH&&BH.r||[]).find(x=>x.id===bhKey(n));return r?String(r.bahan).split(',').filter(Boolean):[]};
-const bhGet=id=>(BH&&BH.b||[]).find(b=>b.id===id);
-async function bhPull(force){const c=getCred();if(!c||!c.t||!BAHAN_API||BHL)return;if(!force&&Date.now()-BHT<45000)return;BHL=true;BHT=Date.now();
- try{const r=await fetch(BAHAN_API,{method:'POST',body:JSON.stringify({op:'ringkas',auth:{user:c.u,tok:c.t}})}).then(x=>x.json());
-  if(r&&r.ok&&r.data){BH=Object.assign(r.data,{t:Date.now()});BHE='';try{localStorage.setItem('positif_bahan_rk',JSON.stringify(BH))}catch(e){}}
-  else BHE=/tidak dikenal/i.test(r&&r.err||'')?'Server Stok Bahan Baku belum diperbarui (Code-StokBahanBaku.gs).':(r&&r.err)||'Gagal memuat data bahan.'}
- catch(e){BHE='Tidak bisa terhubung ke server Stok Bahan Baku.'}
- finally{BHL=false;bhUpd()}}
-function bhUpd(){if(!ready)return;const n=$('nav');if(n&&!document.querySelector('#nav .hubmenu.on'))n.innerHTML=navH();
- if(tab==='beranda'&&$('dsh')&&window.vBeranda)vBeranda();if(window.bhProd)bhProd()}
-setInterval(()=>{if(!document.hidden)bhPull()},60000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)bhPull()});
-setTimeout(()=>bhPull(),400);
-const bhLink=v=>EXT.bahan+(v?'#'+v:'');
-/* kartu kecil daftar bahan (dipakai Beranda & Produksi) */
-const bhRow=b=>{const s=bhSt(b),o=bhOrd(b.id);return '<div class="bhr '+s+'"><span class="bhd"></span><span class="bhn"><b>'+esc(b.n)+'</b><small>'+esc(b.d)+(BGN[b.w]&&b.w!=='1'?' · '+BGN[b.w]:'')+(o?' · <i class="bho">Restok: '+esc(o.st)+'</i>':'')+'</small></span><span class="bhq">'+(+b.s.toFixed(3))+' <small>'+esc(b.u||'')+'</small></span></div>'};
-/* ---------- resep bahan (opsional): produk -> bahan yang dipakai ---------- */
-const bhCanRes=()=>ROLE==='admin'||ROLE==='supervisor';
-let BRS=null;
-async function bhEditRes(name){if(!BH){toast('Data bahan belum termuat.',1);return}
- const base=String(name).replace(/\s*\([^()]*\)\s*$/,'').trim();BRS=new Set(bhRes(name));
- const L=(BH.b||[]).slice().sort((a,b)=>a.n.localeCompare(b.n,'id'));
- const html='<p class="muted" style="margin:0 0 8px">Pilih bahan yang dipakai untuk <b>'+esc(base)+'</b>. Opsional: produk tanpa resep (misal jersey dari vendor) tidak diperiksa.</p><input class="bhs" placeholder="Cari bahan" oninput="bhFl(this.value)"><div class="bhl">'
-  +L.map(b=>'<label class="bhc" data-n="'+esc(b.n.toLowerCase()+' '+b.d.toLowerCase())+'"><input type="checkbox" value="'+esc(b.id)+'"'+(BRS.has(b.id)?' checked':'')+' onchange="this.checked?BRS.add(this.value):BRS.delete(this.value)"><span><b>'+esc(b.n)+'</b><small>'+esc(b.d)+' · '+(BGN[b.w]||'Gudang '+b.w)+'</small></span></label>').join('')+'</div>';
- if(!(await uiBox({title:'Resep bahan',html,ok:'Simpan',cancel:'Batal'})))return;
- const c=getCred(),ids=[...BRS];toast('Menyimpan resep...');
- try{const r=await fetch(BAHAN_API,{method:'POST',body:JSON.stringify({op:'resep',nama:base,bahan:ids,auth:{user:c.u,tok:c.t}})}).then(x=>x.json());
-  if(!r.ok)throw new Error(r.err||'Gagal');
-  BH.r=(BH.r||[]).filter(x=>x.id!==bhKey(base));if(ids.length)BH.r.push({id:bhKey(base),nama:base,bahan:ids.join(',')});
-  try{localStorage.setItem('positif_bahan_rk',JSON.stringify(BH))}catch(e){}toast(ids.length?'Resep bahan disimpan.':'Resep bahan dihapus.');bhUpd();bhPull(true)}
- catch(e){toast('Gagal menyimpan resep: '+e.message,1)}}
-function bhFl(q){q=q.trim().toLowerCase();document.querySelectorAll('.bhl .bhc').forEach(l=>{l.style.display=!q||l.dataset.n.includes(q)?'':'none'})}
