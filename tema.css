@@ -481,3 +481,33 @@ header .clk+#sync{margin-left:14px}
 .bar.fn #q{min-width:0;flex:1}
 @media(max-width:600px){.bar.fn #cat{max-width:38%;min-width:0}}
 @media(max-width:860px){.pos{grid-template-columns:minmax(0,1fr)!important}.pos>*{min-width:0}}
+
+/* =====================================================================
+   STOK PRODUK: setiap desain punya kotak sendiri + info produksi
+   ===================================================================== */
+.sbs{display:flex!important;flex-direction:column;align-items:stretch!important;gap:24px}
+.sgrp{min-width:0}
+.sgh{display:flex;align-items:center;gap:12px;margin:0 2px 10px}
+.sgh b{display:block;font:700 21px/1.1 "Barlow Condensed",Impact,sans-serif;letter-spacing:.02em}
+.sgh small{display:block;color:var(--muted)}
+.sdg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:14px;align-items:start}
+.sdc{min-width:0;padding:10px;border-radius:18px;background:var(--card,#111);border:1px solid rgba(212,255,63,.32);box-shadow:0 0 20px -12px rgba(212,255,63,.45)}
+.sdc.warn{border-color:rgba(212,255,63,.7);box-shadow:0 0 26px -8px rgba(212,255,63,.6)}
+.sdc.cur{border-color:var(--acc);box-shadow:0 0 0 1px rgba(212,255,63,.2),0 0 30px -6px rgba(212,255,63,.75)}
+.sdh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 11px;margin-bottom:6px;border-radius:11px;background:rgba(212,255,63,.13);border:1px solid rgba(212,255,63,.42)}
+.sdh b{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pcp{flex:none;font-size:12px;font-weight:600;color:#ffc247;border:1px solid rgba(255,194,71,.45);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.sdl{display:flex;flex-direction:column;gap:2px}
+.vr .vs{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.vr .vs small.vp{display:flex;align-items:center;gap:6px;color:#ffc247;font-size:12px;margin-top:2px;white-space:nowrap}
+.dts{display:inline-flex;gap:3px;vertical-align:middle}
+.dts i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16)}
+.dts i.on{background:var(--acc)}.dts i.cur{background:#ffc247;box-shadow:0 0 8px rgba(255,194,71,.7)}
+/* panel detail: sedang diproduksi */
+.spd{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,194,71,.42);background:rgba(255,194,71,.05)}
+.spdh{color:#ffc247;font-weight:700;font-size:14px;margin-bottom:4px}
+.spr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px}
+.spr span{display:flex;align-items:center;gap:6px;min-width:0}.spr b{white-space:nowrap}.spr small{color:var(--muted);font-weight:400}
+.spn{font-size:12px;margin-top:6px}
+.spd .lnk{margin-top:4px}
+.modal.sdm .pdt>div:first-child{padding-right:40px}

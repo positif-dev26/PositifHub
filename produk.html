@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tema.css?v=20261121c">
+<link rel="stylesheet" href="tema.css?v=20261122a">
 </head>
 <body>
 <header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
@@ -27,7 +27,7 @@
 <div id="plabels"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
 <script>window.PAGE_TABS=["produk", "stok"];window.PAGE_HOME="produk";</script>
-<script src="inti.js?v=20261121c"></script>
+<script src="inti.js?v=20261122a"></script>
 <script>
 /* ---------- PRODUK & VARIAN ---------- */
  const addForm=()=>`<div>
@@ -82,28 +82,44 @@ let sc='Semua',ssel=0,SCN=[];
 const pcat=p=>String(p.cat||'').trim()||'Lainnya';
 const CI=n=>/stiker|sticker/i.test(n)?'sticker':/jersey|kaos|baju|kemeja|jaket|polo|hoodie|seragam|celana/i.test(n)?'shirt':'box';
 const cvl=v=>{const s=stt(v);return s==='Habis'?'bad':s==='Menipis'?'mid2':''};
-function stokNow(){
- const tr=allV().filter(x=>!isJ(x.v)),lo=tr.filter(x=>x.v.stock>0&&x.v.stock<=S.low).length,ou=tr.filter(x=>x.v.stock<1).length,ok=tr.filter(x=>x.v.stock>S.low).length;
+/* ---------- info produksi per varian (dari order produksi yang belum selesai) ----------
+   PM[vid] = {tot, rows:[{st, loc, qty, date}]}. Tidak ikut dihitung sebagai stok. */
+let PM={};
+function prodMap(){const m={};(S.jobs||[]).forEach(j=>{if(!RS.includes(j.stage))return;const hs=j.hist||[],h=[...hs].reverse().find(x=>!x.kind)||hs[0]||{date:j.date};
+  (j.items||[]).forEach(it=>{if(!(it.qty>0))return;const o=m[String(it.vid)]=m[String(it.vid)]||{tot:0,rows:{}},rk=j.stage+'|'+(j.loc||'');o.tot+=it.qty;
+   const r=o.rows[rk]=o.rows[rk]||{st:j.stage,loc:j.loc||'',qty:0,date:h.date||j.date};r.qty+=it.qty;if(h.date&&h.date<r.date)r.date=h.date})});
+ Object.values(m).forEach(o=>{o.rows=Object.values(o.rows).sort((a,b)=>RS.indexOf(a.st)-RS.indexOf(b.st))});return m}
+const pmOf=v=>PM[String(v.id)];
+const gdN=l=>{const g=(S.gudang||[]).find(x=>x.id===l||x.name===l);return g?g.name:(l||'')};
+const lsn=n=>n>=12?' ('+Math.floor(n/12)+' lsn'+(n%12?' '+n%12+' pcs':'')+')':'';
+const hariLalu=d=>{const x=Math.floor((Date.now()-new Date(d))/864e5);return !(x>=0)?'':x<1?'hari ini':x+' hari'};
+/* titik tahap: hijau = sudah lewat, kuning = tahap paling awal yang masih ada barangnya */
+const dots=st=>{const c=RS.indexOf(st);return '<span class="dts">'+RS.map((s,i)=>'<i class="'+(i<c?'on':i===c?'cur':'')+'"></i>').join('')+'</span>'};
+function stokNow(){PM=prodMap();
+ const tr=allV().filter(x=>!isJ(x.v)),lo=tr.filter(x=>x.v.stock>0&&x.v.stock<=S.low).length,ou=tr.filter(x=>x.v.stock<1).length,ok=tr.filter(x=>x.v.stock>S.low).length,pr=tr.filter(x=>pmOf(x.v)).length;
  const chip=(k,t,n)=>`<button class="chp ${sf===k?'on':''}" onclick="sf='${k}';stokNow()">${t}<b>${n}</b></button>`;
  const cm={};tr.forEach(x=>{const n=pcat(x.p);cm[n]=(cm[n]||0)+x.v.stock});
  SCN=Object.keys(cm).sort((a,b)=>a==='Lainnya'?1:b==='Lainnya'?-1:a.localeCompare(b,'id'));
  if(sc!=='Semua'&&!SCN.includes(sc))sc='Semua';
  const cchip=(n,i,t,u)=>`<button class="chp ${sc===n?'on':''}" onclick="sc=${i<0?"'Semua'":'SCN['+i+']'};ssel=0;stokNow()">${esc(t)}<b>${nf(u)}</b></button>`;
  $('pbody').innerHTML=`<div class="sk2"><div class="pfh"><h1 class="pt">Stok produk</h1><input id="sq" class="srch" placeholder="Cari produk atau varian" value="${esc(sq)}" oninput="sq=this.value;stokFill()" autocomplete="off"></div>
- <div class="bar chr">${chip('all','Semua',tr.length)}${chip('low','Menipis',lo)}${chip('out','Habis',ou)}${chip('ok','Aman',ok)}</div>
+ <div class="bar chr">${chip('all','Semua',tr.length)}${chip('low','Menipis',lo)}${chip('out','Habis',ou)}${chip('ok','Aman',ok)}${chip('prod','Diproduksi',pr)}</div>
  <div class="bar chr">${cchip('Semua',-1,'Semua jenis',tr.reduce((a,x)=>a+x.v.stock,0))}${SCN.map((n,i)=>cchip(n,i,n,cm[n])).join('')}</div></div>
  <div class="pf"><div><div class="rh"><h2>Rak stok</h2><span class="muted" id="skn"></span></div><div class="sbs" id="sbs"></div></div><div id="pdt"></div></div>`;
  stokFill()}
 function stokFill(){
- const ql=sq.trim().toLowerCase(),fo=v=>sf==='all'||(sf==='low'&&v.stock>0&&v.stock<=S.low)||(sf==='out'&&v.stock<1)||(sf==='ok'&&v.stock>S.low),by={};
+ PM=prodMap();const ql=sq.trim().toLowerCase(),fo=v=>sf==='all'||(sf==='low'&&v.stock>0&&v.stock<=S.low)||(sf==='out'&&v.stock<1)||(sf==='ok'&&v.stock>S.low)||(sf==='prod'&&!!pmOf(v)),by={};
  S.products.forEach(p=>{const vs=p.variants.filter(v=>!isJ(v)&&(!ql||(p.name+' '+vl(v)+' '+bcv(v)).toLowerCase().includes(ql))&&fo(v));if(vs.length)(by[pcat(p)]=by[pcat(p)]||[]).push({p,vs})});
  const names=Object.keys(by).sort((a,b)=>a==='Lainnya'?1:b==='Lainnya'?-1:a.localeCompare(b,'id')),shown=sc==='Semua'?names:names.filter(n=>n===sc);
  let sel=null;shown.forEach(n=>by[n].forEach(({p,vs})=>vs.forEach(v=>{if(v.id===ssel)sel={p,v}})));
  if(!sel&&shown.length){const f=by[shown[0]].slice().sort((a,b)=>a.p.name.localeCompare(b.p.name,'id'))[0];sel={p:f.p,v:f.vs[0]}}
  ssel=sel?sel.v.id:0;
+ const row=v=>{const c=cvl(v),pm=pmOf(v);return '<button class="vr'+(v.id===ssel?' on':'')+'" onclick="ssl('+v.id+')"><span class="vs"><span>'+esc(vl(v))+(c?'<small class="'+c+'"> · '+stt(v)+'</small>':'')+'</span>'
+   +(pm?'<small class="vp">'+dots(pm.rows[0].st)+nf(pm.tot)+' pcs · '+esc(STL[pm.rows[0].st])+(pm.rows.length>1?' +'+(pm.rows.length-1):'')+'</small>':'')+'</span><span class="vq '+c+'">'+nf(v.stock)+'</span></button>'};
+ const card=({p,vs})=>{const pt=p.variants.reduce((a,v)=>a+((pmOf(v)||{}).tot||0),0),warn=vs.some(v=>v.stock<=S.low),cur=vs.some(v=>v.id===ssel);
+   return '<div class="sdc'+(warn?' warn':'')+(cur?' cur':'')+'"><div class="sdh"><b>'+esc(p.name)+'</b>'+(pt?'<span class="pcp">'+nf(pt)+' pcs diproduksi</span>':'')+'</div><div class="sdl">'+vs.map(row).join('')+'</div></div>'};
  const box=n=>{const L=by[n].slice().sort((a,b)=>a.p.name.localeCompare(b.p.name,'id')),tot=L.reduce((a,x)=>a+x.vs.reduce((s,v)=>s+v.stock,0),0),low=L.reduce((a,x)=>a+x.vs.filter(v=>v.stock<=S.low).length,0);
-  return '<section class="sb'+(sel&&pcat(sel.p)===n?' cur':'')+'"><div class="sbh"><span class="sbi">'+IC(CI(n))+'</span><div><b>'+esc(n)+'</b><small>'+L.length+' produk · '+nf(tot)+' unit</small>'+(low?'<small class="mid2">'+low+' varian menipis/habis</small>':'')+'</div></div><div class="sbl">'
-  +L.map(({p,vs})=>'<div class="vg"><div class="vgn">'+esc(p.name)+'</div>'+vs.map(v=>{const c=cvl(v);return '<button class="vr'+(v.id===ssel?' on':'')+'" onclick="ssl('+v.id+')"><span class="vs">'+esc(vl(v))+(c?'<small class="'+c+'"> · '+stt(v)+'</small>':'')+'</span><span class="vq '+c+'">'+nf(v.stock)+'</span></button>'}).join('')+'</div>').join('')+'</div></section>'};
+  return '<section class="sgrp"><div class="sgh"><span class="sbi">'+IC(CI(n))+'</span><div><b>'+esc(n)+'</b><small>'+L.length+' produk · '+nf(tot)+' unit'+(low?' · <span class="mid2">'+low+' varian menipis/habis</span>':'')+'</small></div></div><div class="sdg">'+L.map(card).join('')+'</div></section>'};
  $('sbs').innerHTML=shown.length?shown.map(box).join(''):'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>';
  $('skn').textContent=shown.reduce((a,n)=>a+by[n].length,0)+' produk';
  $('pdt').innerHTML=narrow()?'':stokDet(sel);stk()}
@@ -114,11 +130,17 @@ function sdmOpen(x){sdmClose();const d=document.createElement('div');d.id='sdm';
 function sdmClose(){const d=$('sdm');if(d)d.remove()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('sdm')&&!document.querySelector('.ubx')){sdmClose();e.stopPropagation()}},true);
 addEventListener('resize',()=>{if(tab==='produk'&&psub==='stok'&&$('pdt')){const w=narrow();if(w!==window._nw){window._nw=w;sdmClose();stokFill()}}});
+/* bagian "Sedang diproduksi" di panel detail / popup HP */
+function spdH(v){const pm=pmOf(v);if(!pm)return '';
+ return '<div class="spd"><div class="spdh">Sedang diproduksi · '+nf(pm.tot)+' pcs'+lsn(pm.tot)+'</div>'
+ +pm.rows.map(r=>'<div class="spr"><span>'+dots(r.st)+esc(STL[r.st])+(r.loc?' · '+esc(gdN(r.loc)):'')+'</span><b>'+nf(r.qty)+' pcs'+(hariLalu(r.date)?' <small>· '+hariLalu(r.date)+'</small>':'')+'</b></div>').join('')
+ +'<div class="muted spn">Belum dihitung sebagai stok. Masuk stok otomatis setelah selesai finishing.</div>'
+ +(tabOk('produksi')?'<button class="lnk" onclick="go(\'produksi\')">Lihat di Produksi ›</button>':'')+'</div>'}
 function stokDet(s){
  if(!s)return '<div class="card pdt"><h2 style="margin:0 0 6px">Detail stok</h2><p class="muted">Pilih varian di rak untuk melihat dan mengubah stok.</p></div>';
  const {p,v}=s,c=cvl(v),lg=(S.log||[]).filter(e=>e.name===cn(p,v)).slice(0,4);
  return '<div class="card pdt"><div style="display:flex;gap:14px;align-items:center"><div class="thumb pdimg" '+(v.img?'onclick="zoomP('+p.id+','+v.id+')" title="Perbesar foto" style="cursor:zoom-in"':'style="cursor:default"')+'>'+(v.img?'<img src="'+v.img+'" alt="">':'')+'</div><div style="min-width:0"><div class="pn">'+esc(p.name)+'</div><div class="muted">'+esc(vl(v))+' · '+esc(pcat(p))+'</div></div></div>'
- +'<div style="display:flex;align-items:baseline;gap:10px;margin:14px 0 4px"><span class="sn2 '+c+'">'+nf(v.stock)+'</span><span class="muted">unit</span>'+sbadge(v)+'</div><div class="muted" style="font-size:13px">Kode: '+esc(bcv(v))+'</div>'+(can('produk_edit')?'<button class="lnk" onclick="edFromStok('+p.id+')">'+IC('expand')+' Edit produk ini</button>':'')
+ +'<div style="display:flex;align-items:baseline;gap:10px;margin:14px 0 4px"><span class="sn2 '+c+'">'+nf(v.stock)+'</span><span class="muted">unit</span>'+sbadge(v)+'</div><div class="muted" style="font-size:13px">Kode: '+esc(bcv(v))+'</div>'+(can('produk_edit')?'<button class="lnk" onclick="edFromStok('+p.id+')">'+IC('expand')+' Edit produk ini</button>':'')+spdH(v)
  +(can('stok_ubah')?'<div style="margin-top:14px;display:grid;gap:8px"><input type="text" inputmode="numeric" data-n min="0" id="a'+v.id+'" placeholder="Jumlah" autocomplete="off"><input type="text" id="t'+v.id+'" placeholder="Catatan (opsional)" autocomplete="off"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="adj('+v.id+',\'add\')">'+IC('plus')+' Tambah</button><button class="btn sec" onclick="adj('+v.id+',\'sub\')">'+IC('minus')+' Kurangi</button><button class="btn sec" onclick="adj('+v.id+',\'set\')">'+IC('equal')+' Ubah jadi</button></div></div>':'')
  +(lg.length?'<div class="muted" style="margin:14px 0 4px;font-size:13px">Perubahan terakhir</div>'+lg.map(e=>{const d=e.after-e.before;return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:3px 0"><span class="muted">'+fmt(e.date)+' · '+esc(e.type)+'</span><b class="'+(d<0?'bad':'ok')+'">'+(d>0?'+':'')+d+'</b></div>'}).join(''):'')+'</div>'}
 function stokLog(){
