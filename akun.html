@@ -72,7 +72,9 @@ async function masuk(){const m=$('lm');m.className='ms';m.textContent='Memeriksa
 
 /* ---- Akun saya / ganti PIN ---- */
 function pinForm(){return `<label>PIN lama</label><input type="password" id="p0"><label>PIN baru (min. 6 karakter)</label><input type="password" id="p1"><label>Ulangi PIN baru</label><input type="password" id="p2"><button class="b f" onclick="gantiPin()">Simpan PIN baru</button><div class="ms" id="pm"></div>`}
-function vAkun(){$('body').innerHTML=`<div class="cd" style="max-width:420px"><h2>Ganti PIN</h2>${pinForm()}</div>`}
+async function vAkun(){
+ let m=ME;try{m=(await api('/api/me')).me;simpanMe(m)}catch(e){}
+ $('body').innerHTML=`<div class="cd"><h2>Izin saya</h2><p class="mu">Peran: <b>${esc(m.label)}</b> · @${esc(m.username)} · ${m.perms.length} izin</p><div class="pg">${m.perms.map(p=>`<label style="cursor:default">${esc(LBL[p]||p)}</label>`).join('')||'<span class="mu">Tidak ada izin.</span>'}</div></div><div class="cd" style="max-width:420px"><h2>Ganti PIN</h2>${pinForm()}</div>`}
 async function gantiPin(){const m=$('pm');m.className='ms';
  if($('p1').value!==$('p2').value){m.className='ms e';m.textContent='PIN baru dan ulangannya tidak sama.';return}
  try{await api('/api/pin',{lama:$('p0').value,baru:$('p1').value});simpanMe((await api('/api/me')).me);toast('PIN diganti.');render()}catch(e){m.className='ms e';m.textContent=e.message}}

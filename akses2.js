@@ -30,7 +30,7 @@
       '.k{width:min(380px,100%);text-align:center;padding:28px 24px;border-radius:22px;background:#0f0f0f;border:1.5px solid rgba(212,255,63,.5);box-shadow:0 0 44px -14px rgba(212,255,63,.55)}' +
       '.k img{width:70%;margin:0 auto 14px;display:block}.k p{margin:0 0 18px;color:#c9c9c4;line-height:1.5}.k b{color:#f4f4f2}' +
       '.k a{display:block;padding:12px;border-radius:12px;background:#d4ff3f;color:#0a0a0a;font-weight:700;text-decoration:none}</style></head>' +
-      '<body><div class="k"><img src="logo-positif.png" alt="Positif"><p>' + pesan + '</p><a href="akun.html">Ke halaman Masuk</a></div></body>';
+      '<body><div class="k"><img src="logo-positif.png" alt="Positif"><p>' + pesan + '</p><p style="font-size:12px;color:#777;margin:-8px 0 16px">akses2 v3 &middot; butuh: ' + app + ' &middot; peran: ' + (me ? String(me.role).replace(/[<>&]/g, '') : '-') + ' &middot; jumlah izin: ' + (me && me.perms ? me.perms.length : 0) + '</p><a href="akun.html">Ke halaman Masuk</a></div></body>';
   };
   setTimeout(tampil, 0);
 })();
