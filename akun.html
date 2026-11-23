@@ -71,7 +71,7 @@ async function masuk(){const m=$('lm');m.className='ms';m.textContent='Memeriksa
  catch(e){m.className='ms e';m.textContent=e.message}}
 
 /* ---- Akun saya / ganti PIN ---- */
-function pinForm(){return `<label>PIN lama</label><input type="password" id="p0"><label>PIN baru (min. 6 karakter)</label><input type="password" id="p1"><label>Ulangi PIN baru</label><input type="password" id="p2"><button class="b f" onclick="gantiPin()">Simpan PIN baru</button><div class="ms" id="pm"></div>`}
+function pinForm(){return `<label>PIN lama</label><input type="password" id="p0"><label>PIN baru (min. 4 karakter)</label><input type="password" id="p1"><label>Ulangi PIN baru</label><input type="password" id="p2"><button class="b f" onclick="gantiPin()">Simpan PIN baru</button><div class="ms" id="pm"></div>`}
 async function vAkun(){
  let m=ME;try{m=(await api('/api/me')).me;simpanMe(m)}catch(e){}
  $('body').innerHTML=`<div class="cd"><h2>Izin saya</h2><p class="mu">Peran: <b>${esc(m.label)}</b> · @${esc(m.username)} · ${m.perms.length} izin</p><div class="pg">${m.perms.map(p=>`<label style="cursor:default">${esc(LBL[p]||p)}</label>`).join('')||'<span class="mu">Tidak ada izin.</span>'}</div></div><div class="cd" style="max-width:420px"><h2>Ganti PIN</h2>${pinForm()}</div>`}
@@ -96,7 +96,7 @@ function editUser(un){
  <label>Username</label><input type="text" id="eu" value="${esc(x.username)}" ${un?'disabled':''} autocapitalize="none">
  <label>Nama</label><input type="text" id="en" value="${esc(x.name)}">
  <label>Peran</label><select id="er" onchange="gantiPeranForm()">${bisaPeran().map(r=>`<option value="${r.id}" ${r.id===x.role?'selected':''}>${esc(r.label)}</option>`).join('')}</select>
- <label>${un?'PIN baru (kosongkan jika tidak diganti)':'PIN awal (min. 6 karakter, orangnya wajib menggantinya)'}</label><input type="password" id="ep" autocomplete="new-password">
+ <label>${un?'PIN baru (kosongkan jika tidak diganti)':'PIN awal (min. 4 karakter, orangnya wajib menggantinya)'}</label><input type="password" id="ep" autocomplete="new-password">
  <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="ea" ${x.active?'checked':''}> Akun aktif</label>
  <label>Izin <span class="mu">(awalnya mengikuti peran; centang/hapus untuk pengecualian orang ini)</span></label><div class="pg" id="eg">${grid(sel,FULL.includes(x.role))}</div>
  <div class="row" style="margin-top:16px"><button class="b s" onclick="tutup()">Batal</button><span class="sp"></span><button class="b" onclick="simpanUser()">Simpan</button></div><div class="ms" id="em"></div>`;
