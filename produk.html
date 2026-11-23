@@ -155,19 +155,19 @@ const cvl=v=>{const s=stt(v);return s==='Habis'?'bad':s==='Menipis'?'mid2':''};
    Satu kartu berbingkai lime per produk; baris varian: Ukuran · Warna · Stok · Produksi · Ubah stok
    Tahapan diambil dari order produksi yang masih berjalan (Cetak vendor s.d. Finishing).
    Hanya tampil untuk akun yang boleh melihat produksi (data order produksi hanya dikirim ke akun itu). */
-const PST=[['cetak','Cetak','#4da3ff','#9ccaff'],['bahan','Rak bahan','#a78bfa','#c4b5fd'],['cutting','Cutting','#ff9f43','#ffb877'],['jahit','Jahit','#f472b6','#f9a8d4'],['finishing','Finishing','#2dd4bf','#5fe3d1']];
-const PLIM={cetak:7,bahan:3,cutting:2,jahit:3,finishing:2};
+const PST=[['rencana','Rencana','#94a3b8','#cbd5e1'],['cetak','Cetak','#4da3ff','#9ccaff'],['bahan','Rak bahan','#a78bfa','#c4b5fd'],['cutting','Cutting','#ff9f43','#ffb877'],['jahit','Jahit','#f472b6','#f9a8d4'],['finishing','Finishing','#2dd4bf','#5fe3d1']];
+const PLIM={rencana:99,cetak:7,bahan:3,cutting:2,jahit:3,finishing:2};
 const canProd=()=>can('prod_lihat')||can('prod_buat');
 /* idVarian -> {tot, cetak:{q,late,tip[]}, ...}. Batas hari per tahap ikut Pengaturan produksi. */
 function prodMap(){const M={};if(!canProd())return M;
  const cf=(S.jobs||[]).find(j=>j.id==='pcfg')||{};let lim={};try{lim=typeof cf.lim==='string'?JSON.parse(cf.lim):(cf.lim||{})}catch(e){lim={}}lim=Object.assign({},PLIM,lim||{});
  const now=Date.now(),fd=d=>new Date(d+'T00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short'});
- (S.jobs||[]).forEach(j=>{const st=j.stage;if(!PLIM[st])return;
+ (S.jobs||[]).forEach(j=>{const st=j.stage==='cetak'&&+j.rc===1?'rencana':j.stage;if(!PLIM[st])return;
   const hs=j.hist||[],h=hs.slice().reverse().find(x=>x&&!x.kind)||hs[0]||{date:j.date},age=Math.max(0,Math.floor((now-new Date(h.date||j.date))/864e5)),l=+lim[st]||99;
   const lewat=!!j.due&&new Date(j.due+'T23:59')<now,late=age>=l||lewat;
   (j.items||[]).forEach(it=>{const q=+it.qty||0;if(q<=0)return;const m=M[it.vid]=M[it.vid]||{tot:0},s=m[st]=m[st]||{q:0,late:false,tip:[]};
    s.q+=q;m.tot+=q;if(late)s.late=true;
-   s.tip.push((j.no||'Order')+': '+q+' pcs · '+age+' hari (batas '+l+')'+(j.vendor?' · '+j.vendor:'')+(j.due?' · butuh '+fd(j.due):'')+(lewat?' · LEWAT TANGGAL BUTUH':age>=l?' · TERTAHAN':''))})});
+   s.tip.push((j.no||'Order')+': '+q+' pcs · '+age+' hari'+(l<99?' (batas '+l+')':'')+(j.vendor?' · '+j.vendor:'')+(j.due?' · butuh '+fd(j.due):'')+(lewat?' · LEWAT TANGGAL BUTUH':age>=l?' · TERTAHAN':''))})});
  return M}
 function stokNow(){
  const cp=canProd(),PM=prodMap(),tr=allV().filter(x=>!isJ(x.v)),pq=x=>(PM[x.v.id]||{}).tot||0;
