@@ -2006,7 +2006,7 @@ const ACT = {
   home: () => SES && go(SES.peran === 'WONODADI' ? 'cetak' : 'produksi'),
   refresh: async () => { await sync(true); toast('Data dimuat ulang'); },
   theme: () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; LS.set('theme', t); applyTheme(); },
-  pos: () => { const u = ST.cfg.posUrl; if (u) location.href = u; else if (history.length > 1) history.back(); else toast('Atur link Positif POS di Pengaturan', 1); },
+  pos: () => { location.href = (ST.cfg.posUrl || '').trim() || 'index.html'; },
   akun: async () => { if (await dlg({ title: SES.nama, msg: PERAN[SES.peran] + (CONF.demo ? ' · mode demo' : ''), ok: 'Keluar', cancel: 'Tutup', danger: true })) logout(); },
   open: (b, e) => { e.preventDefault(); openOrder(b.dataset.no); },
   close: () => closeMd(),
