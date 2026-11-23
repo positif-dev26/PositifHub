@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script src="posbar.js?v=20261123a"></script>
 <style>
 /* Positif POS — tampilan bersama (dipakai semua halaman) */
 :root{--bg:#ececec;--card:#fff;--text:#262626;--muted:#767676;--line:#d4d4d4;--acc:#cfcfcf;--acc-t:#111;--ok:#2f6f46;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -556,7 +557,6 @@ details>summary{cursor:pointer;font-weight:600;padding:6px 0}
 /* ===== v1.1 ===== */
 .btn:has(.ico){display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .btn:has(.ico) .ico{margin:0;vertical-align:0}
-#hd{justify-content:space-between}
 #view .prod>.ptabs.rl button{position:relative}
 #rail .bgn{top:2px;right:2px}
 #pbody{flex:1;min-width:0}
@@ -622,7 +622,7 @@ select.mini{padding:2px 8px;height:30px;font-size:13px}
  .tbar .srch{flex:1 1 100%;order:5}
  #md .card.wide{padding:12px}
 }
-@media(max-width:600px){#hd{flex-wrap:nowrap}#sync{display:none}#hd .ib{width:34px;height:34px}}
+@media(max-width:600px){#sync{display:none}#hd .ib{width:34px;height:34px}}
 @media(max-width:520px){.icard .g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* ===== v1.2: popup detail dua kolom, tombol file, toolbar sejajar ===== */
@@ -691,18 +691,112 @@ select.mini{padding:2px 8px;height:30px;font-size:13px}
  .fch{flex-wrap:wrap}.fch .fnm{flex:1 1 100%}
 }
 @media print{header,#toasts{display:none!important}}
+/* ===== v1.3: menu bar Positif, konfirmasi, riwayat, order WA, pembayaran, nota ===== */
+.modal{z-index:70}
+#hd .ib{width:38px;height:38px}
+.stmp{margin-top:10px;font-size:13px;color:var(--muted);background:rgba(128,128,128,.12);border-radius:10px;padding:7px 10px}
+.stmp b,.ubm b{color:var(--text)}
+.acc{color:var(--acc)!important}:root:not([data-theme="dark"]) .acc{color:#4b6300!important}
+.dlqs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}
+.dlq{cursor:pointer;background:none;color:var(--text);font:600 13px Barlow,sans-serif}.dlq:hover{border-color:var(--acc)}
+.dlbtn{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;font-size:13px}
+.dlbtn .ico,.wal .ico,.pbt .ico,.mbtn .ico{width:15px;height:15px}
+.wal{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.lgt{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lgr{display:grid;grid-template-columns:96px minmax(80px,130px) minmax(0,1fr);gap:10px;padding:7px 12px;font-size:13px;border-top:1px solid var(--line)}
+.lgr:first-child{border-top:0}.lgr span:last-child{overflow-wrap:anywhere}
+@media(max-width:600px){.lgr{grid-template-columns:auto 1fr}.lgr span:last-child{grid-column:1/-1}}
+.dlab{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);margin-top:10px}
+.ubi2{width:100%;height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit;font-size:15px;box-sizing:border-box}
+/* pembayaran */
+.pay{border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;background:rgba(128,128,128,.06)}
+.phd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px}
+.pst{padding:1px 9px;border-radius:999px;border:1.5px solid #d9962b;color:#e8a734;font-size:12px;font-weight:700}.pst.ok{border-color:var(--ok);color:var(--ok)}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+.prow.tot{font-size:17px;border-top:1px solid var(--line);padding-top:6px;margin-top:2px}
+.prow.sisa{font-size:17px;color:var(--bad)}.prow.sisa.nol{color:var(--ok)}
+.pwarn{font-size:13px;color:#e8a734;background:rgba(217,150,43,.13);border-radius:8px;padding:6px 10px}
+.pwarn[hidden]{display:none}
+.pbt{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.pbt .btn{display:inline-flex;align-items:center;gap:6px}
+/* order manual */
+#mdc.mform{width:min(1100px,100%)}
+.mdh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.seg{display:inline-flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.seg button{border:1px solid var(--line);background:none;color:var(--muted);font:600 14px Barlow,sans-serif;padding:9px 14px;border-radius:10px;cursor:pointer}
+.seg button.on{background:var(--acc);color:var(--acc-t);border-color:var(--acc)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.mgrid label,.mnote{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.mgrid input,.mgrid select{height:42px;font-size:15px}
+.hint{font-size:12px;color:var(--acc)}:root:not([data-theme="dark"]) .hint{color:#4b6300}
+.hint.r{text-align:right;color:var(--muted)}
+.mnote{margin-top:10px}.mnote textarea{min-height:56px}
+.mhead,.mrow{display:grid;grid-template-columns:150px 110px 120px minmax(120px,1fr) 70px 120px 110px 32px;gap:8px;align-items:center}
+.mhead{font-size:12px;color:var(--muted);padding:0 10px;margin-bottom:4px}
+.mhead .r,.msub{text-align:right}
+.mrow{border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:8px}
+.mrow label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mrow input,.mrow select{height:38px;width:100%;box-sizing:border-box}
+.mrow .ml{display:none;font-size:12px;color:var(--muted)}
+.mrow [hidden]{display:none}
+.mpay{max-width:420px;margin:12px 0 0 auto;display:flex;flex-direction:column;gap:8px}
+.mpay .prow input{width:150px;height:38px;text-align:right}
+.mbtn{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.mbtn .btn{display:inline-flex;align-items:center;gap:6px}
+@media(max-width:860px){
+ .mhead{display:none}
+ .mrow{grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}
+ .mrow .ml{display:block}
+ .mrow label:nth-child(3),.mrow label:nth-child(4){grid-column:1/-1}
+ .msub{align-self:center;font-size:16px}
+ .mrow .x{justify-self:end;align-self:center}
+ .mpay{max-width:none}
+ .mbtn{width:100%}.mbtn .btn{flex:1 1 auto}
+}
+/* menu Nota */
+.ngrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px;align-items:start}
+@media(max-width:900px){.ngrid{grid-template-columns:1fr}}
+#notaForm{display:flex;flex-direction:column}
+#notaForm textarea{font-family:inherit;font-size:14px;min-height:70px}
+.rkr{display:grid;grid-template-columns:1fr 1.2fr 1.2fr 32px;gap:6px;margin-bottom:6px}
+@media(max-width:520px){.rkr{grid-template-columns:1fr 1fr 32px}.rkr [data-r="an"]{grid-column:1/3}}
+.nprev{position:relative;overflow:hidden;border-radius:10px;box-shadow:0 0 0 1px var(--line)}
+.npw{width:794px;transform-origin:top left;background:#fff}
+/* nota A4 (pratinjau & cetak) */
+.nota{width:794px;min-height:1123px;box-sizing:border-box;padding:52px 56px;background:#fff;color:#141414;font:15px/1.45 Barlow,system-ui,sans-serif;display:flex;flex-direction:column;gap:20px}
+.nota .r{text-align:right}
+.nhd{display:flex;justify-content:space-between;gap:24px;border-bottom:2px solid #141414;padding-bottom:16px}
+.nlogo{width:240px;display:block;filter:none!important}
+.nalm{font-size:13px;color:#333;margin-top:8px;line-height:1.5}
+.nttl{text-align:right;font:700 32px/1 "Barlow Condensed",sans-serif}.nttl small{display:block;font:15px Barlow,sans-serif;margin-top:6px}
+.nmeta{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.nmeta span{display:block;font-size:12px;color:#555;text-transform:uppercase;letter-spacing:.06em}.nmeta .big{font-size:18px}
+.ntb{width:100%;border-collapse:collapse;font-size:14.5px}
+.ntb th{background:#141414;color:#fff;text-align:left;padding:8px 10px}.ntb th.r{text-align:right}
+.ntb td{padding:9px 10px;border-bottom:1px solid #c9c9c9;vertical-align:top}
+.nsm{font-size:12.5px;color:#555}
+.nbot{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
+.nrek{flex:1;border:1px solid #141414;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.nsum{width:290px;display:flex;flex-direction:column;gap:4px}.nsum div{display:flex;justify-content:space-between}
+.nsum .t{font-weight:700;font-size:18px}.nsum .tt{border-top:2px solid #141414;padding-top:6px}
+.nket{font-size:13px;color:#333;border-top:1px solid #c9c9c9;padding-top:10px}
+.nttd{display:grid;grid-template-columns:1fr 1fr;gap:40px;text-align:center;margin-top:6px}
+.nttd i{display:block;height:64px}.nttd span{display:block;border-top:1px solid #141414;padding-top:4px}
+.nft{margin-top:auto;display:flex;justify-content:space-between;font-size:12px;color:#555;border-top:1px solid #c9c9c9;padding-top:8px}
+#notaPrint{display:none}
+@media print{
+ @page{size:A4;margin:0}
+ body.pnota>*:not(#notaPrint){display:none!important}
+ body.pnota #notaPrint{display:block!important}
+ body.pnota #notaPrint,body.pnota #notaPrint *{visibility:visible!important}
+ body.pnota .nota{width:210mm;min-height:296mm;padding:14mm 15mm}
+ body.pnota{background:#fff!important}
+}
 </style>
 </head>
 <body>
 <header id="hd">
-  <span class="wm" data-act="home" title="Rekap Order Custom"><b>POSITIF</b><small>Rekap Order</small></span>
-  <div class="tools">
-    <span id="sync" class="muted"></span>
-    <button class="ib" data-act="refresh" title="Muat ulang semua data" id="btnRef"></button>
-    <button class="ib" data-act="theme" title="Ganti tema terang/gelap" id="btnTheme"></button>
-    <button class="ib" data-act="pos" title="Kembali ke Positif POS" id="btnPos"></button>
-    <button class="accb" data-act="akun" id="accBtn" hidden></button>
-  </div>
+  <span id="sync" class="muted"></span>
+  <button class="ib" data-act="refresh" title="Muat ulang semua data" id="btnRef"></button>
+  <button class="ib" data-act="theme" title="Ganti tema terang/gelap" id="btnTheme"></button>
 </header>
 <main id="view"></main>
 <div id="toasts"></div>
@@ -716,7 +810,7 @@ select.mini{padding:2px 8px;height:30px;font-size:13px}
    POSITIF — REKAP ORDER CUSTOM
    Database: Google Sheet + Apps Script (lihat Code.gs & PANDUAN)
    ===================================================================== */
-const APP_VER = '1.2';
+const APP_VER = '1.3';
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzws96uZeH4gZ0XMW7jI2spZsQdia7xSQ5Y5AmmyslZ3MKivzJIFUODB1DZSWsz7gvx/exec'; // URL Web App Apps Script (…/exec)
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -751,7 +845,11 @@ const IC = {
   box: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
   alert: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
   wand: '<path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8L19 13M15 9h0M17.8 6.2L19 5M3 21l9-9M12.2 6.2L11 5"/>',
-  user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
+  user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  nota: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  wa: '<path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>',
+  money: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>'
 };
 const ic = (n, c = '') => `<svg class="ico ${c}" viewBox="0 0 24 24" aria-hidden="true">${IC[n] || ''}</svg>`;
 
@@ -759,7 +857,7 @@ const ic = (n, c = '') => `<svg class="ico ${c}" viewBox="0 0 24 24" aria-hidden
 const STAT = { BARU: 'Perlu Desain', PROSES: 'Proses Desain', PENDING: 'Pending', SIAP: 'Siap Cetak', CETAK: 'Sudah Cetak', KIRIM: 'Dikirim', BATAL: 'Batal' };
 const ALUR = ['BARU', 'PROSES', 'SIAP', 'CETAK', 'KIRIM'];
 const PERAN = { OWNER: 'Owner', KEDAWUNG: 'Admin Kedawung', WONODADI: 'Admin Wonodadi' };
-const BAHAN = ['VINYL', 'BONTAK', 'SATIN', 'MESH', 'TOPI', 'JORAN', 'LAIN'];
+const BAHAN = ['VINYL', 'BONTAK', 'SATIN', 'MESH', 'BANNER', 'TOPI', 'JORAN', 'LAIN'];
 const POTONG = { KOTAK: 'Kotak', KISSCUT: 'KissCut', DIECUT: 'DieCut' };
 const PRINTABLE = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'gif'];
 const SEMUA = ['OWNER', 'KEDAWUNG', 'WONODADI'];
@@ -767,8 +865,9 @@ const VIEWS = [
   { id: 'produksi', l: 'Produksi', s: 'Produksi', i: 'board', r: SEMUA },
   { id: 'cetak', l: 'Antrean Cetak', s: 'Cetak', i: 'printer', r: SEMUA },
   { id: 'telasih', l: 'Order ke Telasih', s: 'Telasih', i: 'truck', r: SEMUA },
-  { id: 'laporan', l: 'Laporan', s: 'Laporan', i: 'chart', r: ['OWNER'] },
-  { id: 'atur', l: 'Pengaturan', s: 'Atur', i: 'gear', r: ['OWNER'] }
+  { id: 'laporan', l: 'Laporan', s: 'Laporan', i: 'chart', r: SEMUA },
+  { id: 'atur', l: 'Pengaturan', s: 'Atur', i: 'gear', r: SEMUA },
+  { id: 'nota', l: 'Pengaturan nota', s: 'Nota', i: 'nota', r: SEMUA }
 ];
 const DEF_CFG = {
   toko: ['soundbalapblitar', 'positif kids', 'jrsy project'],
@@ -823,7 +922,8 @@ const ymNow = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.g
 /* ---------- state ---------- */
 const DEMO_URL = new URLSearchParams(location.search).has('demo');
 const CONF = { api: LS.get('api', '') || API_URL_DEFAULT, demo: DEMO_URL || (!API_URL_DEFAULT && LS.get('demo', false)) };
-let SES = LS.get('ses', null); // {pin,nama,peran}
+let SES = null; // {nama, peran:'OWNER', user} — dari akun Positif POS
+LS.del('ses');
 const ST = {
   orders: {}, items: {}, byNo: {}, byUser: {}, users: [], cfg: { ...DEF_CFG }, since: '', loaded: false,
   view: 'produksi', online: true, lastSync: null,
@@ -835,12 +935,14 @@ let DET = null; // no order yang terbuka di popup
 let IMP = null; // data import yang sedang dipratinjau
 
 /* ---------- API ---------- */
+const posCred = () => (window.POSBAR ? POSBAR.cred() : null);
 async function api(action, data = {}) {
-  const pin = data.pin ?? SES?.pin;
-  if (CONF.demo) return Demo.call(action, { ...data, pin });
+  if (CONF.demo) return Demo.call(action, data);
   if (!CONF.api) throw new Error('URL server belum diatur');
+  const auth = posCred();
+  if (!auth) throw new Error('AUTH Masuk dulu ke Positif POS.');
   let r;
-  try { r = await fetch(CONF.api, { method: 'POST', body: JSON.stringify({ ...data, action, pin }) }); }
+  try { r = await fetch(CONF.api, { method: 'POST', body: JSON.stringify({ ...data, action, auth: { user: auth.u, tok: auth.t } }) }); }
   catch (e) { throw new Error('Tidak bisa terhubung ke server. Cek internet.'); }
   if (!r.ok) throw new Error('Server error ' + r.status);
   let j;
@@ -858,13 +960,11 @@ const Demo = {
       USER: [{ nama: 'Owner', peran: 'OWNER', pin: '1234' }, { nama: 'Admin Kedawung', peran: 'KEDAWUNG', pin: '2222' }, { nama: 'Admin Wonodadi', peran: 'WONODADI', pin: '3333' }]
     };
   },
-  save() { this.db.LOG = this.db.LOG.slice(-300); LS.set('demo_db', this.db); },
+  save() { this.db.LOG = this.db.LOG.slice(-1000); LS.set('demo_db', this.db); },
   async call(a, d) {
     if (!this.db) this.load();
     await new Promise(r => setTimeout(r, 80));
-    const u = this.db.USER.find(x => String(x.pin) === String(d.pin || '').trim());
-    if (!u) throw new Error('PIN salah');
-    const user = { nama: u.nama, peran: u.peran }, now = new Date().toISOString();
+    const user = { nama: SES?.nama || 'Demo', peran: 'OWNER' }, now = new Date().toISOString();
     const own = () => { if (user.peran !== 'OWNER') throw new Error('Hanya Owner yang boleh melakukan ini'); };
     const up = (t, key, rows, mode) => {
       const out = [];
@@ -890,6 +990,7 @@ const Demo = {
       case 'saveConfig': own(); this.db.MASTER = { ...this.db.MASTER, ...d.config }; log('ubah pengaturan', '', Object.keys(d.config).join(', ')); this.save(); return { ok: true, config: this.db.MASTER };
       case 'saveUsers': { own(); const lama = {}; this.db.USER.forEach(x => lama[x.nama] = x.pin); const l = (d.users || []).filter(x => x.nama).map(x => ({ ...x, pin: x.pin || lama[x.nama] || '' })); if (!l.some(x => x.peran === 'OWNER')) throw new Error('Minimal harus ada 1 Owner'); const p = l.map(x => String(x.pin)); if (p.some(x => !/^\d{4,8}$/.test(x))) throw new Error('PIN harus 4–8 angka'); if (new Set(p).size !== p.length) throw new Error('Ada PIN yang sama'); this.db.USER = l.map(x => ({ nama: x.nama, peran: x.peran, pin: String(x.pin) })); this.save(); return { ok: true, users: this.db.USER.map(x => ({ nama: x.nama, peran: x.peran })) }; }
       case 'log': own(); return { ok: true, log: this.db.LOG.slice().reverse() };
+      case 'logOrder': return { ok: true, log: this.db.LOG.filter(l => String(l.ref || '').split(',').includes(String(d.no))).reverse().slice(0, 200) };
     }
     throw new Error('Aksi tidak dikenal');
   }
@@ -1029,12 +1130,12 @@ async function sync(full) {
     merge(j);
     ST.since = j.since; ST.users = j.users || []; ST.cfg = { ...DEF_CFG, ...(j.config || {}) };
     if (j.imports) ST.imports = j.imports;
-    if (j.user && (j.user.peran !== SES.peran || j.user.nama !== SES.nama)) { SES = { ...SES, ...j.user }; LS.set('ses', SES); renderNav(); }
+    if (j.user && j.user.nama && j.user.nama !== SES.nama) { SES = { ...SES, nama: j.user.nama }; renderNav(); }
     ST.loaded = true;
     setSync(true);
     refresh();
   } catch (e) {
-    if (/PIN salah/.test(e.message)) { toast('PIN tidak berlaku lagi. Silakan masuk ulang.', 1); logout(); }
+    if (/^(AUTH|AKSES)/.test(e.message)) blokir(e.message);
     else setSync(false, 'Offline — ' + e.message.slice(0, 40));
   } finally { syncBusy = false; }
 }
@@ -1052,8 +1153,10 @@ async function patch(orders = [], items = [], aksi = 'ubah', mode = 'patch') {
   items.forEach(p => { ST.items[p.kunci] = { ...(ST.items[p.kunci] || {}), ...p }; });
   reindex(); refresh();
   try {
-    const j = await api('save', { orders, items, mode, aksi, ref: orders.map(o => o.no).concat(items.map(i => i.no)).filter(Boolean).join(',') });
+    const ref = [...new Set(orders.map(o => o.no).concat(items.map(i => i.no)).filter(Boolean))].join(',');
+    const j = await api('save', { orders, items, mode, aksi, ref });
     merge(j); setSync(true); refresh();
+    if (DET && ref.split(',').includes(DET)) muatLog(DET);
     return true;
   } catch (e) {
     toast('Gagal menyimpan: ' + e.message, 1); setSync(false); sync(true);
@@ -1082,12 +1185,56 @@ async function setCetak(keys, val) {
 }
 async function setStatus(no, st) {
   const o = ST.orders[no]; if (!o || o.status === st) return;
-  if (st === 'BATAL' && !await dlg({ title: 'Batalkan order ' + o.no5 + '?', msg: 'Order akan dipindah ke status Batal.', ok: 'Ya, batalkan', danger: true })) return;
+  const dari = STAT[o.status] || o.status, ke = STAT[st] || st;
+  const judul = st === 'BATAL' ? 'Batalkan order ' + o.no5 + '?' : st === 'KIRIM' ? 'Tandai order dikirim?' : 'Pindah ke ' + ke + '?';
+  const ok = await dlg({ title: judul, danger: st === 'BATAL',
+    html: `<div class="ubm">Order <b>${esc(o.no5)}</b>${o.username ? ' (' + esc(o.username) + ')' : ''} pindah dari <b>${esc(dari)}</b> ke <b class="acc">${esc(ke)}</b>.</div><div class="stmp">Tercatat atas nama <b>${esc(SES.nama)}</b> · ${esc(fD(nowStr()))}</div>`,
+    ok: st === 'BATAL' ? 'Ya, batalkan' : st === 'CETAK' ? 'Ya, sudah dicetak' : st === 'KIRIM' ? 'Ya, sudah dikirim' : 'Ya, pindahkan' });
+  if (!ok) return;
   const p = { no, status: st };
   if (st === 'KIRIM') p.tglKirim = nowStr();
   if (o.cekShopee) p.cekShopee = '';
-  await patch([p], [], 'status ' + STAT[st]);
-  toast(`${o.no5} → ${STAT[st]}`);
+  await patch([p], [], `Status: ${dari} → ${ke}`);
+  toast(`${o.no5} → ${ke}`);
+}
+/* ubah batas kirim (deadline) dari detail order */
+const toLocalIn = s => { const d = pd(s); return d ? nowStr(d).replace(' ', 'T') : ''; };
+async function ubahDeadline(no) {
+  const o = ST.orders[no]; if (!o) return;
+  const base = pd(o.deadline) || new Date();
+  const chip = n => { const d = new Date(base); d.setDate(d.getDate() + n); return `<button type="button" class="pill2 dlq" data-act="dlq" data-v="${nowStr(d).replace(' ', 'T')}">+${n} hari</button>`; };
+  const v = await dlg({ title: 'Ubah batas kirim', ok: 'Simpan', input: 'datetime-local', value: toLocalIn(o.deadline) || toLocalIn(nowStr(base)),
+    html: `<div class="ubm">Order <b>${esc(o.no5)}</b> · sekarang <b>${esc(o.deadline ? fD(o.deadline) : 'tanpa batas kirim')}</b></div><div class="dlqs">${chip(1)}${chip(2)}${chip(3)}</div><div class="stmp">Perubahan tercatat di riwayat order atas nama <b>${esc(SES.nama)}</b></div>` });
+  if (v == null || v === '') return;
+  const baru = v.replace('T', ' ');
+  if (baru === o.deadline) return;
+  await patch([{ no, deadline: baru }], [], `Batas kirim: ${o.deadline ? fD(o.deadline) : 'kosong'} → ${fD(baru)}`);
+  toast('Batas kirim diubah');
+}
+/* riwayat perubahan satu order (dari lembar LOG di server) */
+const LOGC = {};
+const tW = w => { w = String(w || ''); if (/Z$|T\d\d:\d\d:\d\d/.test(w)) { const d = new Date(w); return isNaN(d) ? w : nowStr(d); } return parseAny(w) || w; };
+const waNum = w => { let d = String(w || '').replace(/\D/g, ''); if (d.startsWith('0')) d = '62' + d.slice(1); else if (d.startsWith('8')) d = '62' + d; return d; };
+let logT = null;
+function muatLog(no, segera) {
+  clearTimeout(logT);
+  logT = setTimeout(async () => {
+    try { const j = await api('logOrder', { no }); LOGC[no] = j.log || []; } catch (e) { LOGC[no] = LOGC[no] || null; }
+    if (DET === no && $('#dLog')) $('#dLog').innerHTML = logHTML(ST.orders[no]);
+  }, segera ? 0 : 900);
+}
+function logHTML(o) {
+  if (!o) return '';
+  const L = LOGC[o.no];
+  const head = '<div class="lab" style="margin-bottom:6px">Riwayat order</div>';
+  if (L === undefined) return head + '<div class="muted sm">Memuat riwayat…</div>';
+  if (L === null) return head + '<div class="muted sm">Riwayat belum bisa dimuat.</div>';
+  const awal = o.createdBy ? [{ waktu: o.createdAt, user: o.createdBy, aksi: 'Order masuk ke rekap' }] : [];
+  const all = L.concat(L.some(l => /dibuat|import|order manual/i.test(l.aksi)) ? [] : awal);
+  if (!all.length) return head + '<div class="muted sm">Belum ada riwayat.</div>';
+  const ful = OPEN.has('__log');
+  return head + `<div class="lgt">${all.slice(0, ful ? 200 : 6).map(l => `<div class="lgr" title="${esc(l.detail || '')}"><span class="muted">${esc(fD(tW(l.waktu)))}</span><b>${esc(l.user || '-')}</b><span>${esc(l.aksi || '')}</span></div>`).join('')}</div>`
+    + (all.length > 6 ? `<button class="lnk0" data-act="logall" style="margin-top:6px">${ful ? 'Ringkas' : 'Lihat semua (' + all.length + ')'}</button>` : '');
 }
 
 /* =====================================================================
@@ -1095,9 +1242,7 @@ async function setStatus(no, st) {
    ===================================================================== */
 function shell() { if (!$('#rail')) $('#view').innerHTML = '<div class="prod"><div class="ptabs rl" id="rail"></div><div id="pbody"></div></div>'; }
 function renderNav() {
-  const a = $('#accBtn');
-  if (!SES) { a.hidden = true; return; }
-  a.hidden = false; a.textContent = SES.nama;
+  if (!SES) return;
   const n = $('#rail'); if (!n) return;
   const c = counts();
   const bg = { produksi: c.late, cetak: c.siapPos, telasih: c.tlKirim };
@@ -1230,6 +1375,7 @@ function openOrder(no) {
   $('#mdc').className = 'card wide';
   $('#mdc').innerHTML = detHTML(o);
   $('#md').classList.add('on');
+  muatLog(no, true);
 }
 function closeMd() { $('#md').classList.remove('on'); DET = null; OPEN.clear(); if (IMP && IMP.type === 'shopee') IMP = null; }
 function upInfoHTML() {
@@ -1256,10 +1402,12 @@ function detHTML(o) {
       <div class="jbox" id="dJenis">${jenisHTML(o)}</div>
       <div id="dItems">${its.map((i, n) => itemHTML(o, i, n, its.length)).join('')}</div>
       <div><button class="lnk0" data-act="additem">+ Tambah item</button></div>
+      <div id="dPay">${payHTML(o)}</div>
       <div><div class="fhd2"><span class="lab">File cetak</span><button class="lnk0" data-act="pickfile">+ Upload file</button></div>
         <div id="dFiles" class="dropz">${filesHTML(o, true)}</div></div>
       ${o.catatanPembeli ? `<div class="note sm"><b>Catatan pembeli:</b> ${esc(o.catatanPembeli)}</div>` : ''}
       <label class="lab" style="display:flex;flex-direction:column;gap:6px">Catatan internal<input data-of="catatan" class="cin" value="${esc(o.catatan || '')}" placeholder="mis. tunggu file, revisi warna"></label>
+      <div id="dLog">${logHTML(o)}</div>
     </div>
     <div class="dR">
       <div class="dRt"><button class="x" data-act="close" title="Tutup">×</button></div>
@@ -1273,6 +1421,9 @@ function detHTML(o) {
 function detInfo(o) {
   const tk = (ST.cfg.toko || []).concat(['WA/Offline']), lg = langganan(o), d = dlInfo(o);
   return `${d.c ? `<span class="badge ${d.c} dl2">${esc(d.t)} · ${fD(o.deadline)}</span>` : `<span class="muted">Batas kirim ${fD(o.deadline)}</span>`}
+    <button class="btn sec sm dlbtn" data-act="dledit">${ic('edit')}Ubah batas kirim</button>
+    <span class="muted">Tanggal pesan <b style="color:var(--text)">${esc(fD(o.dibuat || tW(o.createdAt)))}</b></span>
+    ${o.noWa ? `<a class="lnk0 wal" href="https://wa.me/${esc(waNum(o.noWa))}" target="_blank" rel="noopener">${ic('wa')}Chat WA ${esc(o.noWa)}</a>` : ''}
     <span>${esc(o.username || '-')}${lg > 1 ? ` <span class="lgn">langganan ×${lg}</span>` : ''}</span>
     <span class="tko"><select data-of="toko" class="mini" title="Toko">${tk.map(t => `<option ${o.toko === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}${!tk.includes(o.toko) && o.toko ? `<option selected>${esc(o.toko)}</option>` : ''}</select><span class="muted">dibuat ${fD(o.dibuat, false)}</span></span>
     <label class="muted"><input type="checkbox" class="cb" data-ofc="jasaDesain" ${o.jasaDesain ? 'checked' : ''}> pembeli bayar jasa desain</label>
@@ -1302,6 +1453,7 @@ function itemHTML(o, i, n = 0, tot = 1) {
         <label>Nama / teks desain<input data-if="label" value="${esc(i.label)}" placeholder="mis. Prime, RA Audio"></label>
         <label>Ukuran<input data-if="ukuran" value="${esc(i.ukuran)}" placeholder="mis. 8x14cm"></label>
         <label>Jumlah<input type="number" min="1" data-if="jumlah" value="${esc(i.jumlah)}"></label>
+        <label>Harga satuan<input inputmode="numeric" data-if="harga" value="${esc(i.harga || '')}" placeholder="0"></label>
         <label>Bahan<select data-if="bahan">${BAHAN.concat(BAHAN.includes(i.bahan) ? [] : [i.bahan]).map(b => `<option ${i.bahan === b ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select></label>
         <label>Potong<select data-if="potong"><option value="">—</option>${Object.entries(POTONG).map(([v, l]) => `<option value="${v}" ${i.potong === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
         <label>Dicetak di<select data-if="pencetak"><option value="POSITIF" ${i.pencetak === 'POSITIF' ? 'selected' : ''}>Positif (sendiri)</option><option value="TELASIH" ${i.pencetak === 'TELASIH' ? 'selected' : ''}>Telasih (vendor)</option></select></label>
@@ -1345,6 +1497,7 @@ function detRefresh() {
   $('#dSteps') && ($('#dSteps').innerHTML = detSteps(o));
   $('#dFiles') && ($('#dFiles').innerHTML = filesHTML(o, true));
   $('#dFt') && ($('#dFt').innerHTML = detFoot(o));
+  $('#dPay') && ($('#dPay').innerHTML = payHTML(o));
   const ae = document.activeElement;
   if ($('#dInfo') && !(ae && $('#dInfo').contains(ae))) $('#dInfo').innerHTML = detInfo(o);
   $$('#mdc .ist').forEach(el => { const i = ST.items[el.dataset.k]; if (i) el.innerHTML = istHTML(i); });
@@ -1357,13 +1510,15 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (!DET || !$('#md').contains(t)) return;
   const o = ST.orders[DET];
-  if (t.dataset.of) { patch([{ no: o.no, [t.dataset.of]: t.value }], [], 'ubah ' + t.dataset.of); return; }
+  if (t.dataset.of) { patch([{ no: o.no, [t.dataset.of]: t.value }], [], (t.dataset.of === 'catatan' ? 'Catatan internal: ' : 'Ubah ' + t.dataset.of + ': ') + t.value); return; }
   if (t.dataset.ofc) { patch([{ no: o.no, [t.dataset.ofc]: t.checked ? '1' : '' }], [], 'ubah ' + t.dataset.ofc); return; }
   if (t.dataset.if) {
     const card = t.closest('.icard'), k = card.dataset.k, old = ST.items[k];
     const f = t.dataset.if; let v = t.value;
     if (f === 'jumlah') v = String(Math.max(1, num(v) || 1));
+    if (f === 'harga') v = num(v) ? String(num(v)) : '';
     const p = { kunci: k, no: old.no, [f]: v };
+    if (f === 'harga' || f === 'jumlah') { const h = num(f === 'harga' ? v : old.harga), q = num(f === 'jumlah' ? v : old.jumlah) || 1; if (h) p.subtotal = String(h * q); }
     const nu = { ...old, ...p };
     if (['label', 'ukuran', 'bahan', 'potong', 'jumlah'].includes(f) && (!old.namaDesain || old.namaDesain === genNama(o, old))) {
       p.namaDesain = genNama(o, nu); const ni = $('[data-if="namaDesain"]', card); if (ni) ni.value = p.namaDesain;
@@ -1372,7 +1527,8 @@ document.addEventListener('change', e => {
       p.pencetak = detPencetak(nu.bahan, nu.potong); const ps = $('[data-if="pencetak"]', card); if (ps) ps.value = p.pencetak;
     }
     const st = (f === 'namaDesain' || p.namaDesain) && o.status === 'BARU' ? [{ no: o.no, status: 'PROSES' }] : [];
-    patch(st, [p], 'ubah item ' + f);
+    const NM = { label: 'teks desain', ukuran: 'ukuran', jumlah: 'jumlah', bahan: 'bahan', potong: 'potong', pencetak: 'pencetak', harga: 'harga satuan', namaDesain: 'nama desain' };
+    patch(st, [p], `Ubah item ${old.bahan || ''}: ${NM[f] || f} ${f === 'harga' ? rp(num(v)) : v}`.trim());
   }
 });
 
@@ -1750,39 +1906,250 @@ function legacyHide() {
   if (l.length) patch(l.map(o => ({ no: o.no, status: 'KIRIM', tglKirim: nowStr(), cekShopee: 'AUTO' })), [], 'sembunyikan otomatis (tidak ada di export)');
 }
 
-/* ---------------- ORDER MANUAL ---------------- */
-function manualForm() {
-  const tk = (ST.cfg.toko || []).concat(['WA/Offline']);
-  $('#mdc').className = 'card mid';
-  $('#mdc').innerHTML = `<div class="mdh"><h2 style="margin:0">Order Manual</h2><button class="x" data-act="close">×</button></div>
-    <p class="muted sm" style="margin-top:0">Untuk order dari WA atau yang tidak ada di export. No. pesanan boleh dikosongkan.</p>
-    <div class="form"><label>No. pesanan<input id="mNo" placeholder="mis. 261119NREK75NX / K75NX"></label><label>Toko<select id="mToko">${tk.map(t => `<option ${t === ST.cfg.tokoDefault ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>
-    <label>Deadline<input type="datetime-local" id="mDl"></label><label>Nama / username pembeli<input id="mUser"></label></div>
-    <label class="sm muted">Catatan pembeli<textarea id="mNote"></textarea></label>
-    <div class="sec"><h3>Item</h3><div id="mItems"></div><button class="btn sec sm" data-act="mitem">${ic('plus')}Tambah item</button></div>
-    <div class="ed-ft"><span></span><div style="display:flex;gap:8px"><button class="btn sec" data-act="close">Batal</button><button class="btn" data-act="msave">${ic('check')}Simpan order</button></div></div>`;
+/* ---------------- ORDER MANUAL (WA custom / marketplace lain) ---------------- */
+const MAN = { mode: 'WA', dlManual: false };
+const plus3 = s => { const d = pd(String(s || '').replace('T', ' ')) || new Date(); d.setDate(d.getDate() + 3); return nowStr(d).replace(' ', 'T'); };
+function manualForm(mode) {
+  MAN.mode = mode || MAN.mode || 'WA'; MAN.dlManual = false;
+  const wa = MAN.mode === 'WA', tk = (ST.cfg.toko || []).concat(['WA/Offline']), tgl = nowStr().replace(' ', 'T');
+  $('#mdc').className = 'card wide mform';
+  $('#mdc').innerHTML = `<div class="mdh"><h2 style="margin:0">Order Manual</h2><button class="x" data-act="close" title="Tutup">×</button></div>
+    <div class="seg" role="group" aria-label="Jenis order"><button class="${wa ? 'on' : ''}" data-act="mmode" data-v="WA">WA custom</button><button class="${wa ? '' : 'on'}" data-act="mmode" data-v="MP">Marketplace / lainnya</button></div>
+    <div class="mgrid">
+      ${wa ? `<label>Nama pemesan<input id="mNama" autocomplete="off" placeholder="mis. Rina"></label>
+      <label>No. WA<input id="mWa" inputmode="tel" autocomplete="off" placeholder="08xxxxxxxxxx"></label>`
+    : `<label>No. pesanan<input id="mNo" placeholder="mis. 261119NREK75NX (boleh kosong)"></label>
+      <label>Toko<select id="mToko">${tk.map(t => `<option ${t === ST.cfg.tokoDefault ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>
+      <label>Nama / username pembeli<input id="mUser" autocomplete="off"></label>`}
+      <label>Tanggal pesan<input type="datetime-local" id="mTgl" value="${tgl}"></label>
+      <label>Deadline<input type="datetime-local" id="mDl" value="${plus3(tgl)}"><small class="hint">Otomatis 3 hari dari tanggal pesan · bisa diubah</small></label>
+    </div>
+    ${wa ? `<p class="muted sm" style="margin:2px 0 0">No. order dibuat otomatis: <b id="mNoWa">${esc(noWaBaru(tgl))}</b></p>` : ''}
+    <label class="sm muted mnote">Catatan pembeli<textarea id="mNote" placeholder="mis. atas plong per 50 cm"></textarea></label>
+    <div class="sec"><h3>Item</h3>
+      <div class="mhead"><span>Bahan</span><span>Potong</span><span>Ukuran</span><span>Keterangan / variasi</span><span>Jumlah</span><span>Harga satuan</span><span class="r">Subtotal</span><span></span></div>
+      <div id="mItems"></div><button class="lnk0" data-act="mitem" style="margin-top:6px">+ Tambah item</button></div>
+    <div class="mpay" id="mPay"></div>
+    <div class="ed-ft"><span></span><div class="mbtn"><button class="btn sec" data-act="close">Batal</button>
+      <button class="btn ${wa ? 'sec' : ''}" data-act="msave">${ic('check')}Simpan order</button>
+      ${wa ? `<button class="btn" data-act="msave" data-nota="1">${ic('nota')}Simpan &amp; cetak nota</button>` : ''}</div></div>`;
   addManualItem();
   $('#md').classList.add('on');
   DET = null;
+  hitungManual();
+}
+function noWaBaru(tgl) {
+  const d = pd(String(tgl || '').replace('T', ' ')) || new Date();
+  const pre = `WA-${String(d.getFullYear()).slice(2)}${pad(d.getMonth() + 1)}${pad(d.getDate())}-`;
+  let n = 1; while (ST.orders[pre + pad(n)]) n++;
+  return pre + pad(n);
 }
 function addManualItem() {
   const d = document.createElement('div');
-  d.className = 'icard mi';
-  d.innerHTML = `<div class="g" style="margin-top:0"><label>Bahan<select data-m="bahan">${BAHAN.map(b => `<option>${b}</option>`).join('')}</select></label><label>Potong<select data-m="potong"><option value="">—</option>${Object.entries(POTONG).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label><label>Variasi / keterangan<input data-m="variasi" placeholder="mis. Potong Kotak / 50x80cm"></label><label>Ukuran<input data-m="ukuran" placeholder="8x14cm"></label><label>Jumlah<input type="number" min="1" value="1" data-m="jumlah"></label><label>Harga satuan<input type="number" min="0" data-m="harga"></label></div>`;
+  d.className = 'mrow';
+  d.innerHTML = `<label><span class="ml">Bahan</span><select data-m="bahan">${BAHAN.filter(b => b !== 'LAIN').map(b => `<option>${b}</option>`).join('')}<option value="__LAIN">Lainnya…</option></select>
+      <input data-m="bahanLain" placeholder="tulis jenis bahan" hidden></label>
+    <label><span class="ml">Potong</span><select data-m="potong"><option value="">—</option>${Object.entries(POTONG).map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
+    <label><span class="ml">Ukuran</span><input data-m="ukuran" placeholder="mis. 350x100cm"></label>
+    <label><span class="ml">Keterangan / variasi</span><input data-m="variasi" placeholder="mis. atas plong"></label>
+    <label><span class="ml">Jumlah</span><input data-m="jumlah" inputmode="numeric" value="1"></label>
+    <label><span class="ml">Harga satuan</span><input data-m="harga" inputmode="numeric" placeholder="0"></label>
+    <b class="msub" data-m="sub">Rp0</b>
+    <button class="x" data-act="mdel" title="Hapus item">×</button>`;
   $('#mItems').append(d);
+  hitungManual();
 }
-async function simpanManual() {
-  let no = $('#mNo').value.replace(/\s+/g, '').toUpperCase();
-  if (!no) no = 'M' + Date.now().toString(36).toUpperCase();
-  if (ST.orders[no]) return toast('No. pesanan sudah ada', 1);
-  const dl = $('#mDl').value ? $('#mDl').value.replace('T', ' ') : '';
-  const o = { no, no5: no5(no), toko: $('#mToko').value, platform: 'MANUAL', sumber: 'MANUAL', deadline: dl, dibuat: nowStr(), username: $('#mUser').value.trim(), catatanPembeli: $('#mNote').value.trim(), jasaDesain: '', totalBayar: '', status: 'BARU', catatan: '', files: '[]', cekShopee: '' };
-  const items = $$('#mItems .mi').map((d, n) => {
-    const g = k => $(`[data-m="${k}"]`, d).value.trim();
-    const bahan = g('bahan'), potong = g('potong') || detPotong(g('variasi')), q = num(g('jumlah')) || 1, h = num(g('harga'));
-    return { kunci: `${no}|manual|${n + 1}`, no, bahan, skuRaw: '', namaProduk: '', variasi: g('variasi'), potong, ukuran: g('ukuran') || detUkuran(g('variasi')), jumlah: String(q), harga: h ? String(h) : '', subtotal: h ? String(h * q) : '', label: '', namaDesain: '', pencetak: detPencetak(bahan, potong), tglKeVendor: '', tglCetak: '', dicetakOleh: '', hapus: '' };
+/* hitung subtotal per item, total, DP minimal 60%, sisa bayar */
+function hitungManual() {
+  if (!$('#mItems')) return;
+  let sub = 0;
+  $$('#mItems .mrow').forEach(r => { const q = num($('[data-m="jumlah"]', r).value) || 0, h = num($('[data-m="harga"]', r).value); sub += q * h; $('[data-m="sub"]', r).textContent = rp(q * h); });
+  const box = $('#mPay'); if (!box) return;
+  if (MAN.mode !== 'WA') { box.innerHTML = sub ? `<div class="prow tot"><span>Total</span><b>${rp(sub)}</b></div>` : ''; return; }
+  const dIn = $('#mDisk'), pIn = $('#mDp');
+  const disk = Math.min(num(dIn?.value), sub), total = Math.max(0, sub - disk), dp = Math.min(num(pIn?.value), total), min = Math.ceil(total * 0.6);
+  const warn = !total ? '' : !dp ? '⚠ Belum ada DP. Order tetap bisa disimpan.' : dp < min ? '⚠ DP masih kurang dari 60%. Order tetap bisa disimpan.' : '';
+  if (!dIn) {
+    box.innerHTML = `<div class="prow"><span>Subtotal</span><b id="mSub"></b></div>
+      <label class="prow"><span>Diskon <small class="muted">(opsional)</small></span><input id="mDisk" inputmode="numeric" placeholder="0"></label>
+      <div class="prow tot"><span>Total bayar</span><b id="mTot" class="acc"></b></div>
+      <label class="prow"><span>DP</span><input id="mDp" inputmode="numeric" placeholder="0"></label>
+      <div class="hint r" id="mMin"></div><div class="pwarn" id="mWarn"></div>
+      <div class="prow sisa"><span>Sisa bayar</span><b id="mSisa"></b></div>`;
+  }
+  $('#mSub').textContent = rp(sub); $('#mTot').textContent = rp(total);
+  $('#mMin').textContent = 'DP minimal 60% = ' + rp(min);
+  $('#mWarn').textContent = warn; $('#mWarn').hidden = !warn;
+  $('#mSisa').textContent = rp(total - dp);
+}
+document.addEventListener('input', e => {
+  const t = e.target; if (!t.closest || !t.closest('.mform')) return;
+  if (t.id === 'mTgl') { if (!MAN.dlManual) $('#mDl').value = plus3(t.value); if ($('#mNoWa')) $('#mNoWa').textContent = noWaBaru(t.value); }
+  if (t.id === 'mDl') MAN.dlManual = true;
+  hitungManual();
+});
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.closest || !t.closest('.mform') || t.dataset.m !== 'bahan') return;
+  const l = $('[data-m="bahanLain"]', t.closest('.mrow')); l.hidden = t.value !== '__LAIN'; if (!l.hidden) l.focus();
+});
+async function simpanManual(cetak) {
+  const wa = MAN.mode === 'WA';
+  const tgl = ($('#mTgl').value || nowStr().replace(' ', 'T')).replace('T', ' '), dl = ($('#mDl').value || '').replace('T', ' ');
+  let no, o;
+  const rows = $$('#mItems .mrow').map(d => {
+    const g = k => ($(`[data-m="${k}"]`, d)?.value || '').trim();
+    let bahan = g('bahan'); if (bahan === '__LAIN') bahan = g('bahanLain').toUpperCase() || 'LAIN';
+    return { bahan, potong: g('potong') || detPotong(g('variasi')), ukuran: g('ukuran'), variasi: g('variasi'), q: num(g('jumlah')) || 1, h: num(g('harga')) };
   });
-  if (await patch([o], items, 'order manual', 'insert')) { toast('Order ' + o.no5 + ' tersimpan'); openOrder(no); }
+  if (!rows.length) return toast('Tambahkan minimal 1 item', 1);
+  if (wa) {
+    const nama = $('#mNama').value.trim(), nowa = $('#mWa').value.trim();
+    if (!nama) { $('#mNama').focus(); return toast('Isi nama pemesan', 1); }
+    if (!nowa) { $('#mWa').focus(); return toast('Isi No. WA pemesan', 1); }
+    no = noWaBaru(tgl);
+    const sub = rows.reduce((a, r) => a + r.q * r.h, 0), disk = Math.min(num($('#mDisk')?.value), sub), total = Math.max(0, sub - disk), dp = Math.min(num($('#mDp')?.value), total);
+    o = { no, no5: nama.toUpperCase().slice(0, 24), toko: 'WA/Offline', platform: 'WA', sumber: 'WA', deadline: dl, dibuat: tgl, username: nama, noWa: nowa, catatanPembeli: $('#mNote').value.trim(), jasaDesain: '', totalBayar: String(total), diskon: disk ? String(disk) : '', dp: dp ? String(dp) : '', dpAt: dp ? nowStr() : '', dpBy: dp ? SES.nama : '', status: 'BARU', catatan: '', files: '[]', cekShopee: '' };
+  } else {
+    no = $('#mNo').value.replace(/\s+/g, '').toUpperCase();
+    if (!no) no = 'M' + Date.now().toString(36).toUpperCase();
+    if (ST.orders[no]) return toast('No. pesanan sudah ada', 1);
+    o = { no, no5: no5(no), toko: $('#mToko').value, platform: 'MANUAL', sumber: 'MANUAL', deadline: dl, dibuat: tgl, username: $('#mUser').value.trim(), catatanPembeli: $('#mNote').value.trim(), jasaDesain: '', totalBayar: '', status: 'BARU', catatan: '', files: '[]', cekShopee: '' };
+  }
+  const items = rows.map((r, n) => ({ kunci: `${no}|manual|${n + 1}`, no, bahan: r.bahan, skuRaw: '', namaProduk: '', variasi: r.variasi, potong: r.potong, ukuran: r.ukuran || detUkuran(r.variasi), jumlah: String(r.q), harga: r.h ? String(r.h) : '', subtotal: r.h ? String(r.h * r.q) : '', label: '', namaDesain: '', pencetak: detPencetak(r.bahan, r.potong), tglKeVendor: '', tglCetak: '', dicetakOleh: '', hapus: '' }));
+  const b = $$('[data-act="msave"]'); b.forEach(x => x.disabled = true);
+  const ok = await patch([o], items, wa ? `Order WA dibuat${num(o.dp) ? ' · DP ' + rp(num(o.dp)) : ''}` : 'Order manual dibuat', 'insert');
+  b.forEach(x => x.disabled = false);
+  if (ok) { toast('Order ' + o.no5 + ' tersimpan'); openOrder(no); if (cetak) cetakNota(no); }
+}
+
+/* ---------------- PEMBAYARAN (order WA) ---------------- */
+const isWA = o => o && (o.sumber === 'WA' || o.platform === 'WA');
+function bayarOf(o) {
+  const sub = itemsOf(o.no).reduce((a, i) => a + subtotal(i), 0);
+  const disk = Math.min(num(o.diskon), sub), total = Math.max(0, sub - disk), dp = num(o.dp), lunas = num(o.bayarLunas);
+  const sisa = Math.max(0, total - dp - lunas);
+  return { sub, disk, total, dp, lunas, sisa, min: Math.ceil(total * 0.6), lunasOk: total > 0 && sisa === 0 };
+}
+function payHTML(o) {
+  if (!isWA(o) && !num(o.dp) && !num(o.diskon)) return '';
+  const b = bayarOf(o);
+  const warn = b.lunasOk || !b.total ? '' : !b.dp ? '⚠ Belum ada DP. Order tetap bisa diproses.' : b.dp < b.min ? `⚠ DP kurang dari 60% (minimal ${rp(b.min)}). Order tetap bisa diproses.` : '';
+  return `<div class="pay"><div class="phd"><span class="lab" style="font-size:14px;color:var(--text);font-weight:700">Pembayaran</span>${b.total ? `<span class="pst ${b.lunasOk ? 'ok' : ''}">${b.lunasOk ? '✓ Lunas' : 'Belum lunas'}</span>` : ''}</div>
+    <div class="prow"><span>Subtotal</span><span>${rp(b.sub)}</span></div>
+    ${b.disk ? `<div class="prow"><span>Diskon</span><span>− ${rp(b.disk)}</span></div>` : ''}
+    <div class="prow tot"><span>Total bayar</span><b>${rp(b.total)}</b></div>
+    <div class="prow"><span>DP${b.dp && o.dpAt ? ` <small class="muted">· ${esc(fD(o.dpAt))} · ${esc(o.dpBy || '')}</small>` : ''}</span><span>${rp(b.dp)}</span></div>
+    ${b.lunas ? `<div class="prow"><span>Pelunasan <small class="muted">· ${esc(fD(o.lunasAt))} · ${esc(o.lunasBy || '')}</small></span><span>${rp(b.lunas)}</span></div>` : ''}
+    ${warn ? `<div class="pwarn">${warn}</div>` : ''}
+    <div class="prow sisa ${b.sisa ? '' : 'nol'}"><span>Sisa bayar</span><b>${rp(b.sisa)}</b></div>
+    <div class="pbt">${b.sisa ? `<button class="btn sm" data-act="lunas">${ic('money')}Catat pelunasan</button>` : ''}
+      <button class="btn sec sm" data-act="bayaredit">${ic('edit')}Ubah DP / diskon</button>
+      <button class="btn sec sm" data-act="nota">${ic('nota')}Cetak nota (A4)</button></div>
+    ${o.notaAt ? `<div class="muted sm">Nota terakhir dicetak ${esc(fD(o.notaAt))} · ${esc(o.notaBy || '')}</div>` : ''}</div>`;
+}
+async function catatLunas(no) {
+  const o = ST.orders[no]; if (!o) return;
+  const b = bayarOf(o);
+  const v = await dlg({ title: 'Catat pelunasan', ok: 'Simpan pelunasan', input: 'text', value: String(b.sisa),
+    html: `<div class="ubm">Order <b>${esc(o.no5)}</b> · total ${rp(b.total)} · sudah dibayar ${rp(b.dp + b.lunas)}<br>Sisa bayar <b class="acc">${rp(b.sisa)}</b>. Jumlah yang diterima:</div><div class="stmp">Tercatat atas nama <b>${esc(SES.nama)}</b> · ${esc(fD(nowStr()))}</div>` });
+  if (v == null) return;
+  const amt = num(v); if (amt <= 0) return toast('Isi jumlah pelunasan', 1);
+  const lunas = b.lunas + Math.min(amt, b.sisa || amt);
+  await patch([{ no, bayarLunas: String(lunas), lunasAt: nowStr(), lunasBy: SES.nama, totalBayar: String(b.total) }], [], `Pelunasan ${rp(amt)} · sisa ${rp(Math.max(0, b.sisa - amt))}`);
+  toast('Pelunasan tersimpan');
+}
+async function ubahBayar(no) {
+  const o = ST.orders[no]; if (!o) return;
+  const b = bayarOf(o);
+  const ok = await dlg({ title: 'Ubah DP / diskon', ok: 'Simpan',
+    html: `<div class="ubm">Subtotal item <b>${rp(b.sub)}</b>. Harga per item diubah lewat "ubah detail" di tiap item.</div>
+      <label class="dlab">Diskon<input class="ubi2" id="pDisk" inputmode="numeric" value="${b.disk || ''}" placeholder="0"></label>
+      <label class="dlab">DP<input class="ubi2" id="pDp" inputmode="numeric" value="${b.dp || ''}" placeholder="0"></label>` });
+  if (!ok) return;
+  const disk = Math.min(num($('#pDisk')?.value), b.sub), dp = num($('#pDp')?.value), total = Math.max(0, b.sub - disk);
+  const p = { no, diskon: disk ? String(disk) : '', dp: dp ? String(dp) : '', totalBayar: String(total) };
+  if (dp !== b.dp) { p.dpAt = dp ? nowStr() : ''; p.dpBy = dp ? SES.nama : ''; }
+  await patch([p], [], `Pembayaran: diskon ${rp(disk)}, DP ${rp(dp)}`);
+}
+
+/* ---------------- NOTA A4 ---------------- */
+const NOTA_DEF = { alamat: '', kontak: '', sosmed: '', rekening: [], ketentuan: '' };
+const notaCfg = () => ({ ...NOTA_DEF, ...(ST.cfg.nota || {}) });
+function notaHTML(o, its, c, oleh) {
+  const b = o.__bayar || bayarOf(o);
+  const rek = (c.rekening || []).filter(r => r.bank || r.no);
+  return `<div class="nota">
+    <div class="nhd"><div><img class="nlogo" src="logo-positif.png" alt="Positif">
+      <div class="nalm">${esc(c.alamat || '[Alamat toko — isi di menu Nota]').replace(/\n/g, '<br>')}${c.kontak || c.sosmed ? `<br>${c.kontak ? 'WA ' + esc(c.kontak) : ''}${c.kontak && c.sosmed ? ' · ' : ''}${esc(c.sosmed || '')}` : ''}</div></div>
+      <div class="nttl"><div>NOTA PESANAN</div><small>No. <b>${esc(o.no)}</b></small></div></div>
+    <div class="nmeta"><div><span>Pemesan</span><b class="big">${esc(o.username || '-')}</b>${o.noWa ? `<div>WA ${esc(o.noWa)}</div>` : ''}</div>
+      <div class="r"><span>Tanggal</span><div>Pesan: <b>${esc(fD(o.dibuat, false))} ${o.dibuat ? (pd(o.dibuat)?.getFullYear() || '') : ''}</b></div><div>Batas kirim: <b>${esc(fD(o.deadline, false))} ${o.deadline ? (pd(o.deadline)?.getFullYear() || '') : ''}</b></div></div></div>
+    <table class="ntb"><thead><tr><th>No</th><th>Item</th><th class="r">Jumlah</th><th class="r">Harga satuan</th><th class="r">Subtotal</th></tr></thead><tbody>
+      ${its.map((i, n) => `<tr><td>${n + 1}</td><td><b>${esc(String(i.bahan || '').charAt(0) + String(i.bahan || '').slice(1).toLowerCase())}</b> ${esc(i.ukuran || '')}${i.potong ? ', potong ' + esc((POTONG[i.potong] || i.potong).toLowerCase()) : ''}${i.variasi ? `<div class="nsm">${esc(i.variasi)}</div>` : ''}</td><td class="r">${esc(i.jumlah)}</td><td class="r">${num(i.harga) ? rp(num(i.harga)) : '-'}</td><td class="r">${rp(subtotal(i))}</td></tr>`).join('')}
+    </tbody></table>
+    <div class="nbot"><div class="nrek">${rek.length ? `<b>Pembayaran transfer</b>${rek.map(r => `<div>${esc(r.bank)} · ${esc(r.no)}${r.an ? `<br><span class="nsm">a.n. ${esc(r.an)}</span>` : ''}</div>`).join('')}` : '<b>Pembayaran transfer</b><div class="nsm">[Rekening — isi di menu Nota]</div>'}</div>
+      <div class="nsum"><div><span>Subtotal</span><span>${rp(b.sub)}</span></div>${b.disk ? `<div><span>Diskon</span><span>− ${rp(b.disk)}</span></div>` : ''}
+        <div class="t tt"><span>Total bayar</span><span>${rp(b.total)}</span></div><div><span>DP dibayar</span><span>${rp(b.dp)}</span></div>
+        ${b.lunas ? `<div><span>Pelunasan</span><span>${rp(b.lunas)}</span></div>` : ''}<div class="t"><span>Sisa bayar</span><span>${b.sisa ? rp(b.sisa) : 'LUNAS'}</span></div></div></div>
+    ${c.ketentuan ? `<div class="nket">Catatan: ${esc(c.ketentuan).replace(/\n/g, '<br>')}</div>` : ''}
+    <div class="nttd"><div>Pemesan<i></i><span>${esc(o.username || '')}</span></div><div>Positif Clothing<i></i><span>${esc(oleh)}</span></div></div>
+    <div class="nft"><span>Dicetak oleh ${esc(oleh)} · ${esc(fD(nowStr()))} ${new Date().getFullYear()}</span><span>Terima kasih atas pesanan Anda</span></div>
+  </div>`;
+}
+async function cetakNota(no) {
+  const o = ST.orders[no]; if (!o) return;
+  let box = $('#notaPrint'); if (!box) { box = document.createElement('div'); box.id = 'notaPrint'; document.body.append(box); }
+  box.innerHTML = notaHTML(o, itemsOf(no), notaCfg(), SES.nama);
+  const img = $('img', box);
+  if (img && !img.complete) await new Promise(r => { img.onload = img.onerror = r; setTimeout(r, 2500); });
+  document.body.classList.add('pnota');
+  const done = () => { document.body.classList.remove('pnota'); removeEventListener('afterprint', done); };
+  addEventListener('afterprint', done);
+  setTimeout(() => { window.print(); setTimeout(done, 1500); }, 60);
+  patch([{ no, notaAt: nowStr(), notaBy: SES.nama }], [], 'Cetak nota');
+}
+
+/* ---------------- MENU NOTA: data toko di nota ---------------- */
+const NOTA_CONTOH = () => {
+  const o = { no: 'WA-CONTOH-01', username: 'Contoh Pemesan', noWa: '0812-0000-0000', dibuat: nowStr(), deadline: (() => { const d = new Date(); d.setDate(d.getDate() + 3); return nowStr(d); })() };
+  const its = [{ bahan: 'BANNER', ukuran: '350x100cm', variasi: 'Atas plong per 50 cm', jumlah: '1', harga: '105000', subtotal: '105000' }, { bahan: 'VINYL', ukuran: 'A3', potong: 'KISSCUT', jumlah: '10', harga: '12000', subtotal: '120000' }];
+  o.__bayar = { sub: 225000, disk: 5000, total: 220000, dp: 132000, lunas: 0, sisa: 88000 };
+  return { o, its };
+};
+const rekRow = (r = {}) => `<div class="rkr"><input data-r="bank" placeholder="Nama bank" value="${esc(r.bank || '')}"><input data-r="no" inputmode="numeric" placeholder="No. rekening" value="${esc(r.no || '')}"><input data-r="an" placeholder="Atas nama" value="${esc(r.an || '')}"><button class="x" data-act="rekdel" title="Hapus rekening">×</button></div>`;
+function notaForm() {
+  const rek = $$('#nRek .rkr').map(d => ({ bank: $('[data-r="bank"]', d).value.trim(), no: $('[data-r="no"]', d).value.trim(), an: $('[data-r="an"]', d).value.trim() })).filter(r => r.bank || r.no || r.an);
+  return { alamat: $('#nAlm').value.trim(), kontak: $('#nKon').value.trim(), sosmed: $('#nSos').value.trim(), rekening: rek, ketentuan: $('#nKet').value.trim() };
+}
+function notaPreview() {
+  const w = $('#nPrev'); if (!w) return;
+  const { o, its } = NOTA_CONTOH();
+  w.innerHTML = `<div class="npw">${notaHTML(o, its, notaForm(), SES.nama)}</div>`;
+  const sc = Math.min(1, w.clientWidth / 794); const npw = $('.npw', w); npw.style.transform = `scale(${sc})`; w.style.height = Math.ceil(1123 * sc) + 'px';
+}
+VW.nota = {
+  live: false,
+  mount() {
+    const c = notaCfg();
+    return `<div class="tbar"><span class="muted sm" style="flex:1">Data ini tampil di setiap nota A4 order WA. Berlaku untuk semua perangkat.</span><button class="btn" data-act="notasave">${ic('check')}Simpan data nota</button></div>
+    <div class="ngrid"><div class="card setg" id="notaForm">
+      <label>Alamat toko<textarea id="nAlm" placeholder="Jl. …, Kota">${esc(c.alamat)}</textarea></label>
+      <label>No. WA / kontak<input id="nKon" inputmode="tel" value="${esc(c.kontak)}" placeholder="08xxxxxxxxxx"></label>
+      <label>Instagram / email <small>opsional</small><input id="nSos" value="${esc(c.sosmed)}" placeholder="@positifclothing"></label>
+      <label>Rekening pembayaran</label><div id="nRek">${(c.rekening.length ? c.rekening : [{}]).map(rekRow).join('')}</div>
+      <button class="lnk0" data-act="rekadd" style="align-self:flex-start;margin:4px 0 12px">+ Tambah rekening</button>
+      <label>Catatan ketentuan <small>tampil di bawah nota, opsional</small><textarea id="nKet" placeholder="mis. Sisa bayar dilunasi sebelum barang dikirim">${esc(c.ketentuan)}</textarea></label>
+    </div>
+    <div><div class="lab" style="margin-bottom:6px">Pratinjau nota (contoh data)</div><div id="nPrev" class="nprev"></div></div></div>`;
+  },
+  after() { notaPreview(); }
+};
+document.addEventListener('input', e => { if (e.target.closest && e.target.closest('#notaForm')) notaPreview(); });
+addEventListener('resize', () => { if (ST.view === 'nota') notaPreview(); });
+async function simpanNota() {
+  const nota = notaForm();
+  try { const j = await api('saveConfig', { config: { nota } }); ST.cfg = { ...DEF_CFG, ...j.config }; toast('Data nota tersimpan'); }
+  catch (e) { toast(e.message, 1); }
 }
 
 /* ---------------- LAPORAN ---------------- */
@@ -1853,15 +2220,11 @@ VW.atur = {
         <div class="form">${BAHAN.filter(b => b !== 'LAIN').map(b => `<label class="sm">${b}<input type="number" min="0" data-hg="${b}" value="${esc(hg[b] || '')}"></label>`).join('')}</div></div>
       <div class="card"><h3 style="margin-top:0">File & sistem</h3>
         <label>Hapus file cetak otomatis <small>hari setelah order Dikirim (0 = tidak pernah)</small><input type="number" min="0" id="cHapus" value="${esc(c.hapusHari)}"></label>
-        <label>Sinkron otomatis tiap (detik)<input type="number" min="15" id="cInt" value="${esc(c.intervalSync)}"></label>
-        <label>Link Positif POS <small>untuk tombol rumah di kanan atas</small><input id="cPosUrl" value="${esc(c.posUrl)}" placeholder="https://…/POSITIF_APLIKASI_FINAL_produksi.html"></label></div>
+        <label>Sinkron otomatis tiap (detik)<input type="number" min="15" id="cInt" value="${esc(c.intervalSync)}"></label></div>
       <div class="card"><h3 style="margin-top:0">Koneksi (komputer ini saja)</h3>
         <label>URL Web App Apps Script<input id="cApi" value="${esc(CONF.api)}" placeholder="https://script.google.com/macros/s/…/exec"></label>
         <div class="row"><span class="muted sm">${CONF.demo ? '<b style="color:#ffd24a">Sedang mode demo</b> — data hanya di browser ini.' : 'Terhubung ke Google Sheet.'}</span><button class="btn sec sm" data-act="apisave">Simpan URL & muat ulang</button></div></div>
     </div>
-    <div class="card sec"><div class="row" style="margin-top:0"><h3 style="margin:0">Pengguna & PIN</h3><div class="bar" style="margin:0"><button class="btn sec sm" data-act="uadd">${ic('plus')}Tambah</button><button class="btn sm" data-act="usave">${ic('check')}Simpan pengguna</button></div></div>
-      <p class="muted sm">Owner: semua menu. Admin Kedawung: layout & upload file. Admin Wonodadi: cetak, packing, kirim. PIN 4–8 angka, tidak boleh sama. Kosongkan nama untuk menghapus.</p>
-      <div class="scroll"><table class="utbl"><thead><tr><th>Nama</th><th>Peran</th><th>PIN baru</th></tr></thead><tbody id="ubody">${ST.users.map(u => userRow(u)).join('')}</tbody></table></div></div>
     <div class="card sec"><h3 style="margin-top:0">Import data lama</h3>
       <p class="muted sm">Pindahkan riwayat dari Google Sheet lama: buka ORDER 2026 › File › Download › Microsoft Excel (.xlsx), lalu pilih sheet DASHBOARD PRODUKSI / DASBOARD PRODUKSI. Order yang sudah ada dilewati.</p>
       <div class="tbar"><label class="sm">Toko <select id="lToko">${(c.toko || []).map(t => `<option ${t === c.tokoDefault ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label><button class="btn sec" data-act="lamapick">${ic('upload')}Pilih file .xlsx</button></div>
@@ -1870,25 +2233,14 @@ VW.atur = {
     <p class="muted sm">Rekap Order Custom v${APP_VER}</p>`;
   }
 };
-const userRow = (u = {}) => `<tr><td><input data-u="nama" value="${esc(u.nama || '')}"></td><td><select data-u="peran">${Object.entries(PERAN).map(([v, l]) => `<option value="${v}" ${u.peran === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td><td><input data-u="pin" inputmode="numeric" placeholder="${u.nama ? 'kosongkan = PIN lama' : 'PIN baru'}"></td></tr>`;
 async function simpanCfg() {
   const L = id => $(id).value.split('\n').map(s => s.trim()).filter(Boolean);
   const hg = {}; $$('[data-hg]').forEach(i => { if (num(i.value)) hg[i.dataset.hg] = num(i.value); });
   const bahanRules = L('#cBhn').map(s => { const [b, ...r] = s.split('='); return [b.trim().toUpperCase(), r.join('=').trim()]; }).filter(r => r[0] && r[1]);
-  const config = { toko: L('#cToko'), tokoDefault: $('#cTokoDef').value, kataKunci: L('#cKata'), skuCustom: L('#cSku').map(s => s.toUpperCase()), aturanPositif: L('#cPos').map(s => s.toUpperCase()), bahanRules, waTelasih: $('#cWa').value.trim(), hargaTelasih: hg, hapusHari: num($('#cHapus').value), intervalSync: Math.max(15, num($('#cInt').value) || 30), posUrl: $('#cPosUrl').value.trim() };
+  const config = { toko: L('#cToko'), tokoDefault: $('#cTokoDef').value, kataKunci: L('#cKata'), skuCustom: L('#cSku').map(s => s.toUpperCase()), aturanPositif: L('#cPos').map(s => s.toUpperCase()), bahanRules, waTelasih: $('#cWa').value.trim(), hargaTelasih: hg, hapusHari: num($('#cHapus').value), intervalSync: Math.max(15, num($('#cInt').value) || 30) };
   if (!config.toko.includes(config.tokoDefault)) config.tokoDefault = config.toko[0] || '';
   try { const j = await api('saveConfig', { config }); ST.cfg = { ...DEF_CFG, ...j.config }; startTimers(); toast('Pengaturan tersimpan'); go('atur'); }
   catch (e) { toast(e.message, 1); }
-}
-async function simpanUsers() {
-  const users = $$('#ubody tr').map(tr => ({ nama: $('[data-u="nama"]', tr).value.trim(), peran: $('[data-u="peran"]', tr).value, pin: $('[data-u="pin"]', tr).value.trim() })).filter(u => u.nama);
-  const me = users.find(u => u.nama === SES.nama);
-  try {
-    const j = await api('saveUsers', { users });
-    ST.users = j.users; toast('Pengguna tersimpan');
-    if (me) { SES = { ...SES, pin: me.pin || SES.pin, peran: me.peran }; LS.set('ses', SES); } else { toast('Akun Anda dihapus — keluar.', 1); return logout(); }
-    go('atur');
-  } catch (e) { toast(e.message, 1); }
 }
 
 /* =====================================================================
@@ -2003,11 +2355,8 @@ async function hapusFile(no, id) {
    ===================================================================== */
 const ACT = {
   go: b => go(b.dataset.v),
-  home: () => SES && go(SES.peran === 'WONODADI' ? 'cetak' : 'produksi'),
   refresh: async () => { await sync(true); toast('Data dimuat ulang'); },
   theme: () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; LS.set('theme', t); applyTheme(); },
-  pos: () => { location.href = (ST.cfg.posUrl || '').trim() || 'index.html'; },
-  akun: async () => { if (await dlg({ title: SES.nama, msg: PERAN[SES.peran] + (CONF.demo ? ' · mode demo' : ''), ok: 'Keluar', cancel: 'Tutup', danger: true })) logout(); },
   open: (b, e) => { e.preventDefault(); openOrder(b.dataset.no); },
   close: () => closeMd(),
   copy: b => salin(b.dataset.t),
@@ -2016,9 +2365,20 @@ const ACT = {
   csv: () => csvOrders(VW.produksi.list(), `rekap-order-${nowStr().slice(0, 10)}.csv`),
   lapcsv: () => csvOrders(VW.laporan.data(), `rekap-order-${ST.lap.bulan}.csv`),
   manual: () => manualForm(),
+  mmode: b => manualForm(b.dataset.v),
   mitem: () => addManualItem(),
-  msave: () => simpanManual(),
+  mdel: b => { if ($$('#mItems .mrow').length > 1) { b.closest('.mrow').remove(); hitungManual(); } },
+  msave: b => simpanManual(!!b.dataset.nota),
+  lunas: () => DET && catatLunas(DET),
+  bayaredit: () => DET && ubahBayar(DET),
+  nota: () => DET && cetakNota(DET),
+  notasave: () => simpanNota(),
+  rekadd: () => { $('#nRek').insertAdjacentHTML('beforeend', rekRow()); notaPreview(); },
+  rekdel: b => { b.closest('.rkr').remove(); notaPreview(); },
   setst: b => setStatus(b.dataset.no || DET, b.dataset.st),
+  dledit: () => DET && ubahDeadline(DET),
+  dlq: b => { const i = b.closest('.ubc')?.querySelector('.ubi'); if (i) i.value = b.dataset.v; },
+  logall: () => { OPEN.has('__log') ? OPEN.delete('__log') : OPEN.add('__log'); $('#dLog').innerHTML = logHTML(ST.orders[DET]); },
   kirimall: async () => {
     const os = Object.values(ST.orders).filter(o => o.status === 'CETAK');
     if (!await dlg({ title: `Tandai ${os.length} order dikirim?`, msg: os.map(o => o.no5).join(', '), ok: 'Ya, dikirim' })) return;
@@ -2053,12 +2413,9 @@ const ACT = {
   tldone: async () => { const ks = [...ST.tl.sel]; ST.tl.sel.clear(); await setCetak(ks, true); toast(ks.length + ' item diterima dari Telasih'); },
   cfgsave: () => simpanCfg(),
   apisave: () => { const u = $('#cApi').value.trim(); if (!u) return toast('URL kosong', 1); CONF.api = u; CONF.demo = false; LS.set('api', u); LS.set('demo', false); LS.del('ses'); location.reload(); },
-  uadd: () => $('#ubody').insertAdjacentHTML('beforeend', userRow()),
-  usave: () => simpanUsers(),
   logload: async () => { try { const j = await api('log'); $('#logbox').innerHTML = `<table><thead><tr><th>Waktu</th><th>User</th><th>Aksi</th><th>Ref</th><th>Detail</th></tr></thead><tbody>${j.log.map(l => `<tr><td class="sm nowrap">${esc(l.waktu)}</td><td class="sm">${esc(l.user)}</td><td class="sm">${esc(l.aksi)}</td><td class="sm">${esc(String(l.ref).slice(0, 40))}</td><td class="sm muted">${esc(String(l.detail).slice(0, 160))}</td></tr>`).join('')}</tbody></table>`; } catch (e) { toast(e.message, 1); } },
   setupsave: () => { const u = $('#sApi').value.trim(); if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(u)) return toast('URL harus dari script.google.com dan berakhiran /exec', 1); CONF.api = u; CONF.demo = false; LS.set('api', u); LS.set('demo', false); boot(); },
   demo: () => { CONF.demo = true; LS.set('demo', true); boot(); },
-  login: () => doLogin()
 };
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]');
@@ -2088,46 +2445,40 @@ function showSetup() {
     <p class="muted">Tempel URL Web App dari Apps Script (berakhiran <b>/exec</b>). Lihat PANDUAN untuk cara membuatnya.</p>
     <input id="sApi" style="width:100%" placeholder="https://script.google.com/macros/s/…/exec">
     <div class="uba" style="justify-content:space-between"><button class="btn sec" data-act="demo">Coba mode demo</button><button class="btn" data-act="setupsave">Simpan</button></div>
-    <p class="muted sm">Mode demo: data hanya tersimpan di browser ini, untuk mencoba. PIN demo: Owner 1234 · Kedawung 2222 · Wonodadi 3333.</p></div></div>`;
+    <p class="muted sm">Mode demo: data hanya tersimpan di browser ini, untuk mencoba.</p></div></div>`;
 }
-function showLogin() {
-  renderNav();
-  $('#view').innerHTML = `<div class="gate"><div class="card" style="text-align:center"><h2 class="pt">Masuk</h2>
-    <p class="muted">Masukkan PIN Anda${CONF.demo ? ' <b style="color:#ffd24a">(mode demo)</b>' : ''}</p>
-    <input id="pin" class="pinin" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
-    <button class="btn big" data-act="login">Masuk</button>
-    <p class="muted sm" style="margin-top:14px">${CONF.demo ? `<a href="${location.pathname}" class="lnk" style="display:inline">Keluar dari mode demo</a>` : ''}</p></div></div>`;
-  const p = $('#pin'); p.focus(); p.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+/* tidak boleh masuk: belum login POS, sesi habis, atau tanpa izin Rekap */
+function blokir(msg) {
+  clearInterval(syncTimer); clearInterval(fullTimer);
+  SES = null; ST.orders = {}; ST.items = {}; reindex(); closeMd();
+  $('#view').innerHTML = '';
+  msg = String(msg || '').replace(/^(AUTH|AKSES)\s*/, '') || 'Masuk dulu ke Positif POS. Setelah itu menu ini terbuka otomatis.';
+  if (window.POSBAR) POSBAR.block(msg); else $('#view').innerHTML = `<div class="gate"><div class="card"><p>${esc(msg)}</p><a class="btn" href="index.html">Buka Positif POS</a></div></div>`;
 }
-async function doLogin() {
-  const pin = $('#pin').value.trim(); if (!pin) return;
-  const b = $('[data-act="login"]'); b.disabled = true; b.textContent = 'Memeriksa…';
-  try {
-    const j = await api('login', { pin });
-    SES = { pin, ...j.user }; LS.set('ses', SES);
-    start();
-  } catch (e) { toast(e.message, 1); b.disabled = false; b.textContent = 'Masuk'; $('#pin').select(); }
-}
-function logout() { SES = null; LS.del('ses'); clearInterval(syncTimer); clearInterval(fullTimer); ST.orders = {}; ST.items = {}; ST.since = ''; ST.loaded = false; reindex(); closeMd(); showLogin(); }
+const bolehRekap = () => !window.POSBAR || POSBAR.can('rekap_kedawung') || POSBAR.can('rekap_wonodadi');
 async function start() {
   setSync(true, 'Memuat…');
   const v = LS.get('view', null);
-  go(v && can(v) ? v : (SES.peran === 'WONODADI' ? 'cetak' : 'produksi'));
+  go(v && can(v) ? v : 'produksi');
   await sync(true);
   legacyHide();
   startTimers();
 }
 function boot() {
+  if (window.POSBAR) POSBAR.mount({ active: 'rekap', replace: '#hd', id: 'hd', tools: ['#sync', '#btnRef', '#btnTheme'] });
   applyTheme();
   $('#btnRef').innerHTML = ic('refresh');
-  $('#btnPos').innerHTML = ic('home');
   if (!CONF.api && !CONF.demo) return showSetup();
-  if (!SES) return showLogin();
+  if (CONF.demo) { SES = { nama: (window.POSBAR && POSBAR.me()?.name) || 'Demo', peran: 'OWNER' }; return start(); }
+  const c = posCred();
+  if (!c) return blokir('');
+  if (!bolehRekap()) return blokir('Akun ' + (POSBAR.me()?.name || c.u) + ' tidak punya izin Rekap order. Minta Owner mengaturnya di Positif POS > Pengaturan > Pengguna.');
+  SES = { nama: POSBAR.me()?.name || c.u, peran: 'OWNER', user: c.u };
   start();
 }
+boot();
 new ResizeObserver(() => document.documentElement.style.setProperty('--hh', $('#hd').offsetHeight + 'px')).observe($('#hd'));
 setInterval(() => { if (SES && ST.loaded) refresh(); }, 60000); // perbarui label "terlambat / hari ini"
-boot();
 </script>
 </body>
 </html>
