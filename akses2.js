@@ -12,9 +12,17 @@
   try { cred = localStorage.getItem('positif2_token') || null; } catch (e) { }
   try { me = JSON.parse(localStorage.getItem('positif2_me') || 'null'); } catch (e) { }
   var masuk = !!(cred && me && me.username);
-  if (masuk && (me.role === 'admin' || (me.perm || []).indexOf(app) >= 0)) return;
+  if (masuk && (me.role === 'admin' || (me.perms || me.perm || []).indexOf(app) >= 0)) { try { sessionStorage.removeItem('positif2_cek'); } catch (e) { } return; }
   var pesan = masuk ? 'Akun <b>' + String(me.name || me.username).replace(/[<>&]/g, '') + '</b> tidak punya akses ke aplikasi ini. Minta Owner mengaturnya di halaman Akun → Pengguna.'
     : 'Masuk dulu. Setelah itu aplikasi ini bisa dibuka.';
+  /* izin di perangkat bisa usang: tanya server dulu sebelum menolak (sekali saja, anti-loop) */
+  if (cred && !sessionStorage.getItem('positif2_cek')) {
+    try { sessionStorage.setItem('positif2_cek', '1'); } catch (e) { }
+    fetch('https://positif-api.positifmerch-blt.workers.dev/api/me', { headers: { Authorization: 'Bearer ' + cred } })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.ok && j.me) { localStorage.setItem('positif2_me', JSON.stringify(j.me)); location.reload(); } })
+      .catch(function () { });
+  }
   try { window.stop(); } catch (e) { }
   var tampil = function () {
     document.documentElement.innerHTML = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tidak ada akses</title>' +
