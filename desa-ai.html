@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="id" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Desa AI · Positif POS</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060606">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Positif POS">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tema.css?v=20261123a">
+<style>
+/* ===== Desa AI: karyawan AI sebagai desa kecil. Data asli dari server (Produksi.gs v7, id '__lk__') ===== */
+.desa{max-width:1240px;margin:0 auto;padding:14px}
+.dtop{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.dtop h1{font:700 clamp(26px,4vw,38px)/1.05 "Barlow Condensed",sans-serif;margin:0;letter-spacing:.01em}
+.dtop p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.dres{display:flex;gap:8px;flex-wrap:wrap}
+.dpill{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 14px 5px 6px}
+.dpill i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:700 14px Barlow,sans-serif;font-style:normal;color:#111}
+.dpill small{display:block;font-size:11px;color:var(--muted);line-height:1.1}.dpill b{font:700 19px "Barlow Condensed",sans-serif;line-height:1}
+.dgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;align-items:start}
+.dmap{background:radial-gradient(90% 70% at 50% 45%,rgba(212,255,63,.07),transparent 70%),var(--card);border:1px solid var(--line);border-radius:14px;padding:6px;overflow:hidden}
+.dmap svg{width:100%;height:auto;display:block}
+.bld{cursor:pointer}.bld:focus{outline:none}.bld:focus-visible .gsel{stroke:#fff}
+.ham{transform-box:fill-box;transform-origin:10% 90%;animation:dh .5s ease-in-out infinite alternate}@keyframes dh{from{transform:rotate(-55deg)}to{transform:rotate(20deg)}}
+.bob{animation:db 1.6s ease-in-out infinite alternate}@keyframes db{to{transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.ham,.bob{animation:none}}
+.dleg{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);padding:6px 8px 4px}
+.dd2{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.dpan{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.dpan h2{font:700 24px/1.1 "Barlow Condensed",sans-serif;margin:0}
+.dpan .drl{color:var(--muted);margin:4px 0 12px}
+.dch{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.dchip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+.tm{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}
+.tm h3{margin:0 0 4px;font:700 18px "Barlow Condensed",sans-serif;display:flex;justify-content:space-between;gap:8px}
+.tm .big{font:700 26px "Barlow Condensed",sans-serif;color:#d4ff3f;line-height:1.1}
+.tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.tr small{color:var(--muted)}.tr b.kd{white-space:nowrap}
+.pb{display:inline-block;padding:1px 7px;border-radius:5px;font:700 11px Barlow,sans-serif;margin-right:6px;border:1px solid var(--line)}
+.pb.p1{background:#b3302f;border-color:#b3302f;color:#fff}.pb.p2{color:#e8a734;border-color:#c98a2e}.pb.p3{color:var(--muted)}
+.dbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.dbtn .btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}.dbtn .btn .ico{width:18px;height:18px}
+.dbtn .btn.lime{background:#d4ff3f;border-color:#d4ff3f;color:#111}
+.dnote{font-size:13px;color:var(--muted);margin:10px 0 0}
+pre.sop{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.5 ui-monospace,Menlo,monospace;margin:6px 0 0;max-height:230px;overflow:auto}
+@media(max-width:860px){.dgrid{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
+<main id="view"></main>
+<div id="modal" class="modal"><div class="card"><div id="rc" class="rc"></div><div class="row noprint"><button class="btn sec" onclick="closeM()">Tutup</button></div></div></div>
+<div id="pk" class="modal" onclick="if(event.target===this)closePk()"><div class="card wide" id="pkc"></div></div>
+<div id="pm" class="modal" onclick="if(event.target===this)closePm()"><div class="card wide" id="pmc"></div></div>
+<div id="ed" class="modal" onclick="if(event.target===this)edClose()"><div class="card wide mf" id="edc" style="width:min(1100px,100%)"></div></div>
+<div class="hubmenu" id="accm" role="menu"></div>
+<div id="hm" class="modal" onclick="if(event.target===this)closeHm()"><div class="card wide mf" id="hmc"></div></div>
+<div id="zm" class="modal" onclick="if(event.target===this)zClose()"><div class="card wide" id="zmc"></div></div>
+<div id="plabels"></div>
+<script>window.PAGE_TABS=["desa"];window.PAGE_HOME="desa";</script>
+<script src="inti.js?v=20261123a"></script>
+<script>
+/* =====================================================================
+   DESA AI — setiap bangunan = satu karyawan AI.
+   Manajer Produksi: data asli dari server (Produksi.gs v7). Manajer AI: tugas terjadwal Claude (laporan pagi).
+   Bangunan lain masih "Lowongan" sampai karyawannya dibuat.
+   ===================================================================== */
+const DA=[
+ {id:'prod',name:'Manajer Produksi',bld:'Balai Produksi',kind:'live',x:4.8,y:4.8,w:2.4,d:2.4,h:1.3,rh:1.3,col:'#d4ff3f',roof:'#d9483b',wall:'#f3e3c3',
+  role:'Menentukan urutan kerja tim Cutting & Jahit dan berapa lusin dikerjakan dulu supaya stok kembali aman.',sched:'Dokumen setiap pagi jam 6–7'},
+ {id:'lap',name:'Manajer AI',bld:'Pos Laporan',kind:'sched',x:0.05,y:5.15,w:1.9,d:1.7,h:1,rh:.9,col:'#4fc3f7',roof:'#2f7fc1',wall:'#efe0c0',
+  role:'Laporan pagi gabungan: order custom Shopee, DTF belum dicetak, belanja bahan.',sched:'Setiap hari 08.07 · dikirim ke HP'},
+ {id:'gud',name:'Gudang Bahan',bld:'Lumbung Bahan',kind:'vac',x:4.9,y:0.1,w:2.2,d:1.8,role:'Memantau stok kain & bahan baku di bawah batas minimum yang belum diminta.'},
+ {id:'cs',name:'CS Chat',bld:'Kios Chat',kind:'vac',x:10.2,y:3.3,w:1.6,d:1.4,role:'Menyiapkan draf balasan chat pembeli.'},
+ {id:'kon',name:'Konten TikTok',bld:'Studio',kind:'vac',x:3.1,y:10.1,w:1.8,d:1.8,role:'Ide & naskah video TikTok harian.'},
+ {id:'ana',name:'Analis Toko',bld:'Menara Data',kind:'vac',x:10.75,y:10.75,w:1.3,d:1.3,role:'Laporan penjualan mingguan dari kasir Positif POS.'}
+];
+const TREES=[[1,12],[12,1],[0.6,0.6],[2.2,0.5],[0.5,2.4],[7.5,12.5],[12.5,7.5],[3,3.2],[9.2,6.6]];
+let DSEL='prod',LK=null,LKE='',LKB=false;
+const C2=0.866*21,S2=0.5*21,Z2=21;
+const P2=(x,y,z=0)=>[+((x-y)*C2).toFixed(1),+((x+y)*S2-z*Z2).toFixed(1)];
+const pts=a=>a.map(p=>P2(...p).join(',')).join(' ');
+const poly=(a,f,st='#0b0b0b',sw=1.5)=>'<polygon points="'+pts(a)+'" fill="'+f+'" stroke="'+st+'" stroke-width="'+sw+'" stroke-linejoin="round"/>';
+const shade=(hex,k)=>{const n=parseInt(hex.slice(1),16),f=v=>Math.max(0,Math.min(255,Math.round(v*k)));return'#'+((1<<24)+(f(n>>16)<<16)+(f(n>>8&255)<<8)+f(n&255)).toString(16).slice(1)};
+const today0=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+/* status per bangunan */
+function dst(b){if(b.kind==='vac')return{s:'vac',c:'#6b6b6b',t:'Lowongan'};if(b.kind==='sched')return{s:'sched',c:'#4fc3f7',t:'Terjadwal 08.07'};
+ if(LKB)return{s:'work',c:'#d4ff3f',t:'Menyusun…'};if(LKE)return{s:'warn',c:'#ff6a4d',t:'Perlu dicek'};if(!LK)return{s:'idle',c:'#9a9a9a',t:'Memuat…'};
+ const sg=LK.cut.sum.segera+LK.jahit.sum.segera,fresh=LK.doc&&LK.doc.at&&new Date(LK.doc.at)>=today0();
+ if(!LK.doc||!LK.jadwal)return{s:'warn',c:'#ff6a4d',t:'Jadwal belum dipasang'};
+ if(!fresh)return{s:'warn',c:'#ff6a4d',t:'Dokumen hari ini belum terbit'};
+ return sg?{s:'done',c:'#e8a734',t:sg+' SEGERA · siap'}:{s:'done',c:'#6cc04a',t:'Hasil siap'}}
+function bldSvg(b){const{x,y,w,d}=b;let s=poly([[x-.25,y-.25],[x+w+.25,y-.25],[x+w+.25,y+d+.25],[x-.25,y+d+.25]],b.kind==='vac'?'#3a3a3a':'#5d5444','#2a2a2a',1.2);
+ if(b.id===DSEL)s+='<polygon class="gsel" points="'+pts([[x-.45,y-.45],[x+w+.45,y-.45],[x+w+.45,y+d+.45],[x-.45,y+d+.45]])+'" fill="none" stroke="#d4ff3f" stroke-width="3" stroke-dasharray="7 5"/>';
+ if(b.kind==='vac'){s+='<polygon points="'+pts([[x,y],[x+w,y],[x+w,y+d],[x,y+d]])+'" fill="none" stroke="#9a9a9a" stroke-width="1.2" stroke-dasharray="4 4"/>';
+  const[px,py]=P2(x+w*.55,y+d*.55);s+='<g transform="translate('+px+','+py+')"><rect x="-1.5" y="-26" width="3" height="26" fill="#6b4226"/><rect x="-11" y="-40" width="22" height="16" rx="2" fill="#c9a26b" stroke="#0b0b0b" stroke-width="1.2"/><path d="M0 -36v8M-4 -32h8" stroke="#1b1b1b" stroke-width="2" stroke-linecap="round"/></g>';return s}
+ const{h,rh}=b,on=dst(b).s==='work'||dst(b).s==='done';
+ s+=poly([[x,y+d,0],[x+w,y+d,0],[x+w,y+d,h],[x,y+d,h]],shade(b.wall,.82))+poly([[x+w,y,0],[x+w,y+d,0],[x+w,y+d,h],[x+w,y,h]],b.wall);
+ s+=poly([[x+w*.5-.22,y+d,0],[x+w*.5+.22,y+d,0],[x+w*.5+.22,y+d,Math.min(.75,h*.7)],[x+w*.5-.22,y+d,Math.min(.75,h*.7)]],'#6b4226');
+ s+=poly([[x+w,y+d*.3,h*.45],[x+w,y+d*.62,h*.45],[x+w,y+d*.62,h*.78],[x+w,y+d*.3,h*.78]],on?'#ffe58a':'#3b4a55');
+ const ap=[x+w/2,y+d/2,h+rh];
+ s+=poly([[x-.1,y-.1,h],[x-.1,y+d+.1,h],ap],shade(b.roof,.7))+poly([[x-.1,y-.1,h],[x+w+.1,y-.1,h],ap],shade(b.roof,.75))+poly([[x-.1,y+d+.1,h],[x+w+.1,y+d+.1,h],ap],shade(b.roof,.88))+poly([[x+w+.1,y-.1,h],[x+w+.1,y+d+.1,h],ap],b.roof);
+ const[wx,wy]=P2(x+w+.55,y+d+.15),st=dst(b).s;
+ s+='<g transform="translate('+wx+','+wy+')"><g class="'+(st==='work'?'':'bob')+'"><ellipse cx="0" cy="1" rx="8" ry="3" fill="rgba(0,0,0,.35)"/><rect x="-6" y="-14" width="12" height="13" rx="4" fill="'+b.col+'" stroke="#0b0b0b" stroke-width="1.5"/><circle cx="0" cy="-20" r="6" fill="#f2c9a0" stroke="#0b0b0b" stroke-width="1.5"/><path d="M-7 -21a7 7 0 0 1 14 0z" fill="#ffd23f" stroke="#0b0b0b" stroke-width="1.5"/><rect x="-8" y="-22" width="16" height="2.5" rx="1" fill="#ffd23f" stroke="#0b0b0b" stroke-width="1"/><circle cx="-2" cy="-19" r="1" fill="#0b0b0b"/><circle cx="2" cy="-19" r="1" fill="#0b0b0b"/>'
+ +(st==='work'?'<g class="ham"><line x1="5" y1="-8" x2="15" y2="-18" stroke="#6b4226" stroke-width="2.5" stroke-linecap="round"/><rect x="11" y="-24" width="9" height="5" rx="1" transform="rotate(45 15.5 -21.5)" fill="#8d99a6" stroke="#0b0b0b" stroke-width="1.2"/></g>':'')+'</g></g>';
+ return s}
+function bubble(b){const t=dst(b),W=b.kind==='vac'?78:104;let bx,by;
+ if(b.kind==='vac'){[bx,by]=P2(b.x+b.w*.55,b.y+b.d*.55);by-=44}else{[bx,by]=P2(b.x+b.w/2,b.y+b.d/2,b.h+b.rh);by-=12}
+ return '<g transform="translate('+bx+','+by+')"><rect x="'+(-W/2)+'" y="-36" width="'+W+'" height="32" rx="8" fill="#111" stroke="#3a3a3a" stroke-width="1.5" opacity=".95"/><path d="M-4 -5h8l-4 6z" fill="#111" stroke="#3a3a3a" stroke-width="1.5" stroke-linejoin="round"/><path d="M-4 -5.5h8" stroke="#111" stroke-width="3"/>'
+ +'<text x="'+(-W/2+7)+'" y="-23" font-family="Barlow Condensed" font-weight="700" font-size="12" fill="#ededed">'+esc(b.name)+'</text><circle cx="'+(-W/2+11)+'" cy="-12" r="3.5" fill="'+t.c+'"/><text x="'+(-W/2+19)+'" y="-8.5" font-family="Barlow" font-weight="600" font-size="10" fill="'+t.c+'">'+esc(t.t)+'</text></g>'}
+function tree([x,y]){const[tx,ty]=P2(x,y);return '<g transform="translate('+tx+','+ty+')"><ellipse cx="0" cy="2" rx="10" ry="4" fill="rgba(0,0,0,.3)"/><rect x="-2.5" y="-10" width="5" height="11" fill="#5a3a22" stroke="#0b0b0b" stroke-width="1.2"/><circle cx="0" cy="-20" r="12" fill="#2d6b2a" stroke="#0b0b0b" stroke-width="1.5"/><circle cx="-4" cy="-24" r="5" fill="#3d8a36"/></g>'}
+function dMap(){const N=13;let s='<defs><linearGradient id="dgr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f7a33"/><stop offset="1" stop-color="#2c5e26"/></linearGradient></defs>';
+ s+=poly([[0,N,0],[N,N,0],[N,N,-.7],[0,N,-.7]],'#4a3020')+poly([[N,0,0],[N,N,0],[N,N,-.7],[N,0,-.7]],'#5c3c27')+poly([[0,0],[N,0],[N,N],[0,N]],'url(#dgr)','#1a3a16',2);
+ DA.filter(b=>b.id!=='prod').forEach(b=>{const[x1,y1]=P2(b.x+b.w/2,b.y+b.d/2),[x2,y2]=P2(6,6);s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#6e6450" stroke-width="13" stroke-linecap="round"/>'});
+ const it=[...DA.map(b=>({k:b.x+b.w+b.y+b.d,f:()=>'<g class="bld" tabindex="0" role="button" data-id="'+b.id+'" aria-label="'+esc(b.bld+', '+b.name+': '+dst(b).t)+'">'+bldSvg(b)+'</g>'})),...TREES.map(t=>({k:t[0]+t[1]+.4,f:()=>tree(t)}))].sort((a,b)=>a.k-b.k);
+ s+=it.map(i=>i.f()).join('')+DA.slice().sort((a,b)=>(a.x+a.y)-(b.x+b.y)).map(b=>'<g class="bld" data-id="'+b.id+'">'+bubble(b)+'</g>').join('');
+ const m=$('dsvg');if(m)m.innerHTML=s}
+const PN2=['','SEGERA','PRIORITAS','NORMAL'];
+const dz=n=>{n=Math.max(0,Math.round(+n||0));const d=Math.floor(n/12),r=n%12;return(d?d+' lusin':'')+(d&&r?' ':'')+((r||!d)?r+' pcs':'')};
+function teamH(nm,T){const S=T.sum;return '<div class="tm"><h3><span>'+nm+'</span><small class="muted">'+S.produk+' produk di rak · '+dz(S.rak)+'</small></h3>'
+ +(S.produk?'<div class="big">Kerjakan dulu '+dz(S.kerja)+'</div><small class="muted">'+S.segera+' SEGERA · '+S.prioritas+' PRIORITAS</small>'
+  +T.top.filter(r=>r.pri<3).slice(0,5).map(r=>'<div class="tr"><span><span class="pb p'+r.pri+'">'+PN2[r.pri]+'</span>'+esc(r.produk)+' <small>'+esc(r.ukuran)+' · stok '+r.stok+'/'+r.aman+(r.hari!=null?' · cukup '+r.hari+' hr':'')+'</small></span><b class="kd">'+dz(r.kerja)+'</b></div>').join('')
+  :'<small class="muted">Rak kosong.</small>')+'</div>'}
+function dPanel(){const b=DA.find(x=>x.id===DSEL),t=dst(b),e=$('dpan');if(!e)return;
+ let h='<h2>'+esc(b.bld)+'</h2><p class="drl">'+esc(b.name)+' · '+esc(b.role)+'</p><div class="dch"><span class="dchip"><i class="dd2" style="background:'+t.c+';margin:0"></i>'+esc(t.t)+'</span>'+(b.sched?'<span class="dchip">'+esc(b.sched)+'</span>':'')+'</div>';
+ if(b.kind==='vac')h+='<p class="dnote" style="margin-top:0">Karyawan ini belum dibuat. Rancangan tugasnya sudah ada; bisa dibuat setelah Manajer Produksi berjalan lancar.</p>';
+ else if(b.kind==='sched')h+='<p class="dnote" style="margin-top:0">Berjalan sebagai tugas terjadwal di Claude dan dikirim sebagai notifikasi ke HP. Statusnya tidak tersimpan di Positif POS, jadi tidak tampil di sini.</p>';
+ else{if(LKE)h+='<p class="bad" style="margin:0 0 8px">'+esc(LKE)+'</p>';
+  if(LK){const dc=LK.doc;h+='<p class="dnote" style="margin-top:0">Dokumen pagi: '+(dc&&dc.at?'diterbitkan '+fmt(dc.at):'belum pernah diterbitkan')+(LK.jadwal?'':' · <span class="bad">jadwal pagi belum dipasang</span>')+'. Batas aman = laku/hari × '+LK.aman+' hari, minimal '+LK.low+' pcs (atau Target varian).</p>'+teamH('Tim Cutting · rak bahan',LK.cut)+teamH('Tim Jahit · rak cutting',LK.jahit)}
+  h+='<div class="dbtn">'+(LK&&LK.doc?'<a class="btn lime" href="'+esc(LK.doc.url)+'" target="_blank" rel="noopener">'+IC('printer')+' Buka dokumen pagi</a>':'')+(can('prod_buat')?'<button class="btn sec" onclick="dBuat()"'+(LKB?' disabled':'')+'>Terbitkan ulang sekarang</button>':'')+'<a class="btn sec" href="produksi.html#produksi">Buka Produksi</a></div>'}
+ e.innerHTML=h}
+function dTop(){const e=$('dres');if(!e)return;const sg=LK?LK.cut.sum.segera+LK.jahit.sum.segera:0,kj=LK?LK.cut.sum.kerja+LK.jahit.sum.kerja:0;
+ e.innerHTML='<div class="dpill"><i style="background:#d4ff3f">2</i><div><small>Karyawan aktif</small><b>2/6</b></div></div><div class="dpill"><i style="background:#ffd23f">↻</i><div><small>Kerjakan dulu hari ini</small><b>'+(LK?dz(kj):'–')+'</b></div></div><div class="dpill"><i style="background:#ff6a4d;color:#fff">!</i><div><small>SEGERA</small><b>'+(LK?sg:'–')+'</b></div></div>'}
+function dAll(){dMap();dPanel();dTop()}
+async function dLoad(buat){if(buat)LKB=true;LKE='';dAll();
+ try{LK=await api('jobAdvance',buat?'__lkbuat__':'__lk__');if(buat)toast('Dokumen pagi diterbitkan ulang')}
+ catch(e){LKE=/tidak ditemukan/i.test(e.message)?'Server belum memakai Produksi.gs versi 7. Salin Produksi.gs baru ke Apps Script lalu terapkan versi baru.':'Gagal memuat: '+e.message}
+ LKB=false;dAll()}
+function dBuat(){dLoad(true)}
+function vBeranda(){$('view').innerHTML='<p class="muted" style="padding:20px">Memuat Desa AI…</p>'}
+function vDesa(){$('view').innerHTML='<div class="desa"><div class="dtop"><div><h1>Desa AI Positif</h1><p>Karyawan AI Positif Clothing · '+new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'})+'</p></div><div class="dres" id="dres"></div></div><div class="dgrid"><section class="dmap" aria-label="Desa AI"><svg id="dsvg" viewBox="-252 -40 504 334" role="img" aria-label="Desa isometrik berisi bangunan karyawan AI"></svg><div class="dleg"><span><i class="dd2" style="background:#6cc04a"></i>Hasil siap</span><span><i class="dd2" style="background:#e8a734"></i>Ada yang SEGERA</span><span><i class="dd2" style="background:#4fc3f7"></i>Terjadwal</span><span><i class="dd2" style="background:#ff6a4d"></i>Perlu dicek</span><span><i class="dd2" style="background:#6b6b6b"></i>Lowongan</span></div></section><aside class="dpan" id="dpan" aria-live="polite"></aside></div></div>';
+ const m=$('dsvg');m.addEventListener('click',e=>{const g=e.target.closest('.bld');if(g){DSEL=g.dataset.id;dAll();if(innerWidth<860)$('dpan').scrollIntoView({behavior:'smooth'})}});
+ m.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const g=e.target.closest('.bld');if(g){e.preventDefault();DSEL=g.dataset.id;dAll()}}});
+ dAll();if(!LK&&!LKB)dLoad(false)}
+boot();
+</script></body></html>
