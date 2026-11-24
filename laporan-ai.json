@@ -1,0 +1,44 @@
+{
+  "laporan": [
+    {
+      "id": "gudang",
+      "agen": "Gudang AI",
+      "dibuat": "2026-11-24T07:30:00+07:00",
+      "ringkasan": "14 bahan di bawah batas minimum belum diminta",
+      "kritis": [
+        {"nama": "Benang Hitam", "divisi": "Jahit", "sisa": 0, "min": 6, "satuan": "pcs", "saran": "12", "catatan": "Di sheet BELANJA lama ada permintaan 10 (3 Nov), belum dikonfirmasi sampai"},
+        {"nama": "Benang Merah", "divisi": "Jahit", "sisa": 0, "min": 4, "satuan": "pcs", "saran": "4–12"},
+        {"nama": "Oli", "divisi": "Jahit", "sisa": 0, "min": 1, "satuan": "pcs", "saran": "2–3"},
+        {"nama": "Elastik 2 cm", "divisi": "Jahit", "sisa": 0, "min": 1, "satuan": "pack", "saran": "6–12"},
+        {"nama": "Elastik 3 cm", "divisi": "Jahit", "sisa": 0, "min": 1, "satuan": "pack", "saran": "3–5"},
+        {"nama": "Elastik 4 cm", "divisi": "Jahit", "sisa": 0, "min": 1, "satuan": "pack", "saran": "4"},
+        {"nama": "Klip Anak", "divisi": "Packing", "sisa": 5, "min": 6, "satuan": "pack", "saran": "10–20"},
+        {"nama": "Klip 20 x 30", "divisi": "Finishing", "sisa": 0, "min": 4, "satuan": "pack", "saran": "10–40", "catatan": "Mungkin sama dengan Klip Anak (Packing)"},
+        {"nama": "Klip 25 x 35", "divisi": "Finishing", "sisa": 0, "min": 2, "satuan": "pack", "saran": "4–10"},
+        {"nama": "OPP 20 x 30", "divisi": "Finishing", "sisa": 0, "min": 2, "satuan": "pack", "saran": "10–15", "catatan": "Mungkin sama dengan OPP Kids (Packing, stok 9)"},
+        {"nama": "OPP 25 x 35", "divisi": "Finishing", "sisa": 0, "min": 2, "satuan": "pack", "saran": "5", "catatan": "Mungkin sama dengan OPP Dewasa (Packing, stok 12)"},
+        {"nama": "Tali Gembos", "divisi": "Finishing", "sisa": 0, "min": 1, "satuan": "pack", "saran": "1"},
+        {"nama": "Stiker Vinyl", "divisi": "Stiker", "sisa": 0, "min": 1, "satuan": "pack", "saran": "1–4", "catatan": "Sheet BELANJA: 4 lembar sampai 14 Nov, belum diinput ke aplikasi"},
+        {"nama": "Kapur Kain", "divisi": "Cutting", "sisa": 0, "min": 2, "satuan": "pcs", "saran": "1–2"}
+      ],
+      "diproses": [
+        {"nama": "Thermal", "qty": "18 roll", "status": "Dibelanjakan"},
+        {"nama": "Tinta DTF White", "qty": "2 botol", "status": "Dibelanjakan"},
+        {"nama": "Label Hitam L", "qty": "10 roll", "status": "Dibelanjakan"},
+        {"nama": "Label Hitam XL", "qty": "10 roll", "status": "Dibelanjakan"},
+        {"nama": "Kancing Putih", "qty": "2", "status": "Dibelanjakan"},
+        {"nama": "Kancing Abu", "qty": "1", "status": "Dibelanjakan"},
+        {"nama": "Kancing Marun", "qty": "1", "status": "Dibelanjakan"}
+      ],
+      "pasBatas": [
+        {"nama": "Cleaner DTF", "sisa": 1, "min": 1, "satuan": "botol"},
+        {"nama": "Pet DTF Rhino", "sisa": 1, "min": 1, "satuan": "roll"},
+        {"nama": "Pet DTF No merk", "sisa": 1, "min": 1, "satuan": "roll"}
+      ],
+      "catatan": [
+        "Ada dua divisi bernama Jahit, dan Klip/OPP tercatat di Packing dan Finishing. Sebaiknya digabung.",
+        "Barang yang sudah sampai menurut sheet BELANJA belum semua masuk stok aplikasi."
+      ]
+    }
+  ]
+}
