@@ -50,7 +50,7 @@
       ['bahan', 'layers', 'Stok bahan baku', 'stok-bahan-baku-baru.html', any(['bahan_lihat', 'bahan_ambil', 'bahan_kelola'])],
       ['produksi', 'factory', 'Produksi', 'produksi.html', any(['prod_lihat', 'prod_buat'])],
       ['pesanan', 'clipboard', 'Pesanan custom', 'pesanan-custom.html', can('pesanan')],
-      ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', any(['rekap_kedawung', 'rekap_wonodadi'])]
+      ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom-baru.html', any(['rekap_kedawung', 'rekap_wonodadi'])]
     ];
   }
   var HUB = [['Resi Print', 'resi_print.html', 'app_resi_print'], ['Resi Video Packing', 'resi_video_packing.html', 'app_resi_video'], ['Resi Pickup Kurir', 'resi_pickup-kurir.html', 'app_resi_pickup']];

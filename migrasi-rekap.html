@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pindah data Rekap Order</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0a0a0a;color:#f4f4f2;font:16px system-ui,sans-serif;padding:20px;box-sizing:border-box}
+.k{width:min(480px,100%);background:#111;border:1.5px solid rgba(212,255,63,.5);border-radius:20px;padding:24px}
+h1{margin:0 0 6px;font-size:22px}p{color:#aaa;margin:0 0 14px;font-size:14px}
+label{display:block;margin:12px 0 4px;font-size:14px;color:#c9c9c4}
+input{width:100%;box-sizing:border-box;padding:11px;border-radius:10px;border:1px solid #333;background:#060606;color:#fff;font-size:16px}
+button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:12px;background:#d4ff3f;color:#0a0a0a;font-weight:700;font-size:16px;cursor:pointer}
+button:disabled{opacity:.5}
+#h{margin-top:16px;padding:12px;border-radius:10px;background:#060606;font-size:14px;white-space:pre-wrap;display:none}
+</style></head><body><div class="k">
+<h1>Pindah data Rekap Order</h1>
+<p>Menyalin order, item, pengaturan, dan riwayat dari Google Sheet lama ke database baru. <b>Mengganti</b> isi data Rekap Order di database baru. Syarat: buka halaman ini dari alamat github.io, dan Anda sedang masuk di Positif POS lama (browser yang sama). Lakukan saat tidak ada yang memakai Rekap Order.</p>
+<label>Username baru (Owner / Super Admin)</label><input id="u" autocapitalize="none">
+<label>PIN</label><input id="p" type="password">
+<button id="go" onclick="mulai()">Mulai pindahkan</button>
+<div id="h"></div></div>
+<script>
+const NEW='https://positif-api.positifmerch-blt.workers.dev';
+const OLD='https://script.google.com/macros/s/AKfycbzws96uZeH4gZ0XMW7jI2spZsQdia7xSQ5Y5AmmyslZ3MKivzJIFUODB1DZSWsz7gvx/exec';
+const $=i=>document.getElementById(i);
+const say=t=>{const h=$('h');h.style.display='block';h.textContent=t};
+function credLama(){let v='';try{v=localStorage.getItem('positif_cred')||sessionStorage.getItem('positif_cred')||''}catch(e){}try{const o=JSON.parse(v);return o&&o.u&&o.t?o:null}catch(e){return null}}
+async function lama(action,extra){
+ const c=credLama();if(!c)throw new Error('Anda belum masuk di Positif POS lama di browser ini. Buka index.html (POS lama), login, lalu ulangi.');
+ const r=await (await fetch(OLD,{method:'POST',body:JSON.stringify(Object.assign({action},extra||{},{auth:{user:c.u,tok:c.t}}))})).json();
+ if(!r.ok)throw new Error('Server lama: '+r.error);return r}
+async function baru(path,body,tok){
+ const r=await (await fetch(NEW+path,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify(body)})).json();
+ if(r.ok===false||r.ok===0)throw new Error(r.error||r.err||'gagal');return r}
+async function mulai(){
+ $('go').disabled=true;
+ try{
+  say('1/5 Masuk ke server baru...');
+  const l=await (await fetch(NEW+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('u').value,pin:$('p').value})})).json();
+  if(!l.ok)throw new Error(l.error);const tok=l.token;
+  say('2/5 Mengambil data dari server lama...');
+  const d=await lama('pull',{since:''});
+  let lg=[];try{lg=(await lama('log')).log||[]}catch(e){}
+  lg=lg.slice().reverse();
+  const O=d.orders||[],I=d.items||[];
+  say('3/5 Memindahkan '+O.length+' order, '+I.length+' item, '+lg.length+' baris riwayat...');
+  await baru('/api/rekap/import',{reset:true,config:d.config||{},log:lg,imports:d.imports||[],orders:O.slice(0,90),items:I.slice(0,90)},tok);
+  for(let i=90;i<O.length;i+=90)await baru('/api/rekap/import',{orders:O.slice(i,i+90)},tok);
+  for(let i=90;i<I.length;i+=90)await baru('/api/rekap/import',{items:I.slice(i,i+90)},tok);
+  say('4/5 Memeriksa...');
+  const c=await baru('/api/rekap',{action:'pull',since:''},tok);
+  const aman=c.orders.length===O.length&&c.items.length===I.length;
+  say('SELESAI.\n\n            Server lama -> Database baru\nOrder       '+O.length+' -> '+c.orders.length+'\nItem        '+I.length+' -> '+c.items.length+'\nRiwayat     '+lg.length+' baris disalin\n\n'+(aman?'Jumlah order dan item sama. Aman.':'ADA YANG BEDA. Jangan dipakai dulu, kabari saya.'));
+ }catch(e){say('GAGAL: '+e.message)}
+ $('go').disabled=false}
+</script></body></html>
