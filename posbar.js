@@ -17,7 +17,7 @@
     factory: '<path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/>',
     clipboard: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
     rekap: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
-    sparkles: '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
     grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
     sticker: '<path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/>',
     key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
@@ -50,7 +50,7 @@
       ['produksi', 'factory', 'Produksi', 'produksi.html', any(['prod_lihat', 'prod_buat'])],
       ['pesanan', 'clipboard', 'Pesanan custom', 'pesanan-custom.html', !!me() && (me().role === 'admin' || me().role === 'supervisor')],
       ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', any(['rekap_kedawung', 'rekap_wonodadi'])],
-      ['desa', 'sparkles', 'Desa AI', 'desa-ai.html', any(['prod_lihat', 'prod_buat'])]
+      ['kinerja', 'users', 'Gaji & kinerja', 'kinerja.html', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji'])]
     ];
   }
   var HUB = [['Resi Print', 'resi_print.html', 'app_resi_print'], ['Resi Video Packing', 'resi_video_packing.html', 'app_resi_video'], ['Resi Pickup Kurir', 'resi_pickup-kurir.html', 'app_resi_pickup']];

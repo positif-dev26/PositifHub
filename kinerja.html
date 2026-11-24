@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gaji &amp; Kinerja — Positif</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="posbar.js?v=20261124k"></script>
+<style>
+:root{--bg:#070707;--card:#0f0f0f;--line:#232323;--tx:#ececec;--mu:#8f8f8a;--ac:#d4ff3f;--ok:#4ddf9a;--bl:#4da3ff;--or:#ffb020;--rd:#ff6b6b;--pp:#a78bfa}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 Barlow,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3{font-family:"Barlow Condensed",sans-serif;margin:0;letter-spacing:.01em}
+.mu{color:var(--mu)}.ok{color:var(--ok)}.bad{color:var(--rd)}.warn{color:var(--or)}
+#tabs{position:sticky;top:var(--pbh,60px);z-index:20;display:flex;gap:6px;padding:10px 16px;overflow-x:auto;background:rgba(7,7,7,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+#tabs button{flex:none;padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--mu);font-weight:600}
+#tabs button.on{background:var(--ac);border-color:var(--ac);color:#0a0a0a}
+main{max-width:1320px;margin:0 auto;padding:16px 16px 120px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid #2c2c2c;background:#141414;font-weight:600}
+.btn:hover{border-color:#555}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#0a0a0a;font-weight:700}
+.btn.dg{color:var(--rd)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.big{width:100%;min-height:54px;font-size:18px;border-radius:16px}
+input,select,textarea{background:#141414;border:1px solid #2c2c2c;border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+textarea{min-height:90px}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(212,255,63,.5);outline-offset:1px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mu)}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:10px 14px;min-height:44px;border-radius:12px;border:1px solid #2c2c2c;background:#121212;font-weight:600}
+.chip.on{border:2px solid var(--ac);background:rgba(212,255,63,.08)}
+.grade{display:inline-grid;place-items:center;min-width:30px;height:30px;padding:0 6px;border-radius:9px;border:1.5px solid currentColor;font:700 16px "Barlow Condensed",sans-serif}
+.gA{color:var(--ok)}.gB{color:var(--bl)}.gC{color:var(--or)}.gD{color:var(--rd)}
+.flag{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:999px;border:1px solid var(--or);color:var(--or);font-size:11px;font-weight:700;white-space:nowrap}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;border:1px solid currentColor;font-size:12px;font-weight:700}
+.tl{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.tl div{display:flex;gap:10px;padding:4px 0;border-top:1px solid #1a1a1a}
+.tl b.t{min-width:44px;font-variant-numeric:tabular-nums;color:var(--mu);font-weight:600}
+table{border-collapse:collapse;width:100%}
+th{font-size:11px;letter-spacing:.05em;color:var(--mu);font-weight:700;text-align:left;padding:8px 6px;white-space:nowrap}
+td{padding:8px 6px;border-top:1px solid #1c1c1c;vertical-align:middle}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:#0b0b0b}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td .flag{margin:1px 0}td:last-child{min-width:220px}
+td input.sm{width:58px;min-height:34px;padding:4px 6px;text-align:center}
+/* layar HP area */
+.who{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.who button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:18px;border:1px solid #262626;background:var(--card);font-weight:700}
+.who button i{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:#1a1a1a;color:var(--ac);font:700 24px "Barlow Condensed",sans-serif;font-style:normal}
+.who button small{font-weight:500;color:var(--mu);font-size:12px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pad button{height:60px;border-radius:14px;border:1px solid #262626;background:#121212;font:700 26px "Barlow Condensed",sans-serif}
+.dots{display:flex;gap:14px;justify-content:center;margin:10px 0 14px}.dots i{width:14px;height:14px;border-radius:50%;background:#2a2a2a}.dots i.on{background:var(--ac)}
+.it{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;border:1px solid #262626;background:var(--card)}
+.it.on{border-color:var(--ac)}
+.step{display:flex;align-items:center;gap:10px}
+.step button{width:52px;height:52px;border-radius:14px;border:1px solid #2c2c2c;background:#151515;font-size:26px;font-weight:700}
+.step button.p{background:var(--ac);border-color:var(--ac);color:#0a0a0a}
+.step input{flex:1;text-align:center;font:700 26px "Barlow Condensed",sans-serif;min-height:52px}
+.task{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;border:1px solid #262626;background:var(--card);width:100%;text-align:left}
+.task i{width:26px;height:26px;border-radius:8px;border:2px solid #555;display:grid;place-items:center;flex:none;font-style:normal;color:#0a0a0a;font-weight:900}
+.task.done{opacity:.6}.task.done i{background:var(--ac);border-color:var(--ac)}
+.stat{padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
+.stat small{display:block;font-size:11px;letter-spacing:.05em;color:var(--mu)}
+.stat b{font:700 26px "Barlow Condensed",sans-serif}
+.sec{margin-top:18px}.sec>h2{font-size:22px;margin-bottom:8px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:90;display:none;padding:12px 18px;border-radius:14px;background:var(--ac);color:#0a0a0a;font-weight:700;box-shadow:0 10px 30px #000;max-width:92vw}
+#toast.err{background:var(--rd);color:#fff}
+dialog{background:#101010;color:var(--tx);border:1px solid rgba(212,255,63,.45);border-radius:22px;padding:18px;width:min(560px,94vw);max-height:92vh}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+dialog h3{font-size:24px;margin-bottom:10px}
+.load{padding:60px 0;text-align:center;color:var(--mu)}
+.slip{display:none}
+@media(max-width:700px){main{padding:12px 12px 120px}.hide-sm{display:none}}
+@media print{
+ body{background:#fff;color:#000}
+ .pbar,#tabs,main,#toast{display:none!important}
+ .slip{display:block;break-after:page;font:12pt/1.4 Barlow,Arial,sans-serif;color:#000;padding:10mm}
+ .slip h2{font-size:20pt}.slip table td,.slip table th{border-top:1px solid #999;color:#000;padding:4px 6px}
+}
+</style>
+</head>
+<body>
+<div id="hd"></div>
+<nav id="tabs" aria-label="Menu Gaji & Kinerja"></nav>
+<main id="v"><div class="load">Memuat data…</div></main>
+<div id="slips"></div>
+<div id="toast" role="status"></div>
+<dialog id="dlg"></dialog>
+<script>
+/* =====================================================================
+   GAJI & KINERJA — Gudang Wonodadi (Positif)
+   Data di server Positif POS (Kinerja.gs). Login ikut akun Positif POS.
+   Izin: kinerja_input (HP area) · kinerja_cek (kepala gudang) · kinerja_gaji (Owner)
+   ===================================================================== */
+var API='https://script.google.com/macros/s/AKfycbwUEqf4lS9mn3Gdyo3vpDmTl3u9gxQzIEIf83dJMeopMDDQpHu_-pcG9puoPFHfMOOBkA/exec';
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var rp=function(n){return 'Rp '+Math.round(+n||0).toLocaleString('id-ID')};
+var nf=function(n){return (Math.round((+n||0)*100)/100).toLocaleString('id-ID')};
+var D=null,TAB='',SES=null,SEST=null,ST={};
+var KERJA={jahit:'Jahit (setor ke Finishing)',potong:'Potong (setor ke Jahit)',hasil:'Hasil lain (dicek kepala gudang)',qc:'QC / packing (catat reject)'};
+
+function toast(m,err){var t=$('toast');t.textContent=m;t.className=err?'err':'';t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none'},err?5000:2600)}
+async function kj(act,p){
+  var c=POSBAR.cred();if(!c){POSBAR.block();throw new Error('Belum masuk')}
+  var r=await fetch(API,{method:'POST',body:JSON.stringify({fn:'kinerja',tok:c.t,a:[act,p||{}]})});
+  var j=await r.json();
+  if(!j.ok){var m=j.error||'Gagal';if(/sesi|tiket|masuk lagi|login/i.test(m))POSBAR.block('Sesi Positif POS berakhir. Masuk lagi dulu.');throw new Error(m)}
+  return j.data}
+async function run(act,p,okMsg){try{var r=await kj(act,p);if(okMsg)toast(okMsg);return r}catch(e){toast(e.message,1);return null}}
+
+/* ---------- tanggal (WIB) ---------- */
+var pad2=function(n){return String(n).padStart(2,'0')};
+var ymd=function(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())};
+var dayOf=function(iso){return ymd(new Date(iso))};
+var hm=function(iso){var d=new Date(iso);return pad2(d.getHours())+':'+pad2(d.getMinutes())};
+function satOf(d){d=new Date(d);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+1)%7));return d}
+function addD(s,n){var d=new Date(s+'T00:00');d.setDate(d.getDate()+n);return ymd(d)}
+var fdl=function(s){return new Date(s+'T00:00').toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short'})};
+function inWeek(iso,w){var d=dayOf(iso);return d>=w&&d<=addD(w,6)}
+
+/* ---------- muat ---------- */
+async function load(){
+  var from=new Date(satOf(new Date()));from.setDate(from.getDate()-14);
+  try{D=await kj('load',{from:from.toISOString()})}catch(e){$('v').innerHTML='<div class="card"><b>Gagal memuat.</b><p class="mu">'+esc(e.message)+'</p><button class="btn" onclick="load()">Coba lagi</button></div>';return}
+  D.K={};D.kar.forEach(function(k){D.K[k.id]=k});
+  var T=tabs();if(!TAB||!T.some(function(t){return t[0]===TAB}))TAB=D.me.gaji&&!D.kar.length?'atur':(D.me.cek||D.me.gaji)?'hari':(T[0]?T[0][0]:'');
+  render()}
+function tabs(){var m=D.me,t=[];
+  if(m.input)t.push(['setor','Setor hasil']);
+  if(m.cek||m.gaji)t.push(['hari','Hari ini'],['cek','Cek & reject']);
+  if(m.gaji)t.push(['rekap','Rekap & gaji'],['atur','Atur']);
+  return t}
+function render(){
+  $('tabs').innerHTML=tabs().map(function(t){return '<button class="'+(t[0]===TAB?'on':'')+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join('')+'<span class="sp"></span><button onclick="load()" title="Muat ulang">↻</button>';
+  var f={setor:vSetor,hari:vHari,cek:vCek,rekap:vRekap,atur:vAtur}[TAB];
+  $('v').innerHTML=f?f():'<div class="card">Akun ini belum punya izin Gaji &amp; Kinerja.</div>'}
+function go(t){TAB=t;if(t!=='setor')keluar(true);render();scrollTo(0,0)}
+
+/* ---------- hitungan minggu per karyawan ---------- */
+function aktOf(kid,w){return D.akt.filter(function(a){return a.kid===kid&&a.st!=='batal'&&a.st!=='tolak'&&inWeek(a.tgl,w)})}
+function sumK(kid,w){
+  var A=aktOf(kid,w),o={poin:0,pcs:0,hasil:0,rj:0,tunggu:0,tugas:{},minus:[],keg:0};
+  A.forEach(function(a){
+    if(a.jenis==='setor'){o.pcs+=+a.d.q||0;o.poin+=(+a.d.q||0)*(+a.d.poin||1)}
+    else if(a.jenis==='hasil'){o.hasil+=+a.d.q||0;o.rj+=+a.d.rj||0;if(a.st==='tunggu')o.tunggu++}
+    else if(a.jenis==='tugas'){o.tugas[dayOf(a.tgl)]=(o.tugas[dayOf(a.tgl)]||0)+1}
+    else if(a.jenis==='minus')o.minus.push(a.d.note);
+    else if(a.jenis==='kegiatan')o.keg++});
+  D.akt.forEach(function(a){if(a.jenis==='reject'&&a.st!=='batal'&&a.d.target===kid&&inWeek(a.tgl,w))o.rj+=+a.d.q||0});
+  var k=D.K[kid]||{};o.out=(k.kerja||[]).some(function(x){return x==='jahit'||x==='potong'})?o.poin:o.hasil;
+  o.outPcs=o.pcs+o.hasil;return o}
+function nilai(kid,w,ck,ovr){
+  var k=D.K[kid],c=D.cfg,s=sumK(kid,w),fl=[],H,M,Dd;
+  if(!k.target){H=4;fl.push('target belum diisi')}else{var r=s.out/k.target,t=c.hasilTangga;H=r>=t[0]?4:r>=t[1]?3:r>=t[2]?2:r>=t[3]?1:0}
+  if(!s.outPcs){M=s.rj?0:3;if(!s.rj)fl.push('tidak ada hasil tercatat')}else{var pc=s.rj/s.outPcs*100,m=c.mutuTangga;M=pc<=m[0]?3:pc<=m[1]?2:pc<=m[2]?1:0}
+  Dd=3;
+  if(ck){if(ck.telat>c.telatMaks)Dd--}else fl.push('ceklok belum diunggah');
+  if((k.cek||[]).length){var hari=ck?ck.hadir:6,isi=Object.keys(s.tugas).reduce(function(a,d){return a+Math.min(s.tugas[d],k.cek.length)},0),pct=hari?isi/(hari*k.cek.length)*100:100;if(pct<c.cekMin){Dd--;fl.push('tugas tetap '+Math.round(pct)+'%')}}
+  Dd-=s.minus.length;if(Dd<0)Dd=0;
+  if(s.tunggu)fl.push(s.tunggu+' hasil belum dicek');
+  ovr=ovr||{};if(ovr.H!=null&&ovr.H!=='')H=+ovr.H;if(ovr.M!=null&&ovr.M!=='')M=+ovr.M;if(ovr.D!=null&&ovr.D!=='')Dd=+ovr.D;
+  var tot=H+M+Dd,g=tot>=c.grade.A?'A':tot>=c.grade.B?'B':tot>=c.grade.C?'C':'D';
+  return{H:H,M:M,D:Dd,tot:tot,g:g,s:s,fl:fl}}
+var gH=function(g){return '<span class="grade g'+g+'">'+g+'</span>'};
+
+/* =================== SETOR (HP area) =================== */
+function keluar(silent){SES=null;clearTimeout(SEST);if(!silent&&TAB==='setor')render()}
+function aktif(){clearTimeout(SEST);SEST=setTimeout(function(){keluar();toast('Keluar otomatis (tidak ada aktivitas)')},120000)}
+function vSetor(){
+  if(SES&&D.K[SES.kid])return vOrang();
+  var area='';try{area=localStorage.getItem('kj_area')||''}catch(e){}
+  var areas=[...new Set(D.kar.map(function(k){return k.area}).filter(Boolean))];
+  var L=D.kar.filter(function(k){return !area||k.area===area});
+  return '<div class="row" style="margin-bottom:12px"><h1 style="font-size:30px">Siapa yang setor?</h1><span class="sp"></span>'
+   +(areas.length>1?'<label class="f" style="flex-direction:row;align-items:center;gap:8px">HP area<select style="width:auto" onchange="try{localStorage.setItem(\'kj_area\',this.value)}catch(e){};render()"><option value="">Semua</option>'+areas.map(function(a){return '<option'+(a===area?' selected':'')+'>'+esc(a)+'</option>'}).join('')+'</select></label>':'')+'</div>'
+   +(L.length?'<div class="who">'+L.map(function(k){return '<button onclick="pinOpen(\''+k.id+'\')"><i>'+esc(k.nama.charAt(0))+'</i>'+esc(k.nama)+'<small>'+esc(k.bagian||'')+'</small></button>'}).join('')+'</div>'
+     :'<div class="card mu">Belum ada karyawan. Owner menambahkannya di menu Atur.</div>')}
+var PIN='',PKID='';
+function pinOpen(id){var k=D.K[id];if(!k.pin)return toast('PIN '+k.nama+' belum dibuat. Minta Owner membuatnya di menu Atur.',1);PIN='';PKID=id;var d=$('dlg');
+  d.innerHTML='<h3>PIN '+esc(k.nama)+'</h3><div class="dots" id="pdots"></div><div class="pad">'+['1','2','3','4','5','6','7','8','9','×','0','⌫'].map(function(x){return '<button aria-label="'+(x==='×'?'Batal':x==='⌫'?'Hapus':x)+'" onclick="pinKey(\''+x+'\')">'+x+'</button>'}).join('')+'</div>';
+  pinDots();d.showModal()}
+function pinDots(){$('pdots').innerHTML=[0,1,2,3].map(function(i){return '<i class="'+(i<PIN.length?'on':'')+'"></i>'}).join('')}
+async function pinKey(x){if(x==='×'){$('dlg').close();return}if(x==='⌫'){PIN=PIN.slice(0,-1);pinDots();return}if(PIN.length>=4)return;PIN+=x;pinDots();
+  if(PIN.length===4){var r=await run('pin',{kid:PKID,pin:PIN});if(r){SES={kid:PKID,pin:PIN};$('dlg').close();aktif();ST={};render()}else{PIN='';pinDots()}}}
+function vOrang(){aktif();
+  var k=D.K[SES.kid],w=ymd(satOf(new Date())),n=nilai(k.id,w,null),today=ymd(new Date()),h='';
+  var mine=D.akt.filter(function(a){return a.kid===k.id&&dayOf(a.tgl)===today&&a.st!=='batal'}).sort(function(a,b){return a.tgl<b.tgl?-1:1});
+  h+='<div class="row" style="margin-bottom:12px"><button class="btn" onclick="keluar()">← Ganti orang</button><div><h1 style="font-size:28px">Halo, '+esc(k.nama)+'</h1><div class="mu" style="font-size:13px">'+esc(k.bagian||'')+'</div></div><span class="sp"></span>'
+   +'<div class="stat"><small>HASIL MINGGU INI</small><b>'+nf(n.s.out)+'</b>'+(k.target?'<small style="display:inline;font-size:14px"> / '+nf(k.target)+'</small>':'')+' <small style="display:inline;font-size:13px">'+((k.kerja.indexOf('jahit')>=0||k.kerja.indexOf('potong')>=0)?'poin':esc(k.satuan))+(n.s.rj?' · <span class="bad">reject '+n.s.rj+'</span>':'')+'</small></div></div>';
+  if(k.kerja.indexOf('jahit')>=0)h+=setorH(k,'jahit');
+  if(k.kerja.indexOf('potong')>=0)h+=setorH(k,'cutting');
+  if(k.kerja.indexOf('hasil')>=0)h+='<div class="sec"><h2>Catat hasil: '+esc(k.hasil||'Hasil')+'</h2><div class="card" style="display:flex;flex-direction:column;gap:10px"><label class="f">Jumlah ('+esc(k.satuan||'pcs')+')</label>'+stepH('hq',0)
+    +'<label class="f">Reject / rusak (pcs)</label>'+stepH('hr',0)+'<input id="hk" placeholder="Keterangan (opsional)"><button class="btn pri big" onclick="simpanHasil()">Simpan hasil</button><div class="mu" style="font-size:12px">Hasil dicek kepala gudang sebelum masuk nilai.</div></div></div>';
+  if(k.kerja.indexOf('qc')>=0)h+='<div class="sec"><button class="btn big" onclick="rejOpen()">+ Catat reject (QC)</button></div>';
+  if((k.cek||[]).length){var dn={};mine.filter(function(a){return a.jenis==='tugas'}).forEach(function(a){dn[a.d.item]=1});
+    h+='<div class="sec"><h2>Tugas hari ini</h2><div style="display:flex;flex-direction:column;gap:8px">'+k.cek.map(function(t,i){return '<button class="task'+(dn[t]?' done':'')+'" '+(dn[t]?'disabled':'onclick="tugas('+i+')"')+'><i>'+(dn[t]?'✓':'')+'</i><span>'+esc(t)+'</span></button>'}).join('')+'</div></div>'}
+  h+='<div class="sec"><h2>Sedang apa? <span class="mu" style="font:500 14px Barlow,sans-serif">saat tidak produksi</span></h2><div class="chips">'+D.keg.map(function(g){return '<button class="chip" onclick="kegiatan(\''+esc(g)+'\')">'+esc(g)+'</button>'}).join('')+'</div></div>';
+  if(k.jobdesk)h+='<div class="sec"><h2>Jobdesk</h2><div class="card mu" style="white-space:pre-line">'+esc(k.jobdesk)+'</div></div>';
+  h+='<div class="sec"><h2>Catatan hari ini</h2><div class="card tl">'+(mine.length?mine.map(aktLine).join(''):'<span class="mu">Belum ada.</span>')+'</div></div>';
+  return h}
+function stepH(id,v){return '<div class="step"><button aria-label="Kurangi" onclick="stp(\''+id+'\',-1)">−</button><input id="'+id+'" type="number" inputmode="numeric" min="0" value="'+v+'" aria-label="Jumlah"><button class="p" aria-label="Tambah" onclick="stp(\''+id+'\',1)">+</button></div>'}
+function stp(id,d){var e=$(id),mx=e.max?+e.max:1e9;e.value=Math.max(0,Math.min(mx,(+e.value||0)+d));aktif();if(e.oninput)e.oninput()}
+function setorH(k,st){var L=D.jobs.filter(function(j){return j.st===st}).sort(function(a,b){return String(a.due||'9')<String(b.due||'9')?-1:1});
+  var lbl=st==='jahit'?'jahit → pindah ke Finishing':'potong → pindah ke Jahit';
+  return '<div class="sec"><h2>Setor hasil '+lbl+'</h2>'+(L.length?'<div style="display:flex;flex-direction:column;gap:10px">'+L.map(function(j,i){var p=poinOf(j.cat);
+    return '<div class="it" id="it'+st+i+'"><div><b>'+esc(j.name)+'</b><div class="mu" style="font-size:12px">'+esc(j.cat||'-')+' · '+nf(p)+' poin/pcs · ada '+j.qty+' pcs'+(j.due?' · butuh '+esc(String(j.due).slice(0,10)):'')+'</div></div>'
+     +'<div class="step"><button aria-label="Kurangi" onclick="stp(\'q'+st+i+'\',-1)">−</button><input id="q'+st+i+'" type="number" inputmode="numeric" min="0" max="'+j.qty+'" value="0" data-vid="'+esc(j.vid)+'" data-p="'+p+'" oninput="setorSum(\''+st+'\')"><button class="p" aria-label="Tambah" onclick="stp(\'q'+st+i+'\',1)">+</button><button style="width:auto;padding:0 12px;font-size:14px" onclick="$(\'q'+st+i+'\').value='+j.qty+';setorSum(\''+st+'\')">Semua</button></div></div>'}).join('')+'</div>'
+    +'<button class="btn pri big" style="margin-top:10px" id="bs'+st+'" disabled onclick="setor(\''+st+'\')">Isi jumlah dulu</button>'
+   :'<div class="card mu">Tidak ada barang di tahap '+(st==='jahit'?'Jahit':'Cutting')+'.</div>')+'</div>'}
+function poinOf(cat){var c=String(cat||'').toLowerCase().trim();return D.cfg.poin[c]!=null?+D.cfg.poin[c]:(+D.cfg.poinDef||1)}
+function setorSum(st){var q=0,p=0;document.querySelectorAll('input[id^="q'+st+'"]').forEach(function(e){var v=Math.max(0,Math.min(+e.max,Math.floor(+e.value||0)));q+=v;p+=v*(+e.dataset.p);e.closest('.it').classList.toggle('on',v>0)});
+  var b=$('bs'+st);b.disabled=!q;b.textContent=q?'Setor '+q+' pcs ('+nf(p)+' poin)':'Isi jumlah dulu';aktif()}
+async function setor(st){var it=[];document.querySelectorAll('input[id^="q'+st+'"]').forEach(function(e){var v=Math.floor(+e.value||0);if(v>0)it.push({vid:e.dataset.vid,q:Math.min(v,+e.max)})});
+  if(!it.length)return;var b=$('bs'+st);b.disabled=true;b.textContent='Menyimpan…';
+  var r=await run('setor',Object.assign({tahap:st,items:it},SES),'Tersimpan. Barang pindah ke '+(st==='jahit'?'Finishing':'Jahit')+'.');
+  await load()}
+async function simpanHasil(){var q=+$('hq').value||0;if(!(q>0))return toast('Isi jumlah hasil',1);
+  if(await run('catat',Object.assign({jenis:'hasil',q:q,rj:+$('hr').value||0,ket:$('hk').value},SES),'Hasil tersimpan, menunggu dicek'))await load()}
+async function tugas(i){var k=D.K[SES.kid];if(await run('catat',Object.assign({jenis:'tugas',item:k.cek[i]},SES),'Tugas dicentang'))await load()}
+async function kegiatan(g){var ket='';if(g==='Lainnya'){ket=await tanya('Kegiatan apa?','');if(ket===null)return;if(!ket.trim())return toast('Tulis kegiatannya',1)}
+  if(await run('catat',Object.assign({jenis:'kegiatan',label:g,ket:ket},SES),'Tercatat: '+g))await load()}
+function tanya(t,v){return new Promise(function(res){var d=$('dlg');d.innerHTML='<h3>'+esc(t)+'</h3><input id="tq" value="'+esc(v||'')+'"><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn" id="tn">Batal</button><button class="btn pri" id="ty">Simpan</button></div>';
+  $('tn').onclick=function(){d.close();res(null)};$('ty').onclick=function(){var x=$('tq').value;d.close();res(x)};d.onclose=function(){res(null)};d.showModal();$('tq').focus()})}
+function yakin(t,m,ok){return new Promise(function(res){var d=$('dlg');d.innerHTML='<h3>'+esc(t)+'</h3><p class="mu" style="margin:0 0 14px">'+m+'</p><div class="row" style="justify-content:flex-end"><button class="btn" id="tn">Tidak</button><button class="btn pri" id="ty">'+esc(ok||'Ya')+'</button></div>';
+  var done=false;$('tn').onclick=function(){done=true;d.close();res(false)};$('ty').onclick=function(){done=true;d.close();res(true)};d.onclose=function(){if(!done)res(false)};d.showModal()})}
+/* catat reject (tim packing / QC) */
+var RJ={};
+function rejOpen(){aktif();RJ={q:1,target:'',alasan:''};var d=$('dlg'),pj=D.kar.filter(function(k){return k.kerja.indexOf('jahit')>=0});
+  var names=[...new Set(D.jobs.map(function(j){return j.name}))];
+  d.innerHTML='<h3>Catat reject (QC)</h3><label class="f">Produk<input id="rp" list="rpl" placeholder="mis. Jersey Embos Hijau (XL)"></label><datalist id="rpl">'+names.map(function(n){return '<option value="'+esc(n)+'">'}).join('')+'</datalist>'
+   +'<label class="f" style="margin-top:10px">Jumlah</label>'+stepH('rq',1)
+   +'<div style="margin-top:12px" class="mu">Jahitan siapa? (lihat kartu bundel)</div><div class="chips" id="rt">'+pj.map(function(k){return '<button class="chip" data-v="'+k.id+'" onclick="rjPick(\'target\',this)">'+esc(k.nama)+'</button>'}).join('')+'<button class="chip" data-v="-" onclick="rjPick(\'target\',this)">Tidak ada kartu / bukan jahitan</button></div>'
+   +'<div style="margin-top:12px" class="mu">Alasan</div><div class="chips" id="ra">'+D.alasan.map(function(a){return '<button class="chip" data-v="'+esc(a)+'" onclick="rjPick(\'alasan\',this)">'+esc(a)+'</button>'}).join('')+'</div>'
+   +'<input id="rk" placeholder="Keterangan (opsional)" style="margin-top:10px"><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" onclick="$(\'dlg\').close()">Batal</button><button class="btn pri" onclick="rjSave()">Simpan → rak reject</button></div>';
+  d.showModal()}
+function rjPick(f,b){RJ[f]=b.dataset.v;b.parentNode.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',x===b)});aktif()}
+async function rjSave(){var q=Math.floor(+$('rq').value||0);if(!(q>0))return toast('Isi jumlah reject',1);if(!RJ.target)return toast('Pilih jahitan siapa',1);if(!RJ.alasan)return toast('Pilih alasan',1);
+  var r=await run('catat',Object.assign({jenis:'reject',q:q,produk:$('rp').value,target:RJ.target==='-'?'':RJ.target,alasan:RJ.alasan,ket:$('rk').value},SES),'Reject tercatat, masuk rak reject');
+  if(r){$('dlg').close();await load()}}
+function aktLine(a){var k=D.K[a.kid]||{},d=a.d,t='';
+  if(a.jenis==='setor')t='Setor '+(d.tahap==='jahit'?'jahit':'potong')+' · '+esc(d.nama)+' · <b>'+d.q+' pcs</b> ('+nf(d.q*d.poin)+' poin)';
+  else if(a.jenis==='hasil')t=esc(d.label)+' · <b>'+nf(d.q)+' '+esc(d.satuan)+'</b>'+(d.rj?' · reject '+d.rj:'')+(d.ket?' · '+esc(d.ket):'')+' '+(a.st==='tunggu'?'<span class="pill warn">belum dicek</span>':a.st==='tolak'?'<span class="pill bad">ditolak</span>':'<span class="pill ok">✓ dicek</span>');
+  else if(a.jenis==='reject')t='Reject '+d.q+' pcs · '+esc(d.produk||'-')+' · '+esc(d.alasan)+' · jahitan '+esc(d.target?(D.K[d.target]||{}).nama||'?':'tanpa kartu')+(a.st==='putus'?' · '+esc(d.putus):'');
+  else if(a.jenis==='tugas')t='✓ '+esc(d.item);
+  else if(a.jenis==='kegiatan')t='⏸ '+esc(d.label)+(d.ket?' · '+esc(d.ket):'');
+  else if(a.jenis==='minus')t='<span class="bad">Catatan disiplin: '+esc(d.note)+'</span> <span class="mu">(oleh '+esc(a.oleh)+')</span>';
+  return '<div><b class="t">'+hm(a.tgl)+'</b><span>'+t+'</span></div>'}
+
+/* =================== HARI INI =================== */
+var HD='';
+function vHari(){if(!HD)HD=ymd(new Date());
+  var h='<div class="row" style="margin-bottom:12px"><h1 style="font-size:30px">Laporan harian</h1><span class="sp"></span><input type="date" value="'+HD+'" style="width:auto" onchange="HD=this.value;render()"></div><div class="g2" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">';
+  h+=D.kar.map(function(k){var A=D.akt.filter(function(a){return a.kid===k.id&&dayOf(a.tgl)===HD&&a.st!=='batal'}).sort(function(a,b){return a.tgl<b.tgl?-1:1});
+    var R=D.akt.filter(function(a){return a.jenis==='reject'&&a.d.target===k.id&&dayOf(a.tgl)===HD&&a.st!=='batal'});
+    var pcs=0,poin=0,hs=0;A.forEach(function(a){if(a.jenis==='setor'){pcs+=+a.d.q;poin+=a.d.q*a.d.poin}if(a.jenis==='hasil'&&a.st!=='tolak')hs+=+a.d.q});
+    var tg=A.filter(function(a){return a.jenis==='tugas'}).length,kg=A.filter(function(a){return a.jenis==='kegiatan'}).length;
+    var sum=[];if(pcs)sum.push('<b>'+pcs+' pcs</b> ('+nf(poin)+' poin)');if(hs)sum.push('<b>'+nf(hs)+' '+esc(k.satuan)+'</b>');if(R.length)sum.push('<span class="bad">reject '+R.reduce(function(a,x){return a+x.d.q},0)+' pcs</span>');if((k.cek||[]).length)sum.push('tugas '+tg+'/'+k.cek.length);
+    return '<div class="card"><div class="row"><b style="font-size:18px">'+esc(k.nama)+'</b><span class="mu" style="font-size:13px">'+esc(k.bagian||'')+'</span></div><div style="margin:4px 0 6px;font-size:14px">'+(sum.join(' · ')||'<span class="warn">Belum ada catatan</span>')+'</div>'
+     +'<div class="tl">'+A.map(aktLine).join('')+R.map(function(a){return '<div><b class="t">'+hm(a.tgl)+'</b><span class="bad">Reject jahitannya '+a.d.q+' pcs ('+esc(a.d.alasan)+') dicatat '+esc(a.oleh)+'</span></div>'}).join('')+'</div></div>'}).join('');
+  return h+'</div>'}
+
+/* =================== CEK & REJECT =================== */
+function vCek(){var T=D.akt.filter(function(a){return a.jenis==='hasil'&&a.st==='tunggu'}).sort(function(a,b){return a.tgl<b.tgl?-1:1});
+  var R=D.akt.filter(function(a){return a.jenis==='reject'&&a.st==='rak'}),w=ymd(satOf(new Date()));
+  var Mn=D.akt.filter(function(a){return a.jenis==='minus'&&a.st!=='batal'&&inWeek(a.tgl,w)});
+  var h='<h1 style="font-size:30px;margin-bottom:10px">Cek hasil &amp; rak reject</h1>';
+  h+='<div class="sec"><div class="row"><h2>Hasil menunggu cek <span class="warn">'+T.length+'</span></h2><span class="sp"></span>'+(T.length?'<button class="btn pri" onclick="cekSemua()">✓ Setujui semua</button>':'')+'</div>'
+   +(T.length?'<div style="display:flex;flex-direction:column;gap:8px">'+T.map(function(a){var k=D.K[a.kid]||{};return '<div class="card row"><div style="flex:1;min-width:180px"><b>'+esc(k.nama)+'</b> <span class="mu">· '+esc(a.d.label)+' · '+fdl(dayOf(a.tgl))+' '+hm(a.tgl)+'</span><div style="font:700 22px Barlow Condensed">'+nf(a.d.q)+' '+esc(a.d.satuan)+(a.d.rj?' <span class="bad" style="font-size:15px">reject '+a.d.rj+'</span>':'')+'</div>'+(a.d.ket?'<div class="mu" style="font-size:13px">'+esc(a.d.ket)+'</div>':'')+cocok(a)+'</div>'
+     +'<button class="btn" onclick="cekUbah(\''+a.id+'\','+a.d.q+')">Ubah jumlah</button><button class="btn dg" onclick="cekTolak(\''+a.id+'\')">Tolak</button><button class="btn pri" onclick="cek1(\''+a.id+'\')">✓ Setujui</button></div>'}).join('')+'</div>':'<div class="card mu">Tidak ada yang menunggu.</div>')+'</div>';
+  h+='<div class="sec"><h2>Rak reject <span class="warn">'+R.reduce(function(a,x){return a+x.d.q},0)+' pcs</span></h2>'+(R.length?'<div class="scroll"><table><tr><th></th><th>TANGGAL</th><th>PRODUK</th><th class="num">PCS</th><th>ALASAN</th><th>JAHITAN</th><th>DICATAT</th></tr>'+R.map(function(a){return '<tr><td><input type="checkbox" class="rjc" value="'+a.id+'" style="width:22px;min-height:22px" aria-label="Pilih"></td><td>'+fdl(dayOf(a.tgl))+'</td><td>'+esc(a.d.produk||'-')+'</td><td class="num">'+a.d.q+'</td><td>'+esc(a.d.alasan)+'</td><td>'+esc(a.d.target?(D.K[a.d.target]||{}).nama:'tanpa kartu')+'</td><td class="mu">'+esc(a.oleh)+'</td></tr>'}).join('')+'</table></div>'
+     +'<div class="row" style="margin-top:10px"><button class="btn" onclick="rjAll()">Pilih semua</button><span class="sp"></span><button class="btn" onclick="putus(\'perbaiki\')">Perbaiki</button><button class="btn" onclick="putus(\'afkir\')">Afkir</button><button class="btn" onclick="putus(\'jual\')">Jual murah</button></div>':'<div class="card mu">Rak reject kosong.</div>')+'</div>';
+  h+='<div class="sec"><h2>Catatan disiplin minggu ini</h2><div class="card"><div class="mu" style="font-size:13px;margin-bottom:8px">Setiap catatan mengurangi 1 poin disiplin. Contoh: bolos piket, meninggalkan tempat kerja, tidak memakai alat keselamatan.</div><div class="row"><select id="mk" style="width:auto;flex:1;min-width:150px">'+D.kar.map(function(k){return '<option value="'+k.id+'">'+esc(k.nama)+'</option>'}).join('')+'</select><input id="mn" placeholder="Alasan" style="flex:2;min-width:200px"><button class="btn pri" onclick="minus()">Catat</button></div>'
+   +(Mn.length?'<div class="tl" style="margin-top:10px">'+Mn.map(function(a){return '<div><b class="t">'+fdl(dayOf(a.tgl))+'</b><span><b>'+esc((D.K[a.kid]||{}).nama)+'</b> · '+esc(a.d.note)+' <span class="mu">oleh '+esc(a.oleh)+'</span></span><span class="sp"></span><button class="btn dg" style="min-height:32px;padding:2px 10px" onclick="hapusAkt(\''+a.id+'\')">Hapus</button></div>'}).join('')+'</div>':'')+'</div></div>';
+  return h}
+/* cocokkan hasil press sablon dengan hasil pilah di hari yang sama */
+function cocok(a){var k=D.K[a.kid]||{};if(!/press|sablon|pilah/i.test(a.d.label))return '';var day=dayOf(a.tgl),press=0,pilah=0;
+  D.akt.forEach(function(x){if(x.jenis==='hasil'&&x.st!=='tolak'&&dayOf(x.tgl)===day){if(/press/i.test(x.d.label))press+=+x.d.q;else if(/pilah/i.test(x.d.label))pilah+=+x.d.q}});
+  if(press&&pilah&&press!==pilah)return '<div class="warn" style="font-size:13px">⚠ Hari ini press '+nf(press)+' vs dipilah '+nf(pilah)+'</div>';return ''}
+async function cek1(id){if(await run('cek',{ids:[id],ok:true},'Disetujui'))await load()}
+async function cekSemua(){var T=D.akt.filter(function(a){return a.jenis==='hasil'&&a.st==='tunggu'});if(!(await yakin('Setujui semua?',T.length+' hasil akan disetujui sesuai jumlah yang dicatat karyawan.','Ya, setujui')))return;if(await run('cek',{ids:T.map(function(a){return a.id}),ok:true},'Semua disetujui'))await load()}
+async function cekUbah(id,q){var v=await tanya('Jumlah yang benar',q);if(v===null)return;if(!(+v>=0))return toast('Jumlah tidak valid',1);if(await run('cek',{ids:[id],ok:true,q:+v},'Disetujui dengan jumlah '+v))await load()}
+async function cekTolak(id){var v=await tanya('Alasan menolak','');if(v===null)return;if(await run('cek',{ids:[id],ok:false,note:v},'Ditolak'))await load()}
+function rjAll(){document.querySelectorAll('.rjc').forEach(function(c){c.checked=true})}
+async function putus(act){var ids=[...document.querySelectorAll('.rjc:checked')].map(function(c){return c.value});if(!ids.length)return toast('Centang barang reject dulu',1);
+  var L={perbaiki:'Perbaiki',afkir:'Afkir',jual:'Jual murah'};if(!(await yakin(L[act]+'?',ids.length+' catatan reject diputuskan: '+L[act]+'.','Ya')))return;
+  if(await run('putus',{ids:ids,act:act},'Tersimpan'))await load()}
+async function minus(){var n=$('mn').value.trim();if(!n)return toast('Tulis alasannya',1);var k=D.K[$('mk').value];
+  if(!(await yakin('Catat disiplin '+k.nama+'?','Nilai disiplin '+esc(k.nama)+' minggu ini berkurang 1 poin.<br>Alasan: '+esc(n),'Ya, catat')))return;
+  if(await run('minus',{kid:k.id,note:n},'Tercatat'))await load()}
+async function hapusAkt(id){if(!(await yakin('Hapus catatan ini?','Catatan dibatalkan dan tidak dihitung.','Ya, hapus')))return;if(await run('hapusAkt',{id:id},'Dihapus'))await load()}
+
+/* =================== REKAP & GAJI =================== */
+var RW='',RG=null;
+function weeks(){var s=new Set();var w=ymd(satOf(new Date()));s.add(w);s.add(addD(w,-7));if(RW)s.add(RW);(D.gaji||[]).forEach(function(g){s.add(g.id)});return [...s].sort().reverse()}
+function vRekap(){if(!RW)RW=addD(ymd(satOf(new Date())),-7);
+  if(!RG||RG.id!==RW){RG={id:RW,loading:true};kj('gajiGet',{week:RW}).then(function(g){RG=g||{id:RW,status:'',data:{}};RG.data=RG.data||{};if(TAB==='rekap')render()}).catch(function(e){toast(e.message,1)});return '<div class="load">Memuat rekap…</div>'}
+  if(RG.loading)return '<div class="load">Memuat rekap…</div>';
+  var G=RG.data,ck=G.ck||{},ov=G.ov||{},fin=RG.status==='final',c=D.cfg,tot=0,cnt={A:0,B:0,C:0,D:0},nfl=0,rows='';
+  D.kar.forEach(function(k){var x=ck[k.id],n=nilai(k.id,RW,x,ov[k.id]),o=ov[k.id]||{},u=+k.upah||0,fl=n.fl.slice();
+    if(!u)fl.push('upah/jam kosong');if(G.file&&!x)fl.push('tidak ada di ceklok');
+    if(x&&x.hadir&&!n.s.outPcs&&!n.s.keg)fl.push('hadir tapi tidak ada catatan');
+    var jamU=x?x.jam*u:0,mk=x?x.makan:0,th=x?(+c.hadir[x.hadir>=6?6:x.hadir]||0):0,tk=+c.kerja[n.g]||0,bn=+o.bonus||0,t=jamU+mk+th+tk+bn;tot+=t;cnt[n.g]++;if(fl.length)nfl++;
+    var inp=function(f,v,mx){return fin?'<b>'+v+'</b>':'<input class="sm" type="number" min="0" max="'+mx+'" value="'+(o[f]!=null&&o[f]!==''?o[f]:'')+'" placeholder="'+v+'" onchange="ovr(\''+k.id+'\',\''+f+'\',this.value)" aria-label="'+f+' '+esc(k.nama)+'">'};
+    rows+='<tr><td><b>'+esc(k.nama)+'</b><div class="mu" style="font-size:12px">'+esc(k.bagian||'')+'</div></td><td class="num">'+(x?x.hadir:'-')+'</td><td class="num">'+(x?nf(x.jam):'-')+'</td><td class="num'+(x&&x.telat>c.telatMaks?' warn':'')+'">'+(x?x.telat:'-')+'</td>'
+     +'<td class="num">'+nf(n.s.out)+(k.target?'<span class="mu"> / '+k.target+'</span>':'')+'</td><td class="num">'+(n.s.rj||0)+'</td>'
+     +'<td>'+inp('H',n.H,4)+'</td><td>'+inp('M',n.M,3)+'</td><td>'+inp('D',n.D,3)+'</td><td><span class="row" style="gap:6px;flex-wrap:nowrap">'+gH(n.g)+'<b>'+n.tot+'</b></span></td>'
+     +'<td class="num">'+(u?rp(jamU):'<span class="warn">—</span>')+'</td><td class="num">'+rp(mk)+'</td><td class="num">'+rp(th)+'</td><td class="num">'+rp(tk)+'</td>'
+     +'<td>'+(fin?rp(bn):'<input class="sm" style="width:90px" type="number" min="0" step="1000" value="'+(o.bonus||'')+'" onchange="ovr(\''+k.id+'\',\'bonus\',this.value)" aria-label="Bonus '+esc(k.nama)+'">')+'</td>'
+     +'<td class="num"><b style="font:700 17px Barlow Condensed">'+rp(t)+'</b></td><td>'+fl.map(function(f){return '<span class="flag">⚠ '+esc(f)+'</span>'}).join(' ')+'</td></tr>'});
+  var st=fin?'<span class="pill ok">DISETUJUI · '+esc(RG.okBy||'')+'</span>':G.file?'<span class="pill warn">DRAF</span>':'<span class="pill mu">BELUM ADA CEKLOK</span>';
+  var h='<div class="row" style="margin-bottom:12px"><h1 style="font-size:30px">Rekap &amp; gaji</h1><select style="width:auto" onchange="RW=this.value;RG=null;render()">'+weeks().map(function(w){return '<option value="'+w+'"'+(w===RW?' selected':'')+'>'+fdl(w)+' – '+fdl(addD(w,6))+'</option>'}).join('')+'</select>'+st+'<span class="sp"></span>'
+   +(fin?'':'<label class="btn" style="cursor:pointer">Unggah Excel ceklok<input type="file" accept=".xls,.xlsx" style="display:none" onchange="unggah(this.files[0])"></label>')+'<button class="btn" onclick="cetak()">Cetak slip</button></div>'
+   +(G.file?'<div class="mu" style="font-size:13px;margin-bottom:8px">Ceklok: '+esc(G.file)+(G.periode?' · '+esc(G.periode):'')+'</div>':'<div class="card warn" style="margin-bottom:12px">Unggah Excel ceklok minggu ini (Sabtu–Jumat) untuk menghitung jam, uang makan, dan keterlambatan.</div>')
+   +'<div class="g2" style="margin-bottom:12px"><div class="stat"><small>KARYAWAN</small><b>'+D.kar.length+'</b></div><div class="stat"><small>TOTAL GAJI</small><b style="color:var(--ac)">'+rp(tot)+'</b></div><div class="stat"><small>NILAI A / B / C / D</small><b>'+cnt.A+' / '+cnt.B+' / '+cnt.C+' / '+cnt.D+'</b></div><div class="stat"><small>PERLU DICEK</small><b class="warn">'+nfl+'</b></div></div>'
+   +'<div class="scroll"><table style="min-width:1500px"><tr><th>KARYAWAN</th><th class="num">HADIR</th><th class="num">JAM</th><th class="num">TELAT</th><th class="num">HASIL / TARGET</th><th class="num">REJECT</th><th>H (0-4)</th><th>M (0-3)</th><th>D (0-3)</th><th>NILAI</th><th class="num">GAJI JAM</th><th class="num">UANG MAKAN</th><th class="num">TUNJ. HADIR</th><th class="num">TUNJ. KERJA</th><th>BONUS</th><th class="num">TOTAL</th><th>PERLU DICEK</th></tr>'+rows+'</table></div>'
+   +'<div class="mu" style="font-size:12px;margin-top:6px">H/M/D dihitung otomatis. Isi kotak untuk mengganti nilai (mis. nilai kepala gudang dari Owner). Kosongkan untuk kembali ke hitungan otomatis.</div>'
+   +'<div class="row" style="margin-top:12px;justify-content:flex-end">'+(fin?'<button class="btn" onclick="simpanGaji(\'buka\')">Buka kunci</button>':'<button class="btn" onclick="simpanGaji(\'draf\')">Simpan draf</button><button class="btn pri" '+(G.file?'':'disabled')+' onclick="simpanGaji(\'final\')">✓ Setujui &amp; kunci gaji minggu ini</button>')+'</div>';
+  return h}
+function ovr(kid,f,v){var G=RG.data;G.ov=G.ov||{};G.ov[kid]=G.ov[kid]||{};G.ov[kid][f]=v===''?'':+v;RG.dirty=1;render()}
+async function simpanGaji(st){if(st==='final'&&!(await yakin('Setujui gaji minggu ini?','Gaji dan nilai '+fdl(RW)+' – '+fdl(addD(RW,6))+' dikunci. Slip siap dicetak.','Ya, setujui')))return;
+  if(st==='final')RG.data.nilai=snap();
+  var r=await run('gajiSave',{week:RW,status:st,data:RG.data},st==='final'?'Gaji disetujui dan dikunci':st==='buka'?'Kunci dibuka':'Draf tersimpan');if(r){RG=null;await load()}}
+/* simpan hasil hitungan saat disetujui, supaya slip lama tidak berubah walau data diubah */
+function snap(){var G=RG.data,o={};D.kar.forEach(function(k){var x=(G.ck||{})[k.id],n=nilai(k.id,RW,x,(G.ov||{})[k.id]);o[k.id]={nama:k.nama,bagian:k.bagian,upah:k.upah,H:n.H,M:n.M,D:n.D,tot:n.tot,g:n.g,out:n.s.out,rj:n.s.rj,target:k.target,satuan:(k.kerja.indexOf('jahit')>=0||k.kerja.indexOf('potong')>=0)?'poin':k.satuan}});return o}
+/* ---- baca Excel ceklok (format mesin yang sama dengan aplikasi gaji lama) ---- */
+function xlsxLib(){return window.XLSX?Promise.resolve():new Promise(function(res,rej){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=res;s.onerror=function(){rej(new Error('Gagal memuat pembaca Excel. Periksa internet.'))};document.head.appendChild(s)})}
+async function unggah(f){if(!f)return;try{await xlsxLib();var buf=await f.arrayBuffer(),wb=XLSX.read(new Uint8Array(buf),{type:'array'});
+  var sn=wb.SheetNames.find(function(n){return n.indexOf('Lap. Log Absen')>=0||n.indexOf('Detail')>=0})||wb.SheetNames[2]||wb.SheetNames[0];
+  var rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''}),r=parseCeklok(rows);
+  if(!Object.keys(r.list).length)throw new Error('Data absen tidak ditemukan di file ini.');
+  if(r.start&&r.start!==RW&&!(await yakin('Periode berbeda','File ini periode mulai '+fdl(r.start)+', bukan minggu yang dipilih ('+fdl(RW)+'). Pindah ke minggu '+fdl(r.start)+'?','Ya, pindah'))){return}
+  if(r.start&&r.start!==RW){RW=r.start;var g=await kj('gajiGet',{week:RW});RG=g||{id:RW,status:'',data:{}};RG.data=RG.data||{};if(RG.status==='final')return toast('Gaji minggu itu sudah dikunci.',1)}
+  var ck={},miss=[];D.kar.forEach(function(k){var x=(k.cid&&r.list['id:'+k.cid])||r.list['nm:'+String(k.nama).toUpperCase()];if(x)ck[k.id]=x;else miss.push(k.nama)});
+  RG.data.ck=ck;RG.data.file=f.name;RG.data.periode=r.periode;render();
+  await simpanGaji('draf');toast('Ceklok terbaca'+(miss.length?'. Tidak ketemu: '+miss.join(', '):''),!!miss.length)}catch(e){toast(e.message,1)}}
+function parseCeklok(rows){var c=D.cfg,H=['Sabtu','Minggu','Senin','Selasa','Rabu','Kamis','Jumat'],out={list:{},start:'',periode:''};
+  var mn=function(t){return (+t.slice(0,2))*60+(+t.slice(3,5))};
+  for(var i=0;i<Math.min(rows.length,6);i++)for(var j=0;j<rows[i].length;j++){var s=String(rows[i][j]),m=s.match(/(\d{4}-\d{2}-\d{2})/);if(m&&!out.start){out.start=m[1];out.periode=s}}
+  var bR=mn(c.batas),bF=mn(c.jumBatas);
+  for(i=0;i<rows.length;i++){var rs=rows[i].join(' ');if(rs.indexOf('ID:')<0||rs.indexOf('Nama:')<0)continue;
+    var id='',nm='';for(j=0;j<rows[i].length;j++){var v=String(rows[i][j]).trim();if(v==='ID:')id=String(rows[i][j+2]||'').trim();if(v==='Nama:')nm=String(rows[i][j+2]||'').trim()}
+    var k=i+1;while(k<rows.length&&rows[k].join('').trim()==='')k++;if(k>=rows.length||rows[k].join(' ').indexOf('ID:')>=0)continue;
+    var jr=rows[k],o={hadir:0,jam:0,makan:0,telat:0,log:[]};
+    for(var d=0;d<7;d++){var cell=String(jr[d]||'').trim(),t=cell.match(/\d{2}:\d{2}/g)||[];
+      if(cell.length<4||!t.length){o.log.push({h:H[d]});continue}
+      o.hadir++;var dt=t[0],pl=t.length===3?t[2]:t[t.length-1],menit=t.length>=2?mn(pl)-mn(dt):0;
+      if(t.length>=4){var ist=mn(t[2])-mn(t[1]);if(ist>0)menit-=ist}
+      if(menit<0)menit=0;var jam=menit/60,fri=d===6,batas=fri?bF:bR,pen=fri?c.jumPenuh:c.penuh,set=fri?c.jumSetengah:c.setengah,um=0;
+      if(mn(dt)<=batas&&jam>=pen)um=c.makan;else if(jam>=set)um=c.makan/2;
+      if(mn(dt)>batas)o.telat++;
+      o.jam+=jam;o.makan+=um;o.log.push({h:H[d],masuk:dt,pulang:pl,jam:Math.round(jam*100)/100,um:um})}
+    o.jam=Math.round(o.jam*100)/100;out.list['id:'+id]=o;out.list['nm:'+nm.toUpperCase()]=o;i=k}
+  return out}
+function cetak(){var G=RG&&RG.data||{},S=RG&&RG.status==='final'&&G.nilai?G.nilai:null,c=D.cfg;
+  $('slips').innerHTML=D.kar.map(function(k){var x=(G.ck||{})[k.id],n=S&&S[k.id]?S[k.id]:(function(){var q=nilai(k.id,RW,x,(G.ov||{})[k.id]);return{H:q.H,M:q.M,D:q.D,tot:q.tot,g:q.g,out:q.s.out,rj:q.s.rj,upah:k.upah}})(),o=(G.ov||{})[k.id]||{},u=+(n.upah!=null?n.upah:k.upah)||0;
+    var jamU=x?x.jam*u:0,mk=x?x.makan:0,th=x?(+c.hadir[x.hadir>=6?6:x.hadir]||0):0,tk=+c.kerja[n.g]||0,bn=+o.bonus||0;
+    return '<div class="slip"><div style="font-size:10pt">SLIP GAJI · POSITIF CLOTHING · GUDANG WONODADI</div><h2>'+esc(k.nama)+'</h2><div>'+esc(k.bagian||'')+' · '+fdl(RW)+' – '+fdl(addD(RW,6))+'</div>'
+     +'<h3 style="margin-top:10px">Nilai kerja: '+n.tot+'/10 ('+n.g+')</h3><table><tr><td>Hasil</td><td>'+n.H+'/4</td><td>'+nf(n.out)+(k.target?' dari target '+k.target:'')+'</td></tr><tr><td>Mutu</td><td>'+n.M+'/3</td><td>reject '+(n.rj||0)+' pcs</td></tr><tr><td>Disiplin</td><td>'+n.D+'/3</td><td>'+(x?'telat '+x.telat+'×':'')+'</td></tr></table>'
+     +'<h3 style="margin-top:10px">Rincian gaji</h3><table><tr><td>Jam kerja ('+(x?nf(x.jam):0)+' jam × '+rp(u)+')</td><td style="text-align:right">'+rp(jamU)+'</td></tr><tr><td>Uang makan</td><td style="text-align:right">'+rp(mk)+'</td></tr><tr><td>Tunjangan hadir ('+(x?x.hadir:0)+' hari)</td><td style="text-align:right">'+rp(th)+'</td></tr><tr><td>Tunjangan kerja (nilai '+n.g+')</td><td style="text-align:right">'+rp(tk)+'</td></tr>'+(bn?'<tr><td>Bonus</td><td style="text-align:right">'+rp(bn)+'</td></tr>':'')+'<tr><th>Total diterima</th><th style="text-align:right">'+rp(jamU+mk+th+tk+bn)+'</th></tr></table>'
+     +'<div style="margin-top:10px;font-size:10pt">'+(RG&&RG.status==='final'?'Disetujui '+esc(RG.okBy||'')+(RG.okAt?' · '+new Date(RG.okAt).toLocaleDateString('id-ID'):''):'DRAF, belum disetujui')+'</div></div>'}).join('');
+  setTimeout(function(){window.print()},100)}
+
+/* =================== ATUR =================== */
+var SEED=[['18','ALFI','Penjahit',['jahit'],'','pcs','Jahit',0],['16','NIKMAH','Penjahit',['jahit'],'','pcs','Jahit',7000],['5','CHOIR','Penjahit',['jahit'],'','pcs','Jahit',7000],['6','ROPIK','Penjahit',['jahit'],'','pcs','Jahit',7000],['17','MUDAH','Penjahit',['jahit'],'','pcs','Jahit',0],
+ ['4','ARIP','Potong jersey · buka paket · tata bahan · PJ kebersihan',['potong'],'','pcs','Potong',4500],['12','ARIS','Potong kaos',['potong'],'','pcs','Potong',6000],['14','JAKA','Potong kaos + belanja',['potong'],'','pcs','Potong',6500],
+ ['15','IAM','Press sablon + packing · rak reject',['hasil','qc'],'Press sablon','pcs','Sablon',6000],['2','ANGGA','Packing + cari gambar DTF (pilah)',['hasil','qc'],'Pilah sablon','pcs','Sablon',6000],['10','IPUL','Cetak + packing stiker',['hasil'],'Cetak stiker','lembar','Sablon',7000],
+ ['7','IM','Packing jersey · tata barang jadi',['hasil','qc'],'Packing jersey','paket','Packing',6000],['9','DESI','Kepala gudang · packing · jadwal · stok jersey',['hasil','qc'],'Packing','paket','Packing',7500]];
+var CEKS={ARIP:['Buka & hitung paket belanja','Tata bahan baku ke rak','Cek kebersihan sore'],IM:['Tata barang jadi / jersey'],IAM:['Rapikan rak reject'],DESI:['Cek hasil sablon, pilah, stiker','Verifikasi paket belanja','Cek piket hari ini'],JAKA:['Catat belanja di Stok bahan']};
+function vAtur(){var c=D.cfg;
+  var h='<div class="row" style="margin-bottom:12px"><h1 style="font-size:30px">Atur</h1><span class="sp"></span><button class="btn pri" onclick="karEdit()">+ Karyawan</button></div>';
+  if(!D.kar.length)h+='<div class="card" style="margin-bottom:12px"><b>Belum ada karyawan.</b> <span class="mu">Isi otomatis 13 karyawan Wonodadi (ID ceklok, bagian, upah dari aplikasi gaji lama)? PIN tetap dibuat satu per satu.</span><div style="margin-top:10px"><button class="btn pri" onclick="isiSeed()">Isi 13 karyawan</button></div></div>';
+  h+='<div class="scroll"><table style="min-width:900px"><tr><th>ID CEKLOK</th><th>NAMA</th><th>BAGIAN</th><th>KERJA</th><th>AREA HP</th><th class="num">UPAH/JAM</th><th class="num">TARGET/MINGGU</th><th>CHECKLIST</th><th>PIN</th><th></th></tr>'
+   +D.kar.map(function(k){return '<tr><td class="mu">'+esc(k.cid||'-')+'</td><td><b>'+esc(k.nama)+'</b></td><td>'+esc(k.bagian||'')+'</td><td style="font-size:13px">'+k.kerja.map(function(x){return x==='hasil'?esc(k.hasil||'hasil'):x}).join(', ')+'</td><td>'+esc(k.area||'-')+'</td><td class="num'+(k.upah?'':' warn')+'">'+(k.upah?rp(k.upah):'isi')+'</td><td class="num'+(k.target?'':' mu')+'">'+(k.target?nf(k.target)+' '+((k.kerja.indexOf('jahit')>=0||k.kerja.indexOf('potong')>=0)?'poin':esc(k.satuan)):'uji coba')+'</td><td class="mu">'+(k.cek||[]).length+'</td><td>'+(k.pin?'<span class="ok">✓</span>':'<span class="warn">belum</span>')+'</td><td><button class="btn" onclick="karEdit(\''+k.id+'\')">Ubah</button></td></tr>'}).join('')+'</table></div>';
+  var pt=Object.keys(c.poin);
+  h+='<div class="g2 sec" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">'
+   +'<div class="card"><h2 style="font-size:22px">Poin produk (per kategori POS)</h2><div class="mu" style="font-size:12px;margin-bottom:8px">Kategori lain = '+c.poinDef+' poin. Pisahkan baris: kategori = poin</div><textarea id="cp">'+esc(pt.map(function(k){return k+' = '+c.poin[k]}).join('\n'))+'</textarea></div>'
+   +'<div class="card"><h2 style="font-size:22px">Aturan jam (sama dengan gaji lama)</h2><div class="g2"><label class="f">Batas masuk<input id="c_batas" type="time" value="'+c.batas+'"></label><label class="f">Uang makan (Rp)<input id="c_makan" type="number" value="'+c.makan+'"></label><label class="f">Makan penuh ≥ jam<input id="c_penuh" type="number" step="0.1" value="'+c.penuh+'"></label><label class="f">Setengah ≥ jam<input id="c_setengah" type="number" step="0.1" value="'+c.setengah+'"></label><label class="f">Jumat batas<input id="c_jumBatas" type="time" value="'+c.jumBatas+'"></label><label class="f">Jumat penuh ≥<input id="c_jumPenuh" type="number" step="0.1" value="'+c.jumPenuh+'"></label><label class="f">Jumat setengah ≥<input id="c_jumSetengah" type="number" step="0.1" value="'+c.jumSetengah+'"></label></div></div>'
+   +'<div class="card"><h2 style="font-size:22px">Tunjangan</h2><div class="g2"><label class="f">Hadir 6 hari<input id="h6" type="number" value="'+(c.hadir[6]||0)+'"></label><label class="f">Hadir 5 hari<input id="h5" type="number" value="'+(c.hadir[5]||0)+'"></label><label class="f">Hadir 4 hari<input id="h4" type="number" value="'+(c.hadir[4]||0)+'"></label>'
+   +['A','B','C','D'].map(function(g){return '<label class="f">Nilai '+g+'<input id="k'+g+'" type="number" value="'+(c.kerja[g]||0)+'"></label>'}).join('')+'</div></div>'
+   +'<div class="card"><h2 style="font-size:22px">Cara hitung nilai (10 poin)</h2><div class="mu" style="font-size:13px;line-height:1.6">Hasil 0–4: ≥100% target = 4 · ≥90% = 3 · ≥75% = 2 · ≥50% = 1<br>Mutu 0–3: reject ≤1% = 3 · ≤3% = 2 · ≤5% = 1<br>Disiplin 0–3: mulai 3, −1 tiap: telat lebih dari <input id="c_telat" type="number" value="'+c.telatMaks+'" style="width:60px;min-height:30px;padding:2px 6px;display:inline-block">× · tugas tetap &lt; <input id="c_cekmin" type="number" value="'+c.cekMin+'" style="width:64px;min-height:30px;padding:2px 6px;display:inline-block">% · setiap catatan disiplin<br>A 9–10 · B 7–8 · C 5–6 · D ≤4</div>'
+   +(D.gudang&&D.gudang.length?'<label class="f" style="margin-top:10px">Barang produksi dari gudang<select id="c_loc"><option value="">Semua gudang</option>'+D.gudang.map(function(g){return '<option value="'+esc(g.id)+'"'+(String(g.id)===String(c.loc)?' selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></label>':'')+'</div></div>'
+   +'<div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn pri" onclick="cfgSave()">Simpan pengaturan</button></div>';
+  return h}
+async function cfgSave(){var poin={},bad='';$('cp').value.split('\n').forEach(function(l){var m=l.split('=');if(m.length<2)return;var k=m[0].trim().toLowerCase(),v=parseFloat(m[1].replace(',','.'));if(k&&v>0)poin[k]=v;else if(k)bad=l});
+  if(bad)return toast('Baris poin tidak valid: '+bad,1);
+  var p={poin:poin,batas:$('c_batas').value,makan:+$('c_makan').value,penuh:+$('c_penuh').value,setengah:+$('c_setengah').value,jumBatas:$('c_jumBatas').value,jumPenuh:+$('c_jumPenuh').value,jumSetengah:+$('c_jumSetengah').value,
+    hadir:{6:+$('h6').value,5:+$('h5').value,4:+$('h4').value},kerja:{A:+$('kA').value,B:+$('kB').value,C:+$('kC').value,D:+$('kD').value},telatMaks:+$('c_telat').value,cekMin:+$('c_cekmin').value};
+  if($('c_loc'))p.loc=$('c_loc').value;
+  if(await run('cfgSave',p,'Pengaturan tersimpan'))await load()}
+async function isiSeed(){if(!(await yakin('Isi 13 karyawan?','Data dasar dibuat dari daftar bagian & aplikasi gaji lama. Upah ALFI dan MUDAH masih kosong.','Ya, isi')))return;
+  for(var i=0;i<SEED.length;i++){var s=SEED[i];await kj('karSave',{cid:s[0],nama:s[1],bagian:s[2],kerja:s[3],hasil:s[4],satuan:s[5],area:s[6],upah:s[7],cek:CEKS[s[1]]||[],urut:i+1})}
+  toast('13 karyawan dibuat. Buat PIN masing-masing lewat tombol Ubah.');await load()}
+function karEdit(id){var k=id?D.K[id]:{kerja:[],cek:[],satuan:'pcs'},d=$('dlg');
+  d.innerHTML='<h3>'+(id?'Ubah '+esc(k.nama):'Karyawan baru')+'</h3><div class="g2"><label class="f">Nama<input id="e_nama" value="'+esc(k.nama||'')+'"></label><label class="f">ID ceklok<input id="e_cid" value="'+esc(k.cid||'')+'"></label></div>'
+   +'<label class="f" style="margin-top:8px">Bagian (tampil di slip)<input id="e_bag" value="'+esc(k.bagian||'')+'"></label>'
+   +'<div style="margin:10px 0 4px" class="mu">Jenis kerja</div><div class="chips">'+Object.keys(KERJA).map(function(x){return '<label class="chip'+(k.kerja.indexOf(x)>=0?' on':'')+'" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="e_k" value="'+x+'" '+(k.kerja.indexOf(x)>=0?'checked':'')+' style="width:20px;min-height:20px" onchange="this.parentNode.classList.toggle(\'on\',this.checked)">'+KERJA[x]+'</label>'}).join('')+'</div>'
+   +'<div class="g2" style="margin-top:8px"><label class="f">Nama hasil (mis. Press sablon)<input id="e_has" value="'+esc(k.hasil||'')+'"></label><label class="f">Satuan<input id="e_sat" value="'+esc(k.satuan||'pcs')+'"></label><label class="f">Area HP<input id="e_area" value="'+esc(k.area||'')+'" list="areas"></label><label class="f">Upah per jam (Rp)<input id="e_upah" type="number" value="'+(k.upah||'')+'"></label><label class="f">Target per minggu (poin / satuan)<input id="e_tgt" type="number" value="'+(k.target||'')+'" placeholder="kosong = uji coba"></label><label class="f">PIN baru (4 angka)<input id="e_pin" inputmode="numeric" maxlength="4" placeholder="'+(k.pin?'kosong = tidak diubah':'wajib dibuat')+'"></label></div>'
+   +'<datalist id="areas">'+[...new Set(D.kar.map(function(x){return x.area}).filter(Boolean))].map(function(a){return '<option value="'+esc(a)+'">'}).join('')+'</datalist>'
+   +'<label class="f" style="margin-top:8px">Jobdesk (uraian, tampil di HP)<textarea id="e_jd">'+esc(k.jobdesk||'')+'</textarea></label>'
+   +'<label class="f" style="margin-top:8px">Checklist harian (maks. 5, satu per baris)<textarea id="e_cek" style="min-height:110px">'+esc((k.cek||[]).join('\n'))+'</textarea></label>'
+   +'<div class="row" style="margin-top:14px">'+(id?'<button class="btn dg" onclick="karNon(\''+id+'\')">Nonaktifkan</button>':'')+'<span class="sp"></span><button class="btn" onclick="$(\'dlg\').close()">Batal</button><button class="btn pri" onclick="karSave(\''+(id||'')+'\')">Simpan</button></div>';
+  d.showModal()}
+function karForm(id){var k=id?D.K[id]:{};return{id:id,nama:$('e_nama').value,cid:$('e_cid').value,bagian:$('e_bag').value,kerja:[...document.querySelectorAll('.e_k:checked')].map(function(x){return x.value}),hasil:$('e_has').value,satuan:$('e_sat').value,area:$('e_area').value,upah:+$('e_upah').value||0,target:+$('e_tgt').value||0,pin:$('e_pin').value.trim(),jobdesk:$('e_jd').value,cek:$('e_cek').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),urut:k.urut}}
+async function karSave(id){var p=karForm(id);if(p.cek.length>5)return toast('Checklist maksimal 5',1);if(p.pin&&!/^\d{4}$/.test(p.pin))return toast('PIN harus 4 angka',1);
+  if(await run('karSave',p,'Tersimpan')){$('dlg').close();await load()}}
+async function karNon(id){if(!(await yakin('Nonaktifkan '+D.K[id].nama+'?','Karyawan tidak tampil lagi. Data lama tetap tersimpan.','Ya')))return;var p=karForm(id);p.on=false;p.pin='';if(await run('karSave',p,'Dinonaktifkan'))await load()}
+
+/* ---------- mulai ---------- */
+(function(){if(!POSBAR.cred()){POSBAR.mount({active:'kinerja',replace:'#hd'});POSBAR.block();return}
+  POSBAR.mount({active:'kinerja',replace:'#hd'});load()})();
+</script>
+</body>
+</html>
