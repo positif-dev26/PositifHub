@@ -12,20 +12,6 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tema.css?v=20261123a">
-<style>
-.dash.has-ai{height:auto;min-height:38vh;padding:24px 0 8px}
-#aiw{max-width:760px;margin:0 auto;padding:0 14px 32px}
-.aic{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:12px}
-.aih{display:flex;gap:10px;align-items:center}.aih b{display:block;font:700 18px "Barlow Condensed",sans-serif;letter-spacing:.02em}.aih small{font-size:13px}
-.aidot{width:10px;height:10px;border-radius:50%;background:#d4ff3f;box-shadow:0 0 12px #d4ff3f;flex:none}
-.ais{font-size:17px;font-weight:600;margin:10px 0 4px}
-.aic h4{font:600 13px Barlow,sans-serif;color:var(--muted);margin:14px 0 6px}
-.air{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
-.air:last-child{border-bottom:0}.aint{display:block;font-size:12.5px}
-.ain{text-align:right;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end}.ain span{font:700 20px "Barlow Condensed",sans-serif;line-height:1}
-.aiw2{color:#e8a734}.aich{display:flex;flex-wrap:wrap;gap:6px}.aico{margin:0;padding-left:18px;color:var(--muted)}
-.aib{display:inline-block;margin-top:14px;text-decoration:none}
-</style>
 </head>
 <body>
 <header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
@@ -44,23 +30,7 @@
 <script>
 /* ---------- BERANDA (jam) ---------- */
 function vBeranda(){
- $('view').innerHTML='<div class="dash" id="dashc"><div class="dclk" id="dclk"><div class="dclk-t"></div><div class="dclk-w"></div><div class="dclk-d"></div></div></div><div id="aiw"></div>';startClock();loadAI()}
-/* ---------- LAPORAN KANTOR AI (dari laporan-ai.json, ditulis tugas terjadwal) ---------- */
-async function loadAI(){
- try{const r=await fetch('laporan-ai.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const d=await r.json();
-  const L=(d.laporan||[]);if(!L.length||!$('aiw'))return;$('dashc').classList.add('has-ai');$('aiw').innerHTML=L.map(aiCard).join('')}catch(e){}}
-function aiAgo(s){const t=new Date(s);if(isNaN(t))return'';const m=Math.round((Date.now()-t)/60000);
- const w=t.toLocaleString('id-ID',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
- return w+(m<60*20?'':' · <span class="bad">lebih dari 20 jam lalu</span>')}
-function aiCard(a){
- const K=a.kritis||[],P=a.diproses||[],B=a.pasBatas||[],C=a.catatan||[];
- return '<section class="aic"><div class="aih"><span class="aidot"></span><div><b>'+esc(a.agen||'Karyawan AI')+'</b><small class="muted">'+aiAgo(a.dibuat)+'</small></div></div>'+
- (a.ringkasan?'<p class="ais">'+esc(a.ringkasan)+'</p>':'')+
- (K.length?'<h4>Kritis, belum diminta</h4><div class="ail">'+K.map(k=>'<div class="air"><div><b>'+esc(k.nama)+'</b> <small class="muted">'+esc(k.divisi||'')+'</small>'+(k.catatan?'<small class="muted aint">'+esc(k.catatan)+'</small>':'')+'</div><div class="ain"><span class="'+(+k.sisa===0?'bad':'aiw2')+'">'+esc(k.sisa)+'</span><small class="muted">/ '+esc(k.min)+' '+esc(k.satuan||'')+'</small>'+(k.saran?'<small class="muted">beli ±'+esc(k.saran)+'</small>':'')+'</div></div>').join('')+'</div>':'<p class="ok">Semua bahan aman.</p>')+
- (P.length?'<h4>Sedang dibelanjakan</h4><div class="aich">'+P.map(p=>'<span class="badge">'+esc(p.nama)+' · '+esc(p.qty)+'</span>').join('')+'</div>':'')+
- (B.length?'<h4>Pas di batas minimum</h4><div class="aich">'+B.map(p=>'<span class="badge mid">'+esc(p.nama)+' '+esc(p.sisa)+'/'+esc(p.min)+'</span>').join('')+'</div>':'')+
- (C.length?'<h4>Catatan</h4><ul class="aico">'+C.map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul>':'')+
- '<a class="btn sec aib" href="stok-bahan-baku-baru.html">Buka Stok Bahan Baku</a></section>'}
+ $('view').innerHTML='<div class="dash"><div class="dclk" id="dclk"><div class="dclk-t"></div><div class="dclk-w"></div><div class="dclk-d"></div></div></div>';startClock()}
 let clkT=null;
 function startClock(){clearInterval(clkT);const tick=()=>{const e=$('dclk');if(!e){clearInterval(clkT);return}const n=new Date(),p=x=>String(x).padStart(2,'0');
  e.querySelector('.dclk-t').innerHTML=p(n.getHours())+':'+p(n.getMinutes())+'<span class="sec">:'+p(n.getSeconds())+'</span>';
