@@ -12,7 +12,7 @@
   try { cred = JSON.parse(localStorage.getItem('positif_cred') || sessionStorage.getItem('positif_cred') || 'null'); } catch (e) { }
   try { me = JSON.parse(localStorage.getItem('positif_me') || 'null'); } catch (e) { }
   var masuk = !!(cred && cred.u && cred.t && me && me.u === cred.u);
-  if (masuk && (me.role === 'admin' || (me.perm || []).indexOf(app) >= 0)) return;
+  if (masuk && (me.role === 'admin' || me.role === 'owner' || (me.perm || []).indexOf(app) >= 0)) return;
   var pesan = masuk ? 'Akun <b>' + String(me.name || me.u).replace(/[<>&]/g, '') + '</b> tidak punya akses ke aplikasi ini. Minta Owner mengaturnya di Positif POS → Pengaturan.'
     : 'Masuk dulu ke Positif POS. Setelah itu aplikasi ini bisa dibuka.';
   try { window.stop(); } catch (e) { }

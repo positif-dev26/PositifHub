@@ -300,7 +300,7 @@ addEventListener('beforeunload',e=>{if(OUT.length&&!LEAVING){e.preventDefault();
 async function load(first){
  const r=await api('getAll');
  if(!first&&(busyW>0||OUT.length||DR))return;
- ME=r.name;isAdm=r.role==='admin';SSURL=r.ss;ACC(r);apply(r);META=metaOf(r);
+ ME=r.name;isAdm=r.role==='admin'||r.role==='owner';SSURL=r.ss;ACC(r);apply(r);META=metaOf(r);
  if(first&&!ready){ready=true;rebuild();render();startPoll();if(OUT.length)flush();else save()}else{rebuild();onData()}
  snapSave();setSync('Tersinkron')}
 /* ---------- simpan data terakhir di perangkat (IndexedDB) supaya aplikasi langsung tampil ---------- */
@@ -315,7 +315,7 @@ function snapNow(){clearTimeout(snapT);if(!ready||!META||!USR)return Promise.res
 function snapSave(){if(!ready||!META||!USR)return;clearTimeout(snapT);snapT=setTimeout(snapNow,400)}
 function snapDel(u){return IDB.del('snap:'+(u||USR))}
 /* tampilkan langsung dari cuplikan, lalu sinkron di belakang layar */
-function fromSnap(r){ME=r.name;isAdm=r.role==='admin';SSURL=r.ss;ACC(r);apply(r);META=metaOf(r);ready=true;rebuild();render();startPoll();if(OUT.length){OTH=true;flush()}}
+function fromSnap(r){ME=r.name;isAdm=r.role==='admin'||r.role==='owner';SSURL=r.ss;ACC(r);apply(r);META=metaOf(r);ready=true;rebuild();render();startPoll();if(OUT.length){OTH=true;flush()}}
 /* ---------- sinkron pintar: hanya jenis data yang berubah ---------- */
 let SYNCING=false;
 async function syncCheck(manual){
@@ -356,7 +356,7 @@ async function replaceAll(o){
  KO={};OUT=[];outSave();S=o;busyW--;save();
  if(busyW===0){try{await load(false)}catch(e){}}
  render()}
-async function resetAll(){if(await uiConfirm('Hapus SEMUA data di spreadsheet (produk, stok, transaksi, pesanan) untuk semua komputer? Tindakan ini tidak bisa dibatalkan.','Hapus semua',true))replaceAll(emptyS())}
+async function resetAll(){if(!OWN())return toast('Hanya Owner yang bisa menghapus semua data.',1);if(await uiConfirm('Hapus SEMUA data di spreadsheet (produk, stok, transaksi, pesanan) untuk semua komputer? Tindakan ini tidak bisa dibatalkan.','Hapus semua',true))replaceAll(emptyS())}
 function vSetup(){
  $('view').innerHTML=`<div class="card"><h2 style="margin:0 0 6px;font-size:26px">Selamat datang di Positif POS</h2><p class="muted" style="margin:0 0 12px">Spreadsheet masih kosong. ${isAdm?'Pilih cara memulai:':'Minta admin untuk mengisi data awal.'}</p>
  ${isAdm?`<div class="row" style="justify-content:flex-start;flex-wrap:wrap"><button class="btn sec" onclick="replaceAll(seed())">Isi dengan data contoh</button><label class="btn sec up">Impor dari berkas cadangan (.json)<input type="file" accept=".json,application/json" hidden onchange="impJ(this)"></label><button class="btn sec" onclick="skipSetup=true;render()">Mulai kosong</button></div>`:''}</div>`}
@@ -393,7 +393,7 @@ addEventListener('resize',accClose);
 function closeHm(){$('hm').classList.remove('on')}
 function bmsg(t,bad){const e=$('bmsg');if(e){e.textContent=t;e.className=bad?'bad':'ok'}else if(bad)alert(t)}
 async function mkBackup(){bmsg('Membuat salinan...');try{const r=await api('backupCopy');S.lastBackup=new Date().toISOString();save();accFill();if(tab==='cadangan')vPengaturan();bmsg('Salinan dibuat di Google Drive: '+r.name,0)}catch(e){bmsg('Gagal membuat salinan: '+e.message,1)}}
-function impJ(inp){const f=inp.files[0];inp.value='';if(!f)return;const r=new FileReader();
+function impJ(inp){const f=inp.files[0];inp.value='';if(!f)return;if(!OWN())return toast('Hanya Owner yang bisa mengimpor data.',1);const r=new FileReader();
  r.onload=async()=>{let o=null;try{o=migrate(JSON.parse(r.result));if(!o||!Array.isArray(o.products)||!Array.isArray(o.sales)||!Array.isArray(o.orders))throw 0}catch(e){bmsg('Berkas bukan cadangan Positif POS yang valid.',1);return}
   if(!(await uiConfirm('Ganti semua data di spreadsheet (semua komputer) dengan isi cadangan? Data saat ini akan hilang.','Ganti data',true)))return;
   cart=[];replaceAll(o).then(()=>alert('Data berhasil diimpor.'))};
@@ -407,11 +407,13 @@ window.addEventListener('focus',()=>{if(tab==='kasir'&&!pk&&!$('modal').classLis
 /* ===== AKSES PENGGUNA: login username + PIN, tingkat Admin / Supervisor / Staf ===== */
 const ALLP=['kasir','riwayat','laporan','void','produk_edit','harga_edit','stok_ubah','pesanan','prod_lihat','prod_buat','prod_cetak','prod_bahan','prod_cutting','prod_jahit','prod_finishing','gudang','hapus','backup','pengaturan','rekap_kedawung','rekap_wonodadi','app_resi_print','app_resi_video','app_resi_pickup','app_layout','bahan_order','kinerja_input','kinerja_cek','kinerja_gaji'];
 const PL={kasir:'Kasir (jual)',riwayat:'Riwayat penjualan',laporan:'Laporan penjualan',void:'Ubah/batalkan transaksi',produk_edit:'Ubah produk',harga_edit:'Ubah harga',stok_ubah:'Ubah stok',pesanan:'Pesanan custom',prod_lihat:'Lihat produksi',prod_buat:'Kelola order produksi',prod_cetak:'Proses: Cetak',prod_bahan:'Proses: Rak bahan',prod_cutting:'Proses: Cutting',prod_jahit:'Proses: Jahit',prod_finishing:'Proses: Finishing',gudang:'Data gudang',hapus:'Hapus data',backup:'Cadangan',pengaturan:'Pengaturan',rekap_kedawung:'Rekap order: Admin Kedawung',rekap_wonodadi:'Rekap order: Admin Wonodadi',app_resi_print:'App Resi Print',app_resi_video:'App Resi Video Packing',app_resi_pickup:'App Resi Pickup Kurir',app_layout:'App Layout Stiker',bahan_order:'Stok bahan: kelola order',kinerja_input:'Kinerja: HP area (setor hasil)',kinerja_cek:'Kinerja: kepala gudang (cek)',kinerja_gaji:'Kinerja: gaji & atur (Owner)'};
-const RL={admin:'Admin',supervisor:'Supervisor',staf:'Staf'};
+const RL={owner:'Owner',admin:'Admin',supervisor:'Supervisor',staf:'Staf'};
 let USR='',ROLE='',PERM=[],USERS=[],ROLEP=null,WEAK=false,WARNED=false;
-const can=k=>ROLE==='admin'||PERM.includes(k);
+const can=k=>ROLE==='owner'||ROLE==='admin'||PERM.includes(k);
+/* Owner: 1 akun di atas Admin. Selama server belum punya peran Owner (belum ada akun Owner), Admin bertindak sebagai Owner. */
+const OWN=()=>ROLE==='owner'||(ROLE==='admin'&&!USERS.some(x=>x.r==='owner'));
 const TP={kasir:['kasir'],riwayat:['riwayat'],laporan:['laporan'],produk:['produk_edit','harga_edit','stok_ubah','kasir'],stok:['stok_ubah','kasir'],bahan:['stok_ubah'],produksi:['prod_lihat','prod_buat'],pesanan:[]};
-const tabOk=t=>t==='beranda'||(t==='bahan'&&!!ROLE)||(t==='pesanan'&&(ROLE==='admin'||ROLE==='supervisor'))||((t==='pengguna'||t==='peran')&&isAdm)||(t==='cadangan'&&(isAdm||can('backup')))||(t==='rekap'&&(can('rekap_kedawung')||can('rekap_wonodadi')))||(t==='kinerja'&&(can('kinerja_input')||can('kinerja_cek')||can('kinerja_gaji')))||(TP[t]||[]).some(can);
+const tabOk=t=>t==='beranda'||(t==='bahan'&&!!ROLE)||(t==='pesanan'&&(ROLE==='admin'||ROLE==='supervisor'))||((t==='pengguna'||t==='peran')&&OWN())||(t==='cadangan'&&(isAdm||can('backup')))||(t==='rekap'&&(can('rekap_kedawung')||can('rekap_wonodadi')))||(t==='kinerja'&&(can('kinerja_input')||can('kinerja_cek')||can('kinerja_gaji')))||(TP[t]||[]).some(can);
 function pTabOk(k){if(k==='cetak')return can('prod_buat');if(k==='gudang')return can('prod_lihat')||can('gudang');if(k==='petugas')return isAdm||can('prod_buat');return can('prod_lihat')}
 function ACC(r){USR=r.user||USR;ROLE=r.role||'admin';PERM=Array.isArray(r.perm)?r.perm:ALLP.concat(['pengguna']);USERS=r.users||[];ROLEP=r.roles||ROLEP;WEAK=!!r.weak;
  try{localStorage.setItem('positif_me',JSON.stringify({u:USR,name:r.name||ME,role:ROLE,perm:PERM,ss:r.ss||''}))}catch(e){}
@@ -470,7 +472,7 @@ function accFill(){const m=$('accm');if(!m)return;
  m.innerHTML='<div class="acch"><b>'+esc(ME)+'</b><span>'+(RL[ROLE]||'')+' · @'+esc(USR)+'</span></div>'
  +(WEAK?'<div class="accw">PIN masih bawaan (123456). Segera ganti.</div>':'')
  +I('key','Ganti PIN','accClose();chPin()')
- +((isAdm||can('backup'))?I('settings','Pengaturan',"accClose();go('"+(isAdm?'pengguna':'cadangan')+"')"):'')
+ +((isAdm||can('backup'))?I('settings','Pengaturan',"accClose();go('"+(OWN()?'pengguna':'cadangan')+"')"):'')
  +(can('backup')&&SSURL?'<a class="acci" href="'+esc(SSURL)+'" target="_blank" rel="noopener" onclick="accClose()">'+IC('sheet')+'<span>Buka Google Sheet</span></a>':'')
  +'<hr class="mhr">'+I('logout','Keluar','logout()','dg')}
 /* ---------- petugas = pengguna ---------- */
@@ -481,13 +483,14 @@ function pOk(by,st){if(!USERS.length)return true;const b=String(by).trim().toLow
  if(!x){toast('Petugas "'+by+'" tidak terdaftar. Pilih dari daftar pengguna.',1);return false}
  if(!(x.p||[]).includes('prod_'+st)){toast(x.n+' tidak punya akses ke tahap '+STL[st]+'.',1);return false}return true}
 async function uCall(fn,...a){try{applyU(await api(fn,...a));return true}catch(e){toast(e.message,1);return false}finally{uRef()}}
-function uPatch(un,p){const x=USERS.find(y=>y.u===un);if(!x)return;const o=Object.assign({u:x.u,n:x.n,role:x.r,on:x.on,izin:x.iz||[]},p);
+const uLock=x=>x&&x.r==='owner'&&ROLE!=='owner';
+function uPatch(un,p){const x=USERS.find(y=>y.u===un);if(!x)return;if(uLock(x)){toast('Akun Owner hanya bisa diubah oleh Owner.',1);return uRef()}if(p.role==='owner'&&ROLE!=='owner'&&USERS.some(y=>y.r==='owner')){toast('Owner hanya boleh 1 akun.',1);return uRef()}const o=Object.assign({u:x.u,n:x.n,role:x.r,on:x.on,izin:x.iz||[]},p);
  if(p.role&&p.role!==x.r)o.izin=[];if(!String(o.n).trim()){toast('Nama wajib diisi.',1);return uRef()}return uCall('userSave',o)}
-function togIz(un,k){const x=USERS.find(y=>y.u===un);if(!x||x.r==='admin')return;const base=(ROLEP&&ROLEP[x.r])||[],E=new Set(x.p||[]);E.has(k)?E.delete(k):E.add(k);
+function togIz(un,k){const x=USERS.find(y=>y.u===un);if(!x||x.r==='admin'||x.r==='owner')return;const base=(ROLEP&&ROLEP[x.r])||[],E=new Set(x.p||[]);E.has(k)?E.delete(k):E.add(k);
  const iz=[];ALLP.forEach(q=>{if(E.has(q)&&!base.includes(q))iz.push('+'+q);if(!E.has(q)&&base.includes(q))iz.push('-'+q)});return uPatch(un,{izin:iz})}
-async function uPin(un){const x=USERS.find(y=>y.u===un);if(!x)return;const p=await uiPrompt('PIN baru untuk '+x.n+' (4-10 angka)','',{num:1});if(p===null)return;
+async function uPin(un){const x=USERS.find(y=>y.u===un);if(!x)return;if(uLock(x)&&x.u!==USR)return toast('PIN Owner hanya bisa diganti oleh Owner.',1);const p=await uiPrompt('PIN baru untuk '+x.n+' (4-10 angka)','',{num:1});if(p===null)return;
  if(!/^\d{4,10}$/.test(p.trim())){toast('PIN harus 4-10 angka.',1);return}uCall('userSave',{u:x.u,n:x.n,role:x.r,on:x.on,izin:x.iz||[],pin:p.trim()}).then(ok=>ok&&toast('PIN '+x.n+' diperbarui.'))}
-async function uDel(un){const x=USERS.find(y=>y.u===un);if(!x||!(await askC('Hapus pengguna '+x.n+' (@'+x.u+')? Ia tidak bisa masuk lagi.','Hapus')))return;uCall('userDelete',un)}
+async function uDel(un){const x=USERS.find(y=>y.u===un);if(x&&x.r==='owner')return toast('Akun Owner tidak bisa dihapus.',1);if(!x||!(await askC('Hapus pengguna '+x.n+' (@'+x.u+')? Ia tidak bisa masuk lagi.','Hapus')))return;uCall('userDelete',un)}
 function addU(){const u=$('nu').value.trim().toLowerCase(),n=$('nn').value.trim(),p=$('np').value.trim(),r=$('nr').value;
  if(!u||!n||!p)return toast('Isi username, nama, dan PIN.',1);uCall('userSave',{u,n,pin:p,role:r,on:true,izin:[]})}
 function togR(r,k){const b=((ROLEP&&ROLEP[r])||[]).slice(),i=b.indexOf(k);i<0?b.push(k):b.splice(i,1);uCall('roleSave',r,b)}
@@ -498,9 +501,9 @@ const chipG=(has,fn)=>PGRP.map(([g,ks])=>'<div class="pgl">'+g+'</div><div class
 function usersHtml(part){let h='';
  if(isAdm){
   if(part!=='r')h+='<div class="card"><h2 style="margin:0 0 6px">Pengguna</h2><p class="muted" style="margin:0 0 10px">Setiap karyawan punya username dan PIN sendiri. Akun yang sama dipakai untuk masuk ke aplikasi dan sebagai petugas / penanggung jawab produksi.</p><div class="ptl">'
-  +USERS.map(x=>{const me=x.u===USR,adm=x.r==='admin';
-   const chips=adm?'<span class="muted" style="font-size:13px">Admin punya semua akses.</span>':chipG(k=>(x.p||[]).includes(k),k=>'togIz(\''+x.u+'\',\''+k+'\')');
-   return '<div class="pt"><div class="pth"><input value="'+esc(x.n)+'" onchange="uPatch(\''+x.u+'\',{n:this.value})"><select aria-label="Tingkat"'+(me?' disabled':'')+' onchange="uPatch(\''+x.u+'\',{role:this.value})">'+['admin','supervisor','staf'].map(r=>'<option value="'+r+'"'+(x.r===r?' selected':'')+'>'+RL[r]+'</option>').join('')+'</select><button class="chp'+(x.on?' on':'')+'"'+(me?' disabled':'')+' onclick="uPatch(\''+x.u+'\',{on:'+(!x.on)+'})">'+(x.on?'Aktif':'Nonaktif')+'</button><button class="ib" title="Atur PIN baru" aria-label="Atur PIN baru" onclick="uPin(\''+x.u+'\')">'+IC('key')+'</button>'+(me?'':'<button class="ib" title="Hapus" aria-label="Hapus" onclick="uDel(\''+x.u+'\')">'+IC('trash')+'</button>')+'</div><div class="muted" style="font-size:13px;margin:6px 0 0">@'+esc(x.u)+((x.pj||[]).length?' · PJ: '+x.pj.map(s=>STL[s]).join(', '):'')+'</div><div class="muted" style="font-size:13px;margin:8px 0 4px">Akses</div><div class="pgw">'+chips+'</div></div>'}).join('')+'</div>'
+  +USERS.map(x=>{const me=x.u===USR,adm=x.r==='admin'||x.r==='owner',lk=me||uLock(x)||x.r==='owner',rls=(ROLE==='owner'&&!USERS.some(y=>y.r==='owner'&&y.u!==x.u)?['owner']:[]).concat(['admin','supervisor','staf']).concat(x.r==='owner'&&ROLE!=='owner'?['owner']:[]);
+   const chips=adm?'<span class="muted" style="font-size:13px">'+RL[x.r]+' punya semua akses.</span>':chipG(k=>(x.p||[]).includes(k),k=>'togIz(\''+x.u+'\',\''+k+'\')');
+   return '<div class="pt"><div class="pth"><input value="'+esc(x.n)+'"'+(uLock(x)?' disabled':'')+' onchange="uPatch(\''+x.u+'\',{n:this.value})"><select aria-label="Tingkat"'+(lk?' disabled':'')+' onchange="uPatch(\''+x.u+'\',{role:this.value})">'+rls.map(r=>'<option value="'+r+'"'+(x.r===r?' selected':'')+'>'+RL[r]+'</option>').join('')+'</select><button class="chp'+(x.on?' on':'')+'"'+(lk?' disabled':'')+' onclick="uPatch(\''+x.u+'\',{on:'+(!x.on)+'})">'+(x.on?'Aktif':'Nonaktif')+'</button><button class="ib" title="Atur PIN baru" aria-label="Atur PIN baru" onclick="uPin(\''+x.u+'\')">'+IC('key')+'</button>'+(lk?'':'<button class="ib" title="Hapus" aria-label="Hapus" onclick="uDel(\''+x.u+'\')">'+IC('trash')+'</button>')+'</div><div class="muted" style="font-size:13px;margin:6px 0 0">@'+esc(x.u)+((x.pj||[]).length?' · PJ: '+x.pj.map(s=>STL[s]).join(', '):'')+'</div><div class="muted" style="font-size:13px;margin:8px 0 4px">Akses</div><div class="pgw">'+chips+'</div></div>'}).join('')+'</div>'
   +'<div class="form" style="margin-top:12px;flex-wrap:wrap"><input id="nu" placeholder="Username (huruf kecil)" autocapitalize="none" autocomplete="off"><input id="nn" placeholder="Nama lengkap" autocomplete="off"><input id="np" placeholder="PIN (4-10 angka)" inputmode="numeric" autocomplete="off"><select id="nr" aria-label="Tingkat">'+['staf','supervisor','admin'].map(r=>'<option value="'+r+'">'+RL[r]+'</option>').join('')+'</select><button class="btn" onclick="addU()">Tambah pengguna</button></div></div>';
   if(part!=='u')h+='<div class="card"><h2 style="margin:0 0 6px">Akses per tingkat</h2><p class="muted" style="margin:0 0 10px">Pengaturan dasar tiap tingkat. Pengguna tertentu bisa diberi tambahan atau pengurangan akses di daftar di atas.</p>'
   +['supervisor','staf'].map(r=>'<div class="muted" style="font-size:13px;margin:10px 0 4px"><b>'+RL[r]+'</b></div><div class="pgw">'+chipG(k=>((ROLEP&&ROLEP[r])||[]).includes(k),k=>'togR(\''+r+'\',\''+k+'\')')+'</div>').join('')+'</div>'}

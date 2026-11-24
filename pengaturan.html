@@ -26,7 +26,7 @@
 <div id="zm" class="modal" onclick="if(event.target===this)zClose()"><div class="card wide" id="zmc"></div></div>
 <div id="plabels"></div>
 <script>window.PAGE_TABS=["pengguna", "peran", "cadangan"];window.PAGE_HOME="pengguna";</script>
-<script src="inti.js?v=20261123b"></script>
+<script src="inti.js?v=20261124a"></script>
 <script>
 /* ---------- PENGATURAN: Pengguna · Peran · Cadangan ---------- */
 const SUBA=[['pengguna','Pengguna','users','Pengguna'],['peran','Peran','shield','Akses per peran'],['cadangan','Cadangan','db','Cadangan data']];
@@ -40,8 +40,8 @@ function vPengaturan(){if(!saOk(tab)){const f=SUBA.find(x=>saOk(x[0]));if(!f){ta
   P.innerHTML='<div class="pfh"><h1 class="pt">Cadangan data</h1></div><div class="card cdg"><p class="muted" style="margin:0 0 10px">Cadangan terakhir: <b>'+(S.lastBackup?fmt(S.lastBackup):'belum pernah')+'</b></p>'
   +(can('backup')?row('copy','Buat salinan cadangan','Menyalin seluruh spreadsheet ke Google Drive','mkBackup()'):'')
   +(can('backup')&&SSURL?'<a class="cdr" href="'+esc(SSURL)+'" target="_blank" rel="noopener">'+IC('sheet')+'<span><b>Buka Google Sheet</b><small>Lihat data langsung di spreadsheet</small></span></a>':'')
-  +(isAdm?'<label class="cdr">'+IC('upload')+'<span><b>Pulihkan dari berkas .json</b><small>Mengganti semua data dengan isi berkas cadangan</small></span><input type="file" accept=".json,application/json" hidden onchange="impJ(this)"></label>':'')
-  +(isAdm?row('trash','Hapus semua data','Mengosongkan produk, stok, transaksi, dan pesanan untuk semua komputer','resetAll()','dg'):'')
+  +(OWN()?'<label class="cdr">'+IC('upload')+'<span><b>Pulihkan dari berkas .json</b><small>Mengganti semua data dengan isi berkas cadangan</small></span><input type="file" accept=".json,application/json" hidden onchange="impJ(this)"></label>':'')
+  +(OWN()?row('trash','Hapus semua data','Mengosongkan produk, stok, transaksi, dan pesanan untuk semua komputer','resetAll()','dg'):'')
   +'<p id="bmsg" style="margin:10px 2px 0"></p></div>'}
  stk()}
 boot();
