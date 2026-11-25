@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<script src="akses2.js" data-app="app_resi_pickup"></script>
+<script src="akses.js" data-app="app_resi_pickup"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resi Pickup Kurir - Floating Windows</title>
@@ -403,9 +403,7 @@
     </div>
 
 <script>
-    const WEB_APP_URL = "https://positif-api.positifmerch-blt.workers.dev/api/resi";
-    const AUTH_H = () => ({ Authorization: "Bearer " + (localStorage.getItem("positif2_token") || "") });
-    let RESI_V = "", RESI_LAST = null;
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxvgi8zUkxdByFB78J6gKaTE0mdHlUtH8j747cBJdwIMQCEGJEB_tbQAKRZIFVd5x7s/exec";
 
     // Mode konfirmasi dari Apps Script:
     //  "json"   = doPost mengembalikan {status:"SUCCESS"} (AMAN, disarankan, perlu app script baru)
@@ -837,10 +835,9 @@
             }
             const res = await fetch(WEB_APP_URL, {
                 method: "POST",
-                headers: Object.assign({ "Content-Type": "text/plain;charset=utf-8" }, AUTH_H()),
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: body, signal: ctrl.signal
             });
-            if (res.status === 401) { location.href = "akun.html"; return false; }
             const j = await res.json();
             if (j && j.status === "REJECTED") console.warn("Item ditolak sheet, dibuang dari antrean:", item, j.message);
             return !!(j && (j.status === "SUCCESS" || j.status === "REJECTED"));
@@ -882,12 +879,8 @@
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), POST_TIMEOUT_MS);
         try {
-            const res = await fetch(WEB_APP_URL + "?v=" + encodeURIComponent(RESI_V), { headers: AUTH_H(), signal: ctrl.signal });
-            if (res.status === 401) { location.href = "akun.html"; throw new Error("sesi berakhir"); }
-            const j = await res.json();
-            if (j && j.unchanged && RESI_LAST) return RESI_LAST;
-            if (j && j.status === "SUCCESS") { RESI_V = j.v || ""; RESI_LAST = j; }
-            return j;
+            const res = await fetch(WEB_APP_URL, { signal: ctrl.signal });
+            return await res.json();
         } finally {
             clearTimeout(timer);
         }
