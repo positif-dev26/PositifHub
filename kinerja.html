@@ -101,6 +101,8 @@ dialog h3{font-size:24px;margin-bottom:10px}
    GAJI & KINERJA — Gudang Wonodadi (Positif)
    Data di server Positif POS (Kinerja.gs). Login ikut akun Positif POS.
    Izin: kinerja_input (HP area) · kinerja_cek (kepala gudang) · kinerja_gaji (Owner)
+   v2: setor jahit menunggu persetujuan supervisor; karyawan, barang dan setoran dibatasi per gudang akun;
+       karyawan punya Gudang dan Unit (mis. Tim Jahit Wonodadi). Perlu Kinerja.gs versi 2.
    ===================================================================== */
 var API='https://script.google.com/macros/s/AKfycbwUEqf4lS9mn3Gdyo3vpDmTl3u9gxQzIEIf83dJMeopMDDQpHu_-pcG9puoPFHfMOOBkA/exec';
 var $=function(i){return document.getElementById(i)};
@@ -108,6 +110,9 @@ var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){r
 var rp=function(n){return 'Rp '+Math.round(+n||0).toLocaleString('id-ID')};
 var nf=function(n){return (Math.round((+n||0)*100)/100).toLocaleString('id-ID')};
 var D=null,TAB='',SES=null,SEST=null,ST={};
+var gN=function(id){var g=(D.gudang||[]).filter(function(x){return String(x.id)===String(id)})[0];return g?g.name:(id?id:'Tanpa gudang')};
+var kG=function(k){return k.gud||D.cfg.loc||''};
+var sTg=function(){return D.akt.filter(function(a){return a.jenis==='setor'&&(a.st==='tunggu'||a.st==='proses')})};
 var KERJA={jahit:'Jahit (setor ke Finishing)',potong:'Potong (setor ke Jahit)',hasil:'Hasil lain (dicek kepala gudang)',qc:'QC / packing (catat reject)'};
 
 function toast(m,err){var t=$('toast');t.textContent=m;t.className=err?'err':'';t.style.display='block';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none'},err?5000:2600)}
@@ -134,11 +139,12 @@ async function load(){
   var from=new Date(satOf(new Date()));from.setDate(from.getDate()-14);
   try{D=await kj('load',{from:from.toISOString()})}catch(e){$('v').innerHTML='<div class="card"><b>Gagal memuat.</b><p class="mu">'+esc(e.message)+'</p><button class="btn" onclick="load()">Coba lagi</button></div>';return}
   D.K={};D.kar.forEach(function(k){D.K[k.id]=k});
+  if(+D.v<2)toast('Server Kinerja.gs masih versi lama. Perbarui ke versi 2 dulu.',1);
   var T=tabs();if(!TAB||!T.some(function(t){return t[0]===TAB}))TAB=D.me.gaji&&!D.kar.length?'atur':(D.me.cek||D.me.gaji)?'hari':(T[0]?T[0][0]:'');
   render()}
 function tabs(){var m=D.me,t=[];
   if(m.input)t.push(['setor','Setor hasil']);
-  if(m.cek||m.gaji)t.push(['hari','Hari ini'],['cek','Cek & reject']);
+  if(m.cek||m.gaji){var n=sTg().length;t.push(['hari','Hari ini'],['cek','Setujui & cek'+(n?' ('+n+')':'')])}
   if(m.gaji)t.push(['rekap','Rekap & gaji'],['atur','Atur']);
   return t}
 function render(){
@@ -150,9 +156,9 @@ function go(t){TAB=t;if(t!=='setor')keluar(true);render();scrollTo(0,0)}
 /* ---------- hitungan minggu per karyawan ---------- */
 function aktOf(kid,w){return D.akt.filter(function(a){return a.kid===kid&&a.st!=='batal'&&a.st!=='tolak'&&inWeek(a.tgl,w)})}
 function sumK(kid,w){
-  var A=aktOf(kid,w),o={poin:0,pcs:0,hasil:0,rj:0,tunggu:0,tugas:{},minus:[],keg:0};
+  var A=aktOf(kid,w),o={poin:0,pcs:0,hasil:0,rj:0,tunggu:0,stg:0,tugas:{},minus:[],keg:0};
   A.forEach(function(a){
-    if(a.jenis==='setor'){o.pcs+=+a.d.q||0;o.poin+=(+a.d.q||0)*(+a.d.poin||1)}
+    if(a.jenis==='setor'){if(a.st!=='ok'){o.tunggu++;o.stg+=+a.d.q||0;return}o.pcs+=+a.d.q||0;o.poin+=(+a.d.q||0)*(+a.d.poin||1)}
     else if(a.jenis==='hasil'){o.hasil+=+a.d.q||0;o.rj+=+a.d.rj||0;if(a.st==='tunggu')o.tunggu++}
     else if(a.jenis==='tugas'){o.tugas[dayOf(a.tgl)]=(o.tugas[dayOf(a.tgl)]||0)+1}
     else if(a.jenis==='minus')o.minus.push(a.d.note);
@@ -168,7 +174,7 @@ function nilai(kid,w,ck,ovr){
   if(ck){if(ck.telat>c.telatMaks)Dd--}else fl.push('ceklok belum diunggah');
   if((k.cek||[]).length){var hari=ck?ck.hadir:6,isi=Object.keys(s.tugas).reduce(function(a,d){return a+Math.min(s.tugas[d],k.cek.length)},0),pct=hari?isi/(hari*k.cek.length)*100:100;if(pct<c.cekMin){Dd--;fl.push('tugas tetap '+Math.round(pct)+'%')}}
   Dd-=s.minus.length;if(Dd<0)Dd=0;
-  if(s.tunggu)fl.push(s.tunggu+' hasil belum dicek');
+  if(s.tunggu)fl.push(s.tunggu+' hasil/setoran belum dicek');
   ovr=ovr||{};if(ovr.H!=null&&ovr.H!=='')H=+ovr.H;if(ovr.M!=null&&ovr.M!=='')M=+ovr.M;if(ovr.D!=null&&ovr.D!=='')Dd=+ovr.D;
   var tot=H+M+Dd,g=tot>=c.grade.A?'A':tot>=c.grade.B?'B':tot>=c.grade.C?'C':'D';
   return{H:H,M:M,D:Dd,tot:tot,g:g,s:s,fl:fl}}
@@ -182,7 +188,7 @@ function vSetor(){
   var area='';try{area=localStorage.getItem('kj_area')||''}catch(e){}
   var areas=[...new Set(D.kar.map(function(k){return k.area}).filter(Boolean))];
   var L=D.kar.filter(function(k){return !area||k.area===area});
-  return '<div class="row" style="margin-bottom:12px"><h1 style="font-size:30px">Siapa yang setor?</h1><span class="sp"></span>'
+  return '<div class="row" style="margin-bottom:12px"><h1 style="font-size:30px">Siapa yang setor?</h1>'+(D.me.gud?'<span class="pill ok">'+esc(gN(D.me.gud))+'</span>':'')+'<span class="sp"></span>'
    +(areas.length>1?'<label class="f" style="flex-direction:row;align-items:center;gap:8px">HP area<select style="width:auto" onchange="try{localStorage.setItem(\'kj_area\',this.value)}catch(e){};render()"><option value="">Semua</option>'+areas.map(function(a){return '<option'+(a===area?' selected':'')+'>'+esc(a)+'</option>'}).join('')+'</select></label>':'')+'</div>'
    +(L.length?'<div class="who">'+L.map(function(k){return '<button onclick="pinOpen(\''+k.id+'\')"><i>'+esc(k.nama.charAt(0))+'</i>'+esc(k.nama)+'<small>'+esc(k.bagian||'')+'</small></button>'}).join('')+'</div>'
      :'<div class="card mu">Belum ada karyawan. Owner menambahkannya di menu Atur.</div>')}
@@ -196,8 +202,8 @@ async function pinKey(x){if(x==='×'){$('dlg').close();return}if(x==='⌫'){PIN=
 function vOrang(){aktif();
   var k=D.K[SES.kid],w=ymd(satOf(new Date())),n=nilai(k.id,w,null),today=ymd(new Date()),h='';
   var mine=D.akt.filter(function(a){return a.kid===k.id&&dayOf(a.tgl)===today&&a.st!=='batal'}).sort(function(a,b){return a.tgl<b.tgl?-1:1});
-  h+='<div class="row" style="margin-bottom:12px"><button class="btn" onclick="keluar()">← Ganti orang</button><div><h1 style="font-size:28px">Halo, '+esc(k.nama)+'</h1><div class="mu" style="font-size:13px">'+esc(k.bagian||'')+'</div></div><span class="sp"></span>'
-   +'<div class="stat"><small>HASIL MINGGU INI</small><b>'+nf(n.s.out)+'</b>'+(k.target?'<small style="display:inline;font-size:14px"> / '+nf(k.target)+'</small>':'')+' <small style="display:inline;font-size:13px">'+((k.kerja.indexOf('jahit')>=0||k.kerja.indexOf('potong')>=0)?'poin':esc(k.satuan))+(n.s.rj?' · <span class="bad">reject '+n.s.rj+'</span>':'')+'</small></div></div>';
+  h+='<div class="row" style="margin-bottom:12px"><button class="btn" onclick="keluar()">← Ganti orang</button><div><h1 style="font-size:28px">Halo, '+esc(k.nama)+'</h1><div class="mu" style="font-size:13px">'+esc(k.bagian||'')+(k.unit?' · '+esc(k.unit):'')+'</div></div><span class="sp"></span>'
+   +'<div class="stat"><small>HASIL MINGGU INI</small><b>'+nf(n.s.out)+'</b>'+(k.target?'<small style="display:inline;font-size:14px"> / '+nf(k.target)+'</small>':'')+' <small style="display:inline;font-size:13px">'+((k.kerja.indexOf('jahit')>=0||k.kerja.indexOf('potong')>=0)?'poin':esc(k.satuan))+(n.s.rj?' · <span class="bad">reject '+n.s.rj+'</span>':'')+(n.s.stg?' · <span class="warn">'+n.s.stg+' pcs menunggu disetujui</span>':'')+'</small></div></div>';
   if(k.kerja.indexOf('jahit')>=0)h+=setorH(k,'jahit');
   if(k.kerja.indexOf('potong')>=0)h+=setorH(k,'cutting');
   if(k.kerja.indexOf('hasil')>=0)h+='<div class="sec"><h2>Catat hasil: '+esc(k.hasil||'Hasil')+'</h2><div class="card" style="display:flex;flex-direction:column;gap:10px"><label class="f">Jumlah ('+esc(k.satuan||'pcs')+')</label>'+stepH('hq',0)
@@ -211,19 +217,21 @@ function vOrang(){aktif();
   return h}
 function stepH(id,v){return '<div class="step"><button aria-label="Kurangi" onclick="stp(\''+id+'\',-1)">−</button><input id="'+id+'" type="number" inputmode="numeric" min="0" value="'+v+'" aria-label="Jumlah"><button class="p" aria-label="Tambah" onclick="stp(\''+id+'\',1)">+</button></div>'}
 function stp(id,d){var e=$(id),mx=e.max?+e.max:1e9;e.value=Math.max(0,Math.min(mx,(+e.value||0)+d));aktif();if(e.oninput)e.oninput()}
-function setorH(k,st){var L=D.jobs.filter(function(j){return j.st===st}).sort(function(a,b){return String(a.due||'9')<String(b.due||'9')?-1:1});
-  var lbl=st==='jahit'?'jahit → pindah ke Finishing':'potong → pindah ke Jahit';
-  return '<div class="sec"><h2>Setor hasil '+lbl+'</h2>'+(L.length?'<div style="display:flex;flex-direction:column;gap:10px">'+L.map(function(j,i){var p=poinOf(j.cat);
-    return '<div class="it" id="it'+st+i+'"><div><b>'+esc(j.name)+'</b><div class="mu" style="font-size:12px">'+esc(j.cat||'-')+' · '+nf(p)+' poin/pcs · ada '+j.qty+' pcs'+(j.due?' · butuh '+esc(String(j.due).slice(0,10)):'')+'</div></div>'
-     +'<div class="step"><button aria-label="Kurangi" onclick="stp(\'q'+st+i+'\',-1)">−</button><input id="q'+st+i+'" type="number" inputmode="numeric" min="0" max="'+j.qty+'" value="0" data-vid="'+esc(j.vid)+'" data-p="'+p+'" oninput="setorSum(\''+st+'\')"><button class="p" aria-label="Tambah" onclick="stp(\'q'+st+i+'\',1)">+</button><button style="width:auto;padding:0 12px;font-size:14px" onclick="$(\'q'+st+i+'\').value='+j.qty+';setorSum(\''+st+'\')">Semua</button></div></div>'}).join('')+'</div>'
+function setorH(k,st){var g=kG(k),L=D.jobs.filter(function(j){return j.st===st&&j.qty>0&&(!g||j.loc===g)}).sort(function(a,b){return String(a.due||'9')<String(b.due||'9')?-1:1});
+  var W=D.jobs.filter(function(j){return j.st===st&&j.tunggu>0&&(!g||j.loc===g)}).reduce(function(a,j){return a+j.tunggu},0);
+  var jh=st==='jahit',lbl=jh?'jahit → disetujui supervisor → Finishing':'potong → pindah ke Jahit',banyak=!D.me.gud&&!g;
+  return '<div class="sec"><h2>Setor hasil '+lbl+'</h2>'+(jh?'<div class="mu" style="font-size:13px;margin:-4px 0 8px">Dicatat atas nama <b>'+esc(k.unit||k.nama)+'</b>'+(g?' · '+esc(gN(g)):'')+'. Barang pindah ke Finishing setelah disetujui supervisor.'+(W?' <span class="warn">'+W+' pcs sedang menunggu disetujui.</span>':'')+'</div>':'')
+    +(L.length?'<div style="display:flex;flex-direction:column;gap:10px">'+L.map(function(j,i){var p=poinOf(j.cat);
+    return '<div class="it" id="it'+st+i+'"><div><b>'+esc(j.name)+'</b><div class="mu" style="font-size:12px">'+(banyak?esc(gN(j.loc))+' · ':'')+esc(j.cat||'-')+' · '+nf(p)+' poin/pcs · ada '+j.qty+' pcs'+(j.tunggu?' (+'+j.tunggu+' menunggu)':'')+(j.due?' · butuh '+esc(String(j.due).slice(0,10)):'')+'</div></div>'
+     +'<div class="step"><button aria-label="Kurangi" onclick="stp(\'q'+st+i+'\',-1)">−</button><input id="q'+st+i+'" type="number" inputmode="numeric" min="0" max="'+j.qty+'" value="0" data-vid="'+esc(j.vid)+'" data-loc="'+esc(j.loc)+'" data-p="'+p+'" oninput="setorSum(\''+st+'\')"><button class="p" aria-label="Tambah" onclick="stp(\'q'+st+i+'\',1)">+</button><button style="width:auto;padding:0 12px;font-size:14px" onclick="$(\'q'+st+i+'\').value='+j.qty+';setorSum(\''+st+'\')">Semua</button></div></div>'}).join('')+'</div>'
     +'<button class="btn pri big" style="margin-top:10px" id="bs'+st+'" disabled onclick="setor(\''+st+'\')">Isi jumlah dulu</button>'
-   :'<div class="card mu">Tidak ada barang di tahap '+(st==='jahit'?'Jahit':'Cutting')+'.</div>')+'</div>'}
+   :'<div class="card mu">Tidak ada barang di tahap '+(jh?'Jahit':'Cutting')+(g?' '+esc(gN(g)):'')+'.</div>')+'</div>'}
 function poinOf(cat){var c=String(cat||'').toLowerCase().trim();return D.cfg.poin[c]!=null?+D.cfg.poin[c]:(+D.cfg.poinDef||1)}
 function setorSum(st){var q=0,p=0;document.querySelectorAll('input[id^="q'+st+'"]').forEach(function(e){var v=Math.max(0,Math.min(+e.max,Math.floor(+e.value||0)));q+=v;p+=v*(+e.dataset.p);e.closest('.it').classList.toggle('on',v>0)});
   var b=$('bs'+st);b.disabled=!q;b.textContent=q?'Setor '+q+' pcs ('+nf(p)+' poin)':'Isi jumlah dulu';aktif()}
-async function setor(st){var it=[];document.querySelectorAll('input[id^="q'+st+'"]').forEach(function(e){var v=Math.floor(+e.value||0);if(v>0)it.push({vid:e.dataset.vid,q:Math.min(v,+e.max)})});
+async function setor(st){var it=[];document.querySelectorAll('input[id^="q'+st+'"]').forEach(function(e){var v=Math.floor(+e.value||0);if(v>0)it.push({vid:e.dataset.vid,loc:e.dataset.loc||'',q:Math.min(v,+e.max)})});
   if(!it.length)return;var b=$('bs'+st);b.disabled=true;b.textContent='Menyimpan…';
-  var r=await run('setor',Object.assign({tahap:st,items:it},SES),'Tersimpan. Barang pindah ke '+(st==='jahit'?'Finishing':'Jahit')+'.');
+  var r=await run('setor',Object.assign({tahap:st,items:it},SES),st==='jahit'?'Tersimpan. Menunggu persetujuan supervisor.':'Tersimpan. Barang pindah ke Jahit.');
   await load()}
 async function simpanHasil(){var q=+$('hq').value||0;if(!(q>0))return toast('Isi jumlah hasil',1);
   if(await run('catat',Object.assign({jenis:'hasil',q:q,rj:+$('hr').value||0,ket:$('hk').value},SES),'Hasil tersimpan, menunggu dicek'))await load()}
@@ -249,7 +257,8 @@ async function rjSave(){var q=Math.floor(+$('rq').value||0);if(!(q>0))return toa
   var r=await run('catat',Object.assign({jenis:'reject',q:q,produk:$('rp').value,target:RJ.target==='-'?'':RJ.target,alasan:RJ.alasan,ket:$('rk').value},SES),'Reject tercatat, masuk rak reject');
   if(r){$('dlg').close();await load()}}
 function aktLine(a){var k=D.K[a.kid]||{},d=a.d,t='';
-  if(a.jenis==='setor')t='Setor '+(d.tahap==='jahit'?'jahit':'potong')+' · '+esc(d.nama)+' · <b>'+d.q+' pcs</b> ('+nf(d.q*d.poin)+' poin)';
+  if(a.jenis==='setor')t='Setor '+(d.tahap==='jahit'?'jahit':'potong')+(d.unit&&d.unit!==a.oleh?' ('+esc(d.unit)+', oleh '+esc(a.oleh)+')':'')+' · '+esc(d.nama)+' · <b>'+d.q+' pcs</b> ('+nf(d.q*d.poin)+' poin)'
+    +(a.st==='tunggu'||a.st==='proses'?' <span class="pill warn">menunggu disetujui</span>':a.st==='tolak'?' <span class="pill bad">ditolak'+(d.tolak?': '+esc(d.tolak):'')+'</span>':d.tahap==='jahit'?' <span class="pill ok">✓ disetujui</span>':'')+(d.qAsli!=null?' <span class="mu">(disetor '+d.qAsli+')</span>':'')+(d.catatan?' <span class="warn">'+esc(d.catatan)+'</span>':'');
   else if(a.jenis==='hasil')t=esc(d.label)+' · <b>'+nf(d.q)+' '+esc(d.satuan)+'</b>'+(d.rj?' · reject '+d.rj:'')+(d.ket?' · '+esc(d.ket):'')+' '+(a.st==='tunggu'?'<span class="pill warn">belum dicek</span>':a.st==='tolak'?'<span class="pill bad">ditolak</span>':'<span class="pill ok">✓ dicek</span>');
   else if(a.jenis==='reject')t='Reject '+d.q+' pcs · '+esc(d.produk||'-')+' · '+esc(d.alasan)+' · jahitan '+esc(d.target?(D.K[d.target]||{}).nama||'?':'tanpa kartu')+(a.st==='putus'?' · '+esc(d.putus):'');
   else if(a.jenis==='tugas')t='✓ '+esc(d.item);
@@ -263,7 +272,7 @@ function vHari(){if(!HD)HD=ymd(new Date());
   var h='<div class="row" style="margin-bottom:12px"><h1 style="font-size:30px">Laporan harian</h1><span class="sp"></span><input type="date" value="'+HD+'" style="width:auto" onchange="HD=this.value;render()"></div><div class="g2" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">';
   h+=D.kar.map(function(k){var A=D.akt.filter(function(a){return a.kid===k.id&&dayOf(a.tgl)===HD&&a.st!=='batal'}).sort(function(a,b){return a.tgl<b.tgl?-1:1});
     var R=D.akt.filter(function(a){return a.jenis==='reject'&&a.d.target===k.id&&dayOf(a.tgl)===HD&&a.st!=='batal'});
-    var pcs=0,poin=0,hs=0;A.forEach(function(a){if(a.jenis==='setor'){pcs+=+a.d.q;poin+=a.d.q*a.d.poin}if(a.jenis==='hasil'&&a.st!=='tolak')hs+=+a.d.q});
+    var pcs=0,poin=0,hs=0;A.forEach(function(a){if(a.jenis==='setor'&&a.st==='ok'){pcs+=+a.d.q;poin+=a.d.q*a.d.poin}if(a.jenis==='hasil'&&a.st!=='tolak')hs+=+a.d.q});
     var tg=A.filter(function(a){return a.jenis==='tugas'}).length,kg=A.filter(function(a){return a.jenis==='kegiatan'}).length;
     var sum=[];if(pcs)sum.push('<b>'+pcs+' pcs</b> ('+nf(poin)+' poin)');if(hs)sum.push('<b>'+nf(hs)+' '+esc(k.satuan)+'</b>');if(R.length)sum.push('<span class="bad">reject '+R.reduce(function(a,x){return a+x.d.q},0)+' pcs</span>');if((k.cek||[]).length)sum.push('tugas '+tg+'/'+k.cek.length);
     return '<div class="card"><div class="row"><b style="font-size:18px">'+esc(k.nama)+'</b><span class="mu" style="font-size:13px">'+esc(k.bagian||'')+'</span></div><div style="margin:4px 0 6px;font-size:14px">'+(sum.join(' · ')||'<span class="warn">Belum ada catatan</span>')+'</div>'
@@ -274,7 +283,16 @@ function vHari(){if(!HD)HD=ymd(new Date());
 function vCek(){var T=D.akt.filter(function(a){return a.jenis==='hasil'&&a.st==='tunggu'}).sort(function(a,b){return a.tgl<b.tgl?-1:1});
   var R=D.akt.filter(function(a){return a.jenis==='reject'&&a.st==='rak'}),w=ymd(satOf(new Date()));
   var Mn=D.akt.filter(function(a){return a.jenis==='minus'&&a.st!=='batal'&&inWeek(a.tgl,w)});
-  var h='<h1 style="font-size:30px;margin-bottom:10px">Cek hasil &amp; rak reject</h1>';
+  var S=sTg().sort(function(a,b){return a.tgl<b.tgl?-1:1}),tp=0;S.forEach(function(a){tp+=+a.d.q||0});
+  var h='<div class="row" style="margin-bottom:10px"><h1 style="font-size:30px">Setujui setoran &amp; cek hasil</h1>'+(D.me.gud?'<span class="pill ok">'+esc(gN(D.me.gud))+'</span>':'')+'</div>';
+  if(D.noLoc)h+='<div class="card warn" style="margin-bottom:10px;font-size:14px">⚠ '+D.noLoc+' order di tahap Cutting/Jahit belum punya gudang, sehingga tidak tampil di HP setor. Isi gudangnya di menu Produksi.</div>';
+  h+='<div class="sec"><div class="row"><h2>Setoran jahit menunggu <span class="warn">'+S.length+'</span>'+(tp?' <span class="mu" style="font:500 15px Barlow,sans-serif">· '+tp+' pcs</span>':'')+'</h2><span class="sp"></span>'+(S.length>1?'<button class="btn pri" onclick="setorSemua()">✓ Setujui semua</button>':'')+'</div>'
+   +(S.length?'<div style="display:flex;flex-direction:column;gap:8px">'+S.map(function(a){var d=a.d,pr=a.st==='proses';return '<div class="card row"><div style="flex:1;min-width:200px"><b>'+esc(d.unit||a.oleh)+'</b> <span class="mu">· disetor '+esc(a.oleh)+' · '+fdl(dayOf(a.tgl))+' '+hm(a.tgl)+(D.me.gud?'':' · '+esc(gN(d.loc)))+'</span>'
+     +'<div style="font:700 22px Barlow Condensed">'+esc(d.nama)+' · '+d.q+' pcs <span class="mu" style="font-size:15px">'+nf(d.q*d.poin)+' poin</span></div>'+(pr?'<div class="warn" style="font-size:13px">Sedang diproses '+esc(a.cekBy||'')+'… muat ulang sebentar lagi.</div>':'')+'</div>'
+     +(pr?'':'<button class="btn" onclick="setorUbah(\''+a.id+'\','+d.q+')">Ubah jumlah</button><button class="btn dg" onclick="cekTolak(\''+a.id+'\')">Tolak</button><button class="btn pri" onclick="setor1(\''+a.id+'\')">✓ Setujui</button>')+'</div>'}).join('')+'</div>'
+     +'<div class="mu" style="font-size:12px;margin-top:6px">Setujui = barang pindah dari Jahit ke Finishing sesuai jumlah (order dengan deadline terdekat didahulukan). Hitung fisik dulu; bila kurang, pakai Ubah jumlah.</div>'
+    :'<div class="card mu">Tidak ada setoran yang menunggu.</div>')+'</div>';
+  h+='<h2 style="font-size:24px;margin-top:22px">Cek hasil &amp; rak reject</h2>';
   h+='<div class="sec"><div class="row"><h2>Hasil menunggu cek <span class="warn">'+T.length+'</span></h2><span class="sp"></span>'+(T.length?'<button class="btn pri" onclick="cekSemua()">✓ Setujui semua</button>':'')+'</div>'
    +(T.length?'<div style="display:flex;flex-direction:column;gap:8px">'+T.map(function(a){var k=D.K[a.kid]||{};return '<div class="card row"><div style="flex:1;min-width:180px"><b>'+esc(k.nama)+'</b> <span class="mu">· '+esc(a.d.label)+' · '+fdl(dayOf(a.tgl))+' '+hm(a.tgl)+'</span><div style="font:700 22px Barlow Condensed">'+nf(a.d.q)+' '+esc(a.d.satuan)+(a.d.rj?' <span class="bad" style="font-size:15px">reject '+a.d.rj+'</span>':'')+'</div>'+(a.d.ket?'<div class="mu" style="font-size:13px">'+esc(a.d.ket)+'</div>':'')+cocok(a)+'</div>'
      +'<button class="btn" onclick="cekUbah(\''+a.id+'\','+a.d.q+')">Ubah jumlah</button><button class="btn dg" onclick="cekTolak(\''+a.id+'\')">Tolak</button><button class="btn pri" onclick="cek1(\''+a.id+'\')">✓ Setujui</button></div>'}).join('')+'</div>':'<div class="card mu">Tidak ada yang menunggu.</div>')+'</div>';
@@ -287,6 +305,11 @@ function vCek(){var T=D.akt.filter(function(a){return a.jenis==='hasil'&&a.st===
 function cocok(a){var k=D.K[a.kid]||{};if(!/press|sablon|pilah/i.test(a.d.label))return '';var day=dayOf(a.tgl),press=0,pilah=0;
   D.akt.forEach(function(x){if(x.jenis==='hasil'&&x.st!=='tolak'&&dayOf(x.tgl)===day){if(/press/i.test(x.d.label))press+=+x.d.q;else if(/pilah/i.test(x.d.label))pilah+=+x.d.q}});
   if(press&&pilah&&press!==pilah)return '<div class="warn" style="font-size:13px">⚠ Hari ini press '+nf(press)+' vs dipilah '+nf(pilah)+'</div>';return ''}
+async function setorOk(p,msg){var r=await run('cek',p,msg);if(r){if(r.msg&&r.msg.length)toast(r.msg.join(' '),1);await load()}}
+async function setor1(id){var a=D.akt.filter(function(x){return x.id===id})[0];if(!(await yakin('Setujui setoran?',esc(a.d.unit||a.oleh)+' · '+esc(a.d.nama)+' · <b>'+a.d.q+' pcs</b><br>Barang pindah dari Jahit ke Finishing.','Ya, setujui')))return;await setorOk({ids:[id],ok:true},'Disetujui. Barang pindah ke Finishing.')}
+async function setorUbah(id,q){var v=await tanya('Jumlah yang benar (hasil hitung fisik)',q);if(v===null)return;v=+v;if(!(Math.floor(v)===v&&v>0))return toast('Jumlah harus angka bulat lebih dari 0. Pakai Tolak bila tidak ada yang jadi.',1);if(v>q)return toast('Jumlah tidak boleh melebihi setoran ('+q+' pcs). Minta karyawan menyetor tambahan.',1);await setorOk({ids:[id],ok:true,q:v},'Disetujui '+v+' pcs. Barang pindah ke Finishing.')}
+async function setorSemua(){var S=sTg().filter(function(a){return a.st==='tunggu'});if(!S.length)return;if(!(await yakin('Setujui semua setoran?',S.length+' setoran ('+S.reduce(function(t,a){return t+(+a.d.q||0)},0)+' pcs) disetujui sesuai jumlah yang disetor dan pindah ke Finishing.','Ya, setujui semua')))return;
+  await setorOk({ids:S.map(function(a){return a.id}),ok:true},'Semua disetujui. Barang pindah ke Finishing.')}
 async function cek1(id){if(await run('cek',{ids:[id],ok:true},'Disetujui'))await load()}
 async function cekSemua(){var T=D.akt.filter(function(a){return a.jenis==='hasil'&&a.st==='tunggu'});if(!(await yakin('Setujui semua?',T.length+' hasil akan disetujui sesuai jumlah yang dicatat karyawan.','Ya, setujui')))return;if(await run('cek',{ids:T.map(function(a){return a.id}),ok:true},'Semua disetujui'))await load()}
 async function cekUbah(id,q){var v=await tanya('Jumlah yang benar',q);if(v===null)return;if(!(+v>=0))return toast('Jumlah tidak valid',1);if(await run('cek',{ids:[id],ok:true,q:+v},'Disetujui dengan jumlah '+v))await load()}
@@ -380,8 +403,8 @@ var CEKS={ARIP:['Buka & hitung paket belanja','Tata bahan baku ke rak','Cek kebe
 function vAtur(){var c=D.cfg;
   var h='<div class="row" style="margin-bottom:12px"><h1 style="font-size:30px">Atur</h1><span class="sp"></span><button class="btn pri" onclick="karEdit()">+ Karyawan</button></div>';
   if(!D.kar.length)h+='<div class="card" style="margin-bottom:12px"><b>Belum ada karyawan.</b> <span class="mu">Isi otomatis 13 karyawan Wonodadi (ID ceklok, bagian, upah dari aplikasi gaji lama)? PIN tetap dibuat satu per satu.</span><div style="margin-top:10px"><button class="btn pri" onclick="isiSeed()">Isi 13 karyawan</button></div></div>';
-  h+='<div class="scroll"><table style="min-width:900px"><tr><th>ID CEKLOK</th><th>NAMA</th><th>BAGIAN</th><th>KERJA</th><th>AREA HP</th><th class="num">UPAH/JAM</th><th class="num">TARGET/MINGGU</th><th>CHECKLIST</th><th>PIN</th><th></th></tr>'
-   +D.kar.map(function(k){return '<tr><td class="mu">'+esc(k.cid||'-')+'</td><td><b>'+esc(k.nama)+'</b></td><td>'+esc(k.bagian||'')+'</td><td style="font-size:13px">'+k.kerja.map(function(x){return x==='hasil'?esc(k.hasil||'hasil'):x}).join(', ')+'</td><td>'+esc(k.area||'-')+'</td><td class="num'+(k.upah?'':' warn')+'">'+(k.upah?rp(k.upah):'isi')+'</td><td class="num'+(k.target?'':' mu')+'">'+(k.target?nf(k.target)+' '+((k.kerja.indexOf('jahit')>=0||k.kerja.indexOf('potong')>=0)?'poin':esc(k.satuan)):'uji coba')+'</td><td class="mu">'+(k.cek||[]).length+'</td><td>'+(k.pin?'<span class="ok">✓</span>':'<span class="warn">belum</span>')+'</td><td><button class="btn" onclick="karEdit(\''+k.id+'\')">Ubah</button></td></tr>'}).join('')+'</table></div>';
+  h+='<div class="scroll"><table style="min-width:900px"><tr><th>ID CEKLOK</th><th>NAMA</th><th>BAGIAN</th><th>KERJA</th><th>GUDANG</th><th>UNIT</th><th>AREA HP</th><th class="num">UPAH/JAM</th><th class="num">TARGET/MINGGU</th><th>CHECKLIST</th><th>PIN</th><th></th></tr>'
+   +D.kar.map(function(k){return '<tr><td class="mu">'+esc(k.cid||'-')+'</td><td><b>'+esc(k.nama)+'</b></td><td>'+esc(k.bagian||'')+'</td><td style="font-size:13px">'+k.kerja.map(function(x){return x==='hasil'?esc(k.hasil||'hasil'):x}).join(', ')+'</td><td'+(k.gud?'':' class="warn"')+'>'+(k.gud?esc(gN(k.gud)):(D.cfg.loc?esc(gN(D.cfg.loc))+' <span class="mu">(bawaan)</span>':'belum diatur'))+'</td><td>'+esc(k.unit||'-')+'</td><td>'+esc(k.area||'-')+'</td><td class="num'+(k.upah?'':' warn')+'">'+(k.upah?rp(k.upah):'isi')+'</td><td class="num'+(k.target?'':' mu')+'">'+(k.target?nf(k.target)+' '+((k.kerja.indexOf('jahit')>=0||k.kerja.indexOf('potong')>=0)?'poin':esc(k.satuan)):'uji coba')+'</td><td class="mu">'+(k.cek||[]).length+'</td><td>'+(k.pin?'<span class="ok">✓</span>':'<span class="warn">belum</span>')+'</td><td><button class="btn" onclick="karEdit(\''+k.id+'\')">Ubah</button></td></tr>'}).join('')+'</table></div>';
   var pt=Object.keys(c.poin);
   h+='<div class="g2 sec" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">'
    +'<div class="card"><h2 style="font-size:22px">Poin produk (per kategori POS)</h2><div class="mu" style="font-size:12px;margin-bottom:8px">Kategori lain = '+c.poinDef+' poin. Pisahkan baris: kategori = poin</div><textarea id="cp">'+esc(pt.map(function(k){return k+' = '+c.poin[k]}).join('\n'))+'</textarea></div>'
@@ -389,7 +412,9 @@ function vAtur(){var c=D.cfg;
    +'<div class="card"><h2 style="font-size:22px">Tunjangan</h2><div class="g2"><label class="f">Hadir 6 hari<input id="h6" type="number" value="'+(c.hadir[6]||0)+'"></label><label class="f">Hadir 5 hari<input id="h5" type="number" value="'+(c.hadir[5]||0)+'"></label><label class="f">Hadir 4 hari<input id="h4" type="number" value="'+(c.hadir[4]||0)+'"></label>'
    +['A','B','C','D'].map(function(g){return '<label class="f">Nilai '+g+'<input id="k'+g+'" type="number" value="'+(c.kerja[g]||0)+'"></label>'}).join('')+'</div></div>'
    +'<div class="card"><h2 style="font-size:22px">Cara hitung nilai (10 poin)</h2><div class="mu" style="font-size:13px;line-height:1.6">Hasil 0–4: ≥100% target = 4 · ≥90% = 3 · ≥75% = 2 · ≥50% = 1<br>Mutu 0–3: reject ≤1% = 3 · ≤3% = 2 · ≤5% = 1<br>Disiplin 0–3: mulai 3, −1 tiap: telat lebih dari <input id="c_telat" type="number" value="'+c.telatMaks+'" style="width:60px;min-height:30px;padding:2px 6px;display:inline-block">× · tugas tetap &lt; <input id="c_cekmin" type="number" value="'+c.cekMin+'" style="width:64px;min-height:30px;padding:2px 6px;display:inline-block">% · setiap catatan disiplin<br>A 9–10 · B 7–8 · C 5–6 · D ≤4</div>'
-   +(D.gudang&&D.gudang.length?'<label class="f" style="margin-top:10px">Barang produksi dari gudang<select id="c_loc"><option value="">Semua gudang</option>'+D.gudang.map(function(g){return '<option value="'+esc(g.id)+'"'+(String(g.id)===String(c.loc)?' selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></label>':'')+'</div></div>'
+   +(D.gudang&&D.gudang.length?'<label class="f" style="margin-top:10px">Gudang bawaan (karyawan &amp; akun yang belum diatur)<select id="c_loc"><option value="">Semua gudang</option>'+D.gudang.map(function(g){return '<option value="'+esc(g.id)+'"'+(String(g.id)===String(c.loc)?' selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></label>':'')+'</div></div>'
+   +'<div class="card sec"><h2 style="font-size:22px">Gudang per akun</h2><div class="mu" style="font-size:13px;margin-bottom:8px">Akun HP setor dan supervisor hanya melihat karyawan, barang produksi, dan setoran gudangnya. Akun yang tidak diatur memakai gudang bawaan; Owner yang tidak diatur melihat semua gudang.</div>'
+   +'<div class="scroll"><table><tr><th>AKUN POS</th><th>GUDANG</th></tr>'+(D.akun||[]).map(function(a){var v=(c.akun||{})[String(a.user).toLowerCase()]||'';return '<tr><td><b>'+esc(a.name)+'</b> <span class="mu">@'+esc(a.user)+'</span></td><td><select class="akg" data-u="'+esc(a.user)+'" style="width:auto"><option value="">'+(D.cfg.loc?'Bawaan ('+esc(gN(D.cfg.loc))+')':'Tidak diatur')+'</option>'+(D.gudang||[]).map(function(g){return '<option value="'+esc(g.id)+'"'+(String(g.id)===String(v)?' selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></td></tr>'}).join('')+'</table></div></div>'
    +'<div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn pri" onclick="cfgSave()">Simpan pengaturan</button></div>';
   return h}
 async function cfgSave(){var poin={},bad='';$('cp').value.split('\n').forEach(function(l){var m=l.split('=');if(m.length<2)return;var k=m[0].trim().toLowerCase(),v=parseFloat(m[1].replace(',','.'));if(k&&v>0)poin[k]=v;else if(k)bad=l});
@@ -397,21 +422,23 @@ async function cfgSave(){var poin={},bad='';$('cp').value.split('\n').forEach(fu
   var p={poin:poin,batas:$('c_batas').value,makan:+$('c_makan').value,penuh:+$('c_penuh').value,setengah:+$('c_setengah').value,jumBatas:$('c_jumBatas').value,jumPenuh:+$('c_jumPenuh').value,jumSetengah:+$('c_jumSetengah').value,
     hadir:{6:+$('h6').value,5:+$('h5').value,4:+$('h4').value},kerja:{A:+$('kA').value,B:+$('kB').value,C:+$('kC').value,D:+$('kD').value},telatMaks:+$('c_telat').value,cekMin:+$('c_cekmin').value};
   if($('c_loc'))p.loc=$('c_loc').value;
+  var ak={};document.querySelectorAll('.akg').forEach(function(e){if(e.value)ak[e.dataset.u]=e.value});if(document.querySelector('.akg'))p.akun=ak;
   if(await run('cfgSave',p,'Pengaturan tersimpan'))await load()}
-async function isiSeed(){if(!(await yakin('Isi 13 karyawan?','Data dasar dibuat dari daftar bagian & aplikasi gaji lama. Upah ALFI dan MUDAH masih kosong.','Ya, isi')))return;
-  for(var i=0;i<SEED.length;i++){var s=SEED[i];await kj('karSave',{cid:s[0],nama:s[1],bagian:s[2],kerja:s[3],hasil:s[4],satuan:s[5],area:s[6],upah:s[7],cek:CEKS[s[1]]||[],urut:i+1})}
+async function isiSeed(){var gW=((D.gudang||[]).filter(function(g){return /wonodadi/i.test(g.name)})[0]||{}).id||'';if(!(await yakin('Isi 13 karyawan?','Data dasar dibuat dari daftar bagian & aplikasi gaji lama. Upah ALFI dan MUDAH masih kosong.','Ya, isi')))return;
+  for(var i=0;i<SEED.length;i++){var s=SEED[i];await kj('karSave',{cid:s[0],nama:s[1],bagian:s[2],kerja:s[3],hasil:s[4],satuan:s[5],area:s[6],upah:s[7],cek:CEKS[s[1]]||[],urut:i+1,gud:gW,unit:s[3].indexOf('jahit')>=0?'Tim Jahit Wonodadi':''})}
   toast('13 karyawan dibuat. Buat PIN masing-masing lewat tombol Ubah.');await load()}
 function karEdit(id){var k=id?D.K[id]:{kerja:[],cek:[],satuan:'pcs'},d=$('dlg');
   d.innerHTML='<h3>'+(id?'Ubah '+esc(k.nama):'Karyawan baru')+'</h3><div class="g2"><label class="f">Nama<input id="e_nama" value="'+esc(k.nama||'')+'"></label><label class="f">ID ceklok<input id="e_cid" value="'+esc(k.cid||'')+'"></label></div>'
    +'<label class="f" style="margin-top:8px">Bagian (tampil di slip)<input id="e_bag" value="'+esc(k.bagian||'')+'"></label>'
    +'<div style="margin:10px 0 4px" class="mu">Jenis kerja</div><div class="chips">'+Object.keys(KERJA).map(function(x){return '<label class="chip'+(k.kerja.indexOf(x)>=0?' on':'')+'" style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="e_k" value="'+x+'" '+(k.kerja.indexOf(x)>=0?'checked':'')+' style="width:20px;min-height:20px" onchange="this.parentNode.classList.toggle(\'on\',this.checked)">'+KERJA[x]+'</label>'}).join('')+'</div>'
-   +'<div class="g2" style="margin-top:8px"><label class="f">Nama hasil (mis. Press sablon)<input id="e_has" value="'+esc(k.hasil||'')+'"></label><label class="f">Satuan<input id="e_sat" value="'+esc(k.satuan||'pcs')+'"></label><label class="f">Area HP<input id="e_area" value="'+esc(k.area||'')+'" list="areas"></label><label class="f">Upah per jam (Rp)<input id="e_upah" type="number" value="'+(k.upah||'')+'"></label><label class="f">Target per minggu (poin / satuan)<input id="e_tgt" type="number" value="'+(k.target||'')+'" placeholder="kosong = uji coba"></label><label class="f">PIN baru (4 angka)<input id="e_pin" inputmode="numeric" maxlength="4" placeholder="'+(k.pin?'kosong = tidak diubah':'wajib dibuat')+'"></label></div>'
+   +'<div class="g2" style="margin-top:8px"><label class="f">Nama hasil (mis. Press sablon)<input id="e_has" value="'+esc(k.hasil||'')+'"></label><label class="f">Satuan<input id="e_sat" value="'+esc(k.satuan||'pcs')+'"></label><label class="f">Gudang<select id="e_gud"><option value="">'+(D.cfg.loc?'Bawaan ('+esc(gN(D.cfg.loc))+')':'Belum diatur')+'</option>'+(D.gudang||[]).map(function(g){return '<option value="'+esc(g.id)+'"'+(String(g.id)===String(k.gud||'')?' selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></label><label class="f">Unit setoran (mis. Tim Jahit Wonodadi)<input id="e_unit" value="'+esc(k.unit||'')+'" list="units" placeholder="kosong = atas nama sendiri"></label><label class="f">Area HP<input id="e_area" value="'+esc(k.area||'')+'" list="areas"></label><label class="f">Upah per jam (Rp)<input id="e_upah" type="number" value="'+(k.upah||'')+'"></label><label class="f">Target per minggu (poin / satuan)<input id="e_tgt" type="number" value="'+(k.target||'')+'" placeholder="kosong = uji coba"></label><label class="f">PIN baru (4 angka)<input id="e_pin" inputmode="numeric" maxlength="4" placeholder="'+(k.pin?'kosong = tidak diubah':'wajib dibuat')+'"></label></div>'
+   +'<datalist id="units">'+[...new Set(D.kar.map(function(x){return x.unit}).filter(Boolean))].map(function(a){return '<option value="'+esc(a)+'">'}).join('')+'</datalist>'
    +'<datalist id="areas">'+[...new Set(D.kar.map(function(x){return x.area}).filter(Boolean))].map(function(a){return '<option value="'+esc(a)+'">'}).join('')+'</datalist>'
    +'<label class="f" style="margin-top:8px">Jobdesk (uraian, tampil di HP)<textarea id="e_jd">'+esc(k.jobdesk||'')+'</textarea></label>'
    +'<label class="f" style="margin-top:8px">Checklist harian (maks. 5, satu per baris)<textarea id="e_cek" style="min-height:110px">'+esc((k.cek||[]).join('\n'))+'</textarea></label>'
    +'<div class="row" style="margin-top:14px">'+(id?'<button class="btn dg" onclick="karNon(\''+id+'\')">Nonaktifkan</button>':'')+'<span class="sp"></span><button class="btn" onclick="$(\'dlg\').close()">Batal</button><button class="btn pri" onclick="karSave(\''+(id||'')+'\')">Simpan</button></div>';
   d.showModal()}
-function karForm(id){var k=id?D.K[id]:{};return{id:id,nama:$('e_nama').value,cid:$('e_cid').value,bagian:$('e_bag').value,kerja:[...document.querySelectorAll('.e_k:checked')].map(function(x){return x.value}),hasil:$('e_has').value,satuan:$('e_sat').value,area:$('e_area').value,upah:+$('e_upah').value||0,target:+$('e_tgt').value||0,pin:$('e_pin').value.trim(),jobdesk:$('e_jd').value,cek:$('e_cek').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),urut:k.urut}}
+function karForm(id){var k=id?D.K[id]:{};return{id:id,nama:$('e_nama').value,cid:$('e_cid').value,bagian:$('e_bag').value,kerja:[...document.querySelectorAll('.e_k:checked')].map(function(x){return x.value}),hasil:$('e_has').value,satuan:$('e_sat').value,area:$('e_area').value,gud:$('e_gud').value,unit:$('e_unit').value.trim(),upah:+$('e_upah').value||0,target:+$('e_tgt').value||0,pin:$('e_pin').value.trim(),jobdesk:$('e_jd').value,cek:$('e_cek').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),urut:k.urut}}
 async function karSave(id){var p=karForm(id);if(p.cek.length>5)return toast('Checklist maksimal 5',1);if(p.pin&&!/^\d{4}$/.test(p.pin))return toast('PIN harus 4 angka',1);
   if(await run('karSave',p,'Tersimpan')){$('dlg').close();await load()}}
 async function karNon(id){if(!(await yakin('Nonaktifkan '+D.K[id].nama+'?','Karyawan tidak tampil lagi. Data lama tetap tersimpan.','Ya')))return;var p=karForm(id);p.on=false;p.pin='';if(await run('karSave',p,'Dinonaktifkan'))await load()}
