@@ -11,7 +11,7 @@ const PAGE_OF={beranda:'index.html',kasir:'kasir.html',riwayat:'penjualan.html',
 const EXT={bahan:'stok-bahan-baku-v9.html',pesanan:'pesanan-custom.html',rekap:'rekap-order-custom.html',kinerja:'kinerja.html'};
 let LEAVING=false,LEAVE_T=null,LEAVE_TXT='';
 /* nama menu untuk tulisan "Membuka ..." di samping status sinkron */
-const PG_NAME={beranda:'Beranda',kasir:'Kasir',riwayat:'Penjualan',laporan:'Penjualan',produk:'Produk',stok:'Produk',bahan:'Stok bahan baku',produksi:'Produksi',pesanan:'Pesanan custom',rekap:'Rekap order',kinerja:'Gaji & kinerja',pengguna:'Pengaturan',peran:'Pengaturan',cadangan:'Pengaturan'};
+const PG_NAME={beranda:'Beranda',kasir:'Kasir',riwayat:'Penjualan',laporan:'Penjualan',produk:'Produk',stok:'Produk',bahan:'Stok bahan baku',produksi:'Produksi',pesanan:'Pesanan custom',rekap:'Rekap order',kinerja:'Kinerja',pengguna:'Pengaturan',peran:'Pengaturan',cadangan:'Pengaturan'};
 function pgInfo(t){const e=$('sync');if(!e)return;if(!LEAVE_TXT)LEAVE_TXT=e.textContent;e.textContent=t;e.className='muted'}
 /* lepas kunci "sedang pindah halaman": dipakai saat halaman tampil lagi dari tombol Kembali, atau perpindahan tidak terjadi */
 function leaveReset(){LEAVING=false;clearTimeout(LEAVE_T);const e=$('sync');if(e&&LEAVE_TXT){e.textContent=LEAVE_TXT;e.className='muted'}LEAVE_TXT='';document.documentElement.style.cursor=''}
@@ -117,7 +117,7 @@ const SALES=[['riwayat','Riwayat penjualan'],['laporan','Laporan penjualan']];
 const nb=(k,l)=>{const n=k==='produksi'?lowN():0;return `<button class="nv${k===tab?' on':''}" title="${l}" aria-label="${l}" onclick="tab='${k}';render()">${IC(NI[k])}${k==='beranda'?'':`<span class="nl">${l}</span>`}${n?'<span class="bgn">'+n+'</span>':''}</button>`};
 const navH=()=>(can('kasir')?nb('kasir','Kasir'):'')
  +(SALES.some(s=>can(s[0]))?`<button class="nv${SALES.some(s=>s[0]===tab)?' on':''}" title="Penjualan" aria-label="Penjualan" onclick="go('${SALES.find(s=>can(s[0]))[0]}')">${IC('chart')}<span class="nl">Penjualan</span></button>`:'')
- +[['produk','Produk'],['bahan','Stok bahan baku'],['produksi','Produksi'],['pesanan','Pesanan custom'],['rekap','Rekap order'],['kinerja','Gaji & kinerja']].filter(t=>tabOk(t[0])).map(t=>nb(t[0],t[1])).join('')+hubH();
+ +[['produk','Produk'],['bahan','Stok bahan baku'],['produksi','Produksi'],['pesanan','Pesanan custom'],['rekap','Rekap order'],['kinerja','Kinerja']].filter(t=>tabOk(t[0])).map(t=>nb(t[0],t[1])).join('')+hubH();
 let ddT=null;
 function ddOpen(hov){if(hov&&!matchMedia('(hover:hover)').matches)return;clearTimeout(ddT);const m=$('ddmenu'),b=document.querySelector('.dd');if(!m||!b)return;const r=b.getBoundingClientRect();m.style.top=r.bottom+'px';m.classList.add('on');m.style.left=Math.max(4,Math.min(r.left,innerWidth-m.offsetWidth-4))+'px'}
 function ddClose(hov){if(hov){clearTimeout(ddT);ddT=setTimeout(()=>ddClose(0),150);return}const m=$('ddmenu');if(m)m.classList.remove('on')}

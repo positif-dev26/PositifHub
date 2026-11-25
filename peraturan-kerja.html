@@ -26,6 +26,8 @@ h1{font-size:clamp(32px,5vw,52px);line-height:1.08;letter-spacing:-.02em;margin:
 .lead{font-size:20px;color:var(--ink2);max-width:720px;margin:0}
 .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:26px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--ink2)}
 .meta b{color:var(--ink);font-weight:600}
+.badge.ok{background:#e3f7d8;color:#2d6a12}
+.toc span{display:contents}
 .badge{display:inline-block;background:var(--warn);color:var(--warnink);font:700 11px/1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.08em;padding:6px 9px;border-radius:999px;text-transform:uppercase}
 .btn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}
 .btn:hover{border-color:var(--ink)}
@@ -72,24 +74,25 @@ footer{max-width:1080px;margin:0 auto;padding:24px;border-top:1px solid var(--li
 </style>
 </head>
 <body>
-<div class="mast"><img src="logo-positif.png" alt="Positif Clothing" onerror="this.style.display='none'"><span class="sp"></span><a class="back" href="kinerja.html">← Gaji &amp; Kinerja</a></div>
+<div class="mast"><img src="logo-positif.png" alt="Positif Clothing" onerror="this.style.display='none'"><span class="sp"></span><a class="back" href="kinerja.html">← Kinerja</a></div>
 
 <header class="hero">
   <div class="kicker">Dokumen resmi · HRD Positif Clothing</div>
   <h1>Peraturan Kerja &amp; Jobdesk</h1>
   <p class="lead">Aturan jam kerja, upah, penilaian kinerja, disiplin, dan tugas setiap posisi untuk karyawan produksi Workshop Rejosari dan Workshop Kedawung.</p>
   <div class="meta">
-    <span><span class="badge">Draf · belum ditandatangani</span></span>
-    <span>Nomor <b>PK/POSITIF/2026/01</b></span>
-    <span>Versi <b>25 November 2026</b></span>
-    <span>Berlaku <b>sejak ditandatangani</b></span>
+    <span><span class="badge" id="mBadge">Draf · belum ditandatangani</span></span>
+    <span>Nomor <b id="mNo">PK/POSITIF/2026/01</b></span>
+    <span>Versi <b id="mVer">25 November 2026</b></span>
+    <span>Berlaku <b id="mBer">sejak ditandatangani</b></span>
     <span><button class="btn" onclick="window.print()">Cetak / simpan PDF</button></span>
   </div>
 </header>
 
 <div class="wrap">
-  <nav class="toc" id="toc"><div class="t">Daftar isi</div><a href="#bab1">Bab 1 — Ketentuan umum</a><a href="#bab2">Bab 2 — Jam kerja &amp; kehadiran</a><a href="#bab3">Bab 3 — Upah &amp; tunjangan</a><a href="#bab4">Bab 4 — Penilaian kinerja</a><a href="#bab5">Bab 5 — Tata tertib &amp; disiplin</a><a href="#bab6">Bab 6 — Penutup &amp; persetujuan</a><a href="#lampA">Lampiran A — Jobdesk per posisi</a></nav>
+  <nav class="toc" id="toc"><div class="t">Daftar isi</div><span id="tocL"><a href="#bab1">Bab 1 — Ketentuan umum</a><a href="#bab2">Bab 2 — Jam kerja &amp; kehadiran</a><a href="#bab3">Bab 3 — Upah &amp; tunjangan</a><a href="#bab4">Bab 4 — Penilaian kinerja</a><a href="#bab5">Bab 5 — Tata tertib &amp; disiplin</a><a href="#bab6">Bab 6 — Penutup &amp; persetujuan</a></span><a href="#lampA">Lampiran A — Jobdesk per posisi</a></nav>
   <article>
+<div id="isiDoc">
 <h2 id="bab1">Bab 1 — Ketentuan umum</h2>
 <p>Peraturan ini berlaku untuk semua karyawan produksi Positif Clothing di Workshop Rejosari dan Workshop Kedawung, mulai tanggal ditandatangani.</p>
 <div class="tbl"><table>
@@ -305,6 +308,7 @@ footer{max-width:1080px;margin:0 auto;padding:24px;border-top:1px solid var(--li
 <h2 id="bab6">Bab 6 — Penutup &amp; persetujuan</h2>
 <p>Peraturan ini berlaku sejak ditandatangani dan ditinjau ulang paling lambat setiap 2 tahun, atau lebih cepat bila ada perubahan cara kerja. Perubahan diumumkan dan ditandatangani ulang. Hal yang belum diatur diputuskan Owner setelah mendengar supervisor dan karyawan yang bersangkutan.</p>
 <p>Setiap karyawan menandatangani lembar persetujuan yang menyatakan sudah membaca, memahami, dan menyetujui peraturan ini, termasuk cara penilaian dan tunjangan di Bab 3 dan Bab 4. Lembar persetujuan disimpan Owner.</p>
+</div>
     <h2 id="lampA">Lampiran A — Jobdesk per posisi</h2>
     <p>Setiap tugas dinilai supervisor setiap minggu. Kolom <em>Baik bila</em> adalah patokannya: sebagian terpenuhi berarti Cukup, tidak dikerjakan atau berulang salah berarti Kurang.</p>
     <div class="scale"><span>Baik</span><span>Cukup</span><span>Kurang</span></div>
@@ -337,6 +341,37 @@ function draw(){
 document.getElementById('chips').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;cur=b.dataset.p;draw()});
 try{var h=decodeURIComponent((location.hash.match(/posisi=([^&]+)/)||[])[1]||'');if(P.indexOf(h)>0)cur=h}catch(e){}
 draw();
+/* markdown sederhana → HTML (judul ##/###, paragraf, daftar, tabel, **tebal**, *miring*, [teks](https://…), [isi …]) */
+function mdH(src){
+  var E=function(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  var IN=function(s){return E(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*])\*([^*]+)\*/g,'$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\[isi([^\]]*)\]/g,'<span class="isi">[isi$1]</span>')};
+  var L=String(src||'').replace(/\r/g,'').split('\n'),o=[],i=0,n=0,slug=function(t){return 'bab-'+(++n)};
+  while(i<L.length){var l=L[i];
+    if(!l.trim()){i++;continue}
+    var h=l.match(/^(#{2,3})\s+(.*?)\s*(\{#[\w-]+\})?$/);
+    if(h){var id=h[3]?h[3].slice(2,-1):(h[1].length===2?slug(h[2]):'');o.push('<h'+h[1].length+(id?' id="'+id+'"':'')+'>'+IN(h[2])+'</h'+h[1].length+'>');i++;continue}
+    if(/^\s*\|/.test(l)){var rows=[];while(i<L.length&&/^\s*\|/.test(L[i])){rows.push(L[i].trim().replace(/^\||\|$/g,'').split('|').map(function(c){return c.trim()}));i++}
+      var hd=rows[0],body=rows.slice(rows.length>1&&/^:?-{2,}/.test(rows[1][0]||'')?2:1);
+      o.push('<div class="tbl"><table><thead><tr>'+hd.map(function(c){return '<th>'+IN(c)+'</th>'}).join('')+'</tr></thead><tbody>'+body.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+IN(c)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div>');continue}
+    if(/^\d+\.\s/.test(l)){var it=[];while(i<L.length&&/^\d+\.\s/.test(L[i])){it.push(L[i].replace(/^\d+\.\s/,''));i++}o.push('<ol>'+it.map(function(t){return '<li>'+IN(t)+'</li>'}).join('')+'</ol>');continue}
+    if(/^[-*]\s/.test(l)){var it2=[];while(i<L.length&&/^[-*]\s/.test(L[i])){it2.push(L[i].replace(/^[-*]\s/,''));i++}o.push('<ul>'+it2.map(function(t){return '<li>'+IN(t)+'</li>'}).join('')+'</ul>');continue}
+    var p=[];while(i<L.length&&L[i].trim()&&!/^(#{2,3}\s|\s*\||\d+\.\s|[-*]\s)/.test(L[i])){p.push(L[i].trim());i++}
+    o.push('<p>'+IN(p.join(' '))+'</p>')}
+  return o.join('\n')}
+
+/* isi terbaru dari server HRD (diubah Owner di menu Kinerja › Peraturan); gagal = tetap isi bawaan halaman ini */
+(function(){var H='https://script.google.com/macros/s/AKfycbxmcTx5di5toLD-244l40UoLyQQ7mzXXCPD5T2wjXVxnpKZWmFdd8adx1_VekVF4oK5/exec?doc=peraturan';
+  fetch(H).then(function(r){return r.json()}).then(function(j){if(!j||!j.ok||!j.data||!j.data.md)return;var d=j.data,m=d.meta||{};
+    document.getElementById('isiDoc').innerHTML=mdH(d.md);
+    var hs=[].slice.call(document.querySelectorAll('#isiDoc h2'));hs.forEach(function(h,i){if(!h.id)h.id='bab'+(i+1)});
+    document.getElementById('tocL').innerHTML=hs.map(function(h){return '<a href="#'+h.id+'">'+h.textContent.replace(/[&<>]/g,'')+'</a>'}).join('');
+    if(Array.isArray(d.jobs)&&d.jobs.length){J=d.jobs;P=['Semua'].concat(J.map(function(r){return r[0]}).filter(function(v,i,a){return a.indexOf(v)===i}));if(P.indexOf(cur)<0)cur='Semua';draw()}
+    var fd=function(s){try{return new Date(s+'T00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}catch(e){return s}};
+    if(m.nomor)document.getElementById('mNo').textContent=m.nomor;if(m.versi)document.getElementById('mVer').textContent=fd(m.versi);
+    var b=document.getElementById('mBadge');if(m.status==='berlaku'){b.textContent='Berlaku';b.className='badge ok';document.getElementById('mBer').textContent=m.berlaku?'sejak '+fd(m.berlaku):'sudah ditandatangani'}
+    L=[].slice.call(document.querySelectorAll('#toc a'));document.querySelectorAll('article h2[id]').forEach(function(h){io.observe(h)})}).catch(function(){})})();
 /* tandai bab yang sedang dibaca */
 var L=[].slice.call(document.querySelectorAll('#toc a'));
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){L.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)})}})},{rootMargin:'0px 0px -70% 0px'});
