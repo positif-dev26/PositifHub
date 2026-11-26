@@ -13,7 +13,7 @@
      (nama dari fonts.google.com/icons, huruf kecil, spasi jadi garis bawah). */
   var ICO = {
     receipt: 'universal_currency',     /* Kasir */
-    chart: 'bar_chart',                /* Penjualan */
+    chart: 'monitoring',                /* Penjualan */
     box: 'package_2',                  /* Produk */
     layers: 'layers',                  /* Stok bahan baku */
     factory: 'factory',                /* Produksi */
