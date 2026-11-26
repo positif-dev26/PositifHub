@@ -588,3 +588,23 @@ body.kd-rs{cursor:col-resize;user-select:none;-webkit-user-select:none}
 .kd-v,.kd-rz{display:none!important}
 [data-cs=d] #grid .p.kd{height:44px}
 }
+
+/* =====================================================================
+   IKON GOOGLE (Material Symbols Sharp) — outline normal, filled saat aktif
+   Nama ikon diatur di ikon.js
+   ===================================================================== */
+.ms{font-family:'Material Symbols Sharp';font-weight:400;font-style:normal;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;-webkit-font-smoothing:antialiased;font-feature-settings:'liga';-webkit-font-feature-settings:'liga';font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;transition:font-variation-settings .15s;user-select:none;overflow:hidden}
+.ico.ms{width:1em!important;height:1em!important;font-size:22px;line-height:1;display:block;fill:none;stroke:none}
+/* ukuran per konteks (menyamai ukuran ikon lama) */
+.ib .ms{font-size:20px}.lkb .ms{font-size:20px}.lnk .ms{font-size:16px}.bcc .btn .ms{font-size:18px}
+.acci .ms{font-size:19px}.cdr .ms{font-size:22px}.pp2 .btn .ms{font-size:17px}.sbi .ms{font-size:24px}
+/* menu Produksi (sidebar desktop) */
+#view .prod>.ptabs.rl button .ms{font-size:24px}
+#view .prod>.ptabs.rl button.on .ms{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+/* bar bawah di HP: nonaktif outline, aktif terisi */
+@media(max-width:760px){
+  #view .prod>.ptabs.rl button .ms{font-size:26px}
+  #view .prod>.ptabs.rl button.on .ms{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+}
+/* tombol tab lain yang aktif ikut terisi */
+.ptabs button.on .ms,.ib.on .ms{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}

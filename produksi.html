@@ -11,7 +11,8 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tema.css?v=20261125b">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" data-ms="1">
+<link rel="stylesheet" href="tema.css?v=20261127a">
 <style>
 /* ===== Produksi v5: warna per tahap ===== */
 .sb[data-st]{border-color:color-mix(in srgb,var(--sc) 55%,transparent)!important;background:linear-gradient(165deg,color-mix(in srgb,var(--sc) 11%,transparent),transparent 45%),var(--card)!important;box-shadow:0 0 26px -12px var(--sc)!important}
@@ -23,7 +24,7 @@
 .pdt[data-st]{border-color:var(--sc)!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--sc) 15%,transparent),0 0 30px -10px var(--sc)!important}
 .pdt[data-st] .pn{background:color-mix(in srgb,var(--sc) 14%,transparent);border-color:color-mix(in srgb,var(--sc) 55%,transparent)}
 .sch{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:999px;font:600 13px Barlow,sans-serif;color:var(--sc);border:1px solid color-mix(in srgb,var(--sc) 55%,transparent);background:color-mix(in srgb,var(--sc) 12%,transparent);white-space:nowrap}
-.sch .ico{width:15px;height:15px}
+.sch .ico{width:15px;height:15px}.sch .ms{font-size:15px}
 .btn.go{background:var(--sc)!important;border-color:var(--sc)!important;color:#0a0a0a!important;box-shadow:0 0 22px -8px var(--sc)!important}
 .stp.sc .sti b{border-color:color-mix(in srgb,var(--sc) 60%,transparent);color:var(--sc)}
 .stp.sc .sti.cur b,.stp.sc .sti.dn b{background:var(--sc);border-color:var(--sc);color:#0a0a0a;box-shadow:0 0 14px -3px var(--sc)}
@@ -208,6 +209,7 @@ td.lt,.lt{color:#ff8a80;font-weight:600}
 <div id="pp" class="modal" onclick="if(event.target===this)ppClose()"><div class="card ppc" id="ppc" role="dialog" aria-modal="true" aria-label="Proses produksi"></div></div>
 <div id="plabels"></div>
 <script>window.PAGE_TABS=["produksi"];window.PAGE_HOME="produksi";</script>
+<script src="ikon.js?v=1"></script>
 <script src="inti.js?v=20261126a"></script>
 <script>
 /* =====================================================================
@@ -219,7 +221,7 @@ const SC={cetak:'#4da3ff',bahan:'#a78bfa',cutting:'#ff9f43',jahit:'#f472b6',fini
 const SI2={cetak:'printer',bahan:'layers',cutting:'scissors',jahit:'shirt',finishing:'sparkles',selesai:'check',batal:'ban'};
 const scv=s=>'--sc:'+(SC[s]||'#d4ff3f');
 const stn=s=>STL[s]||SL[s]||s;
-const schip=s=>'<span class="sch" style="'+scv(s)+'">'+IC(SI2[s]||'workflow')+esc(stn(s))+'</span>';
+const schip=s=>'<span class="sch" style="'+scv(s)+'">'+MS(SI2[s]||'workflow')+esc(stn(s))+'</span>';
 const RSN=['Sablon / print cacat','Warna tidak sesuai','Kain cacat / bolong','Salah potong','Ukuran tidak sesuai','Jahitan miring / lepas','Noda / kotor','Lainnya'];
 const LIMDEF={cetak:7,bahan:3,cutting:2,jahit:3,finishing:2};
 /* v6: tahap Rencana = order cetak yang belum dikonfirmasi sudah dicetak di vendor (data: stage 'cetak' + rc=1).
@@ -259,7 +261,7 @@ const PTS={alur:'Alur',cetak:'Cetak',vendor:'Vendor',selesai:'Selesai',reject:'R
 const PTI={alur:'workflow',cetak:'printer',vendor:'factory',selesai:'check',reject:'ban',gudang:'warehouse',petugas:'users',atur:'sliders'};
 const PT2=[['alur','Alur produksi'],['cetak','Buat order cetak'],['vendor','Konfirmasi cetak vendor'],['selesai','Selesai'],['reject','Reject'],['gudang','Data gudang'],['atur','Pengaturan, vendor & petugas']];
 function vProd(){if(pst==='petugas')pst='atur';ppClose();if(!pTabOk(pst))pst=(PT2.map(t=>t[0]).find(pTabOk)||'alur');if(!pday)pday=ymd(new Date());$('view').classList.toggle('fit',pst==='cetak');
- $('view').innerHTML='<div class="prod"><div class="ptabs rl">'+PT2.filter(t=>pTabOk(t[0])).map(([k,l])=>'<button class="'+(k===pst?'on':'')+'" title="'+l+'" aria-label="'+l+'" onclick="pst=\''+k+'\';vProd();scrollTo(0,0)">'+IC(PTI[k])+'<span>'+PTS[k]+'</span></button>').join('')+'</div><div id="pbody"></div></div>';
+ $('view').innerHTML='<div class="prod"><div class="ptabs rl">'+PT2.filter(t=>pTabOk(t[0])).map(([k,l])=>'<button class="'+(k===pst?'on':'')+'" title="'+l+'" aria-label="'+l+'" onclick="pst=\''+k+'\';vProd();scrollTo(0,0)">'+MS(PTI[k])+'<span>'+PTS[k]+'</span></button>').join('')+'</div><div id="pbody"></div></div>';
  ({alur:flowView,cetak:cetakView,vendor:vendorView,selesai:doneView,reject:rejectView,petugas:petugasView,atur:aturView,gudang:gudangView})[pst]();stk()}
 
 /* =====================================================================
@@ -325,10 +327,10 @@ function flowView(){const q=pq.trim().toLowerCase(),A0=groups(),all=A0.filter(g=
   L.forEach(g=>{const n=splitN(g.name);(by[n.b]=by[n.b]||[]).push({g,s:n.s})});
   const names=Object.keys(by).sort((a,b)=>a.localeCompare(b,'id'));
   const ext=g=>{if(s==='rencana')return '<span class="vx">dipesan '+fds(ymd(g.date))+(g.due?' · butuh '+fds(g.due):'')+'</span>';if(s==='cetak'&&g.es)return '<span class="vx'+(W[g.k].lv===2?' bad':'')+'">sampai ± '+fds(g.es)+'</span>';return ''};
-  return '<section class="sb'+(psel&&L.some(g=>g.k===psel)?' cur':'')+'" data-st="'+s+'" style="'+scv(s)+'"><div class="sbh"><span class="sbi">'+IC(SI2[s])+'</span><div class="sbt"><b><span class="sbn">'+(ix+1)+'</span>'+STL[s]+'</b><small>'+L.length+' item · '+dz(tot)+(nw?' · <span style="color:#ff6b6b">'+nw+' tertahan</span>':'')+'</small>'+(s!=='rencana'&&pjName(s)?'<small class="pjn">PJ: '+esc(pjName(s))+'</small>':'')+'</div><button class="ib sbp" title="Cetak A4 '+STL[s]+'" aria-label="Cetak A4 '+STL[s]+'" onclick="printStage(\''+s+'\')">'+IC('printer')+'</button></div><div class="sbl">'
+  return '<section class="sb'+(psel&&L.some(g=>g.k===psel)?' cur':'')+'" data-st="'+s+'" style="'+scv(s)+'"><div class="sbh"><span class="sbi">'+MS(SI2[s])+'</span><div class="sbt"><b><span class="sbn">'+(ix+1)+'</span>'+STL[s]+'</b><small>'+L.length+' item · '+dz(tot)+(nw?' · <span style="color:#ff6b6b">'+nw+' tertahan</span>':'')+'</small>'+(s!=='rencana'&&pjName(s)?'<small class="pjn">PJ: '+esc(pjName(s))+'</small>':'')+'</div><button class="ib sbp" title="Cetak A4 '+STL[s]+'" aria-label="Cetak A4 '+STL[s]+'" onclick="printStage(\''+s+'\')">'+MS('printer')+'</button></div><div class="sbl">'
   +(names.map(b=>'<div class="vg"><div class="vgn">'+esc(b)+'</div>'+by[b].sort((x,y)=>x.s.localeCompare(y.s,'id',{numeric:true})).map(x=>'<button class="vr'+(x.g.k===psel?' on':'')+'" onclick="ppOpen(\''+esc(x.g.k)+'\')" title="Klik untuk memproses"><span class="vs">'+wdot(W[x.g.k])+esc(x.s||'Standar')+(multi?'<small> · '+esc(gname(x.g.loc))+'</small>':'')+'</span><span class="vq" title="'+nf(x.g.qty)+' pcs">'+dz(x.g.qty)+'</span>'+ext(x.g)+'</button>').join('')+'</div>').join('')||'<div class="sbe">Kosong</div>')+'</div></section>'};
  const _sv={};document.querySelectorAll('#pbody .sbl').forEach(e=>{const s=e.closest('.sb');if(s)_sv[s.dataset.st]=e.scrollTop});
- $('pbody').innerHTML='<div class="sk2"><div class="pbar">'+(gl.length>1?'<select onchange="pg=this.value;flowView()"><option value="Semua"'+(pg==='Semua'?' selected':'')+'>Semua gudang</option>'+gl.map(g=>'<option value="'+esc(g.id)+'"'+(g.id===pg?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select>':'')+'<input id="pq" placeholder="Cari produk" value="'+esc(pq)+'" oninput="pfs(this.value)">'+(()=>{const hc=lkHabis('bahan'),hj=lkHabis('cutting');return '<button class="btn sec lkb lkc" onclick="printKerja(\'bahan\')" title="Cetak lembar kerja tim Cutting dari rak bahan (A4). Stok diambil terbaru dulu.">'+IC('scissors')+'<span><b>Lembar Cutting</b><small>dari rak bahan'+(hc?' <i>'+hc+' habis</i>':'')+'</small></span></button><button class="btn sec lkb lkj" onclick="printKerja(\'cutting\')" title="Cetak lembar kerja tim Jahit dari rak cutting (A4). Stok diambil terbaru dulu.">'+IC('shirt')+'<span><b>Lembar Jahit</b><small>dari rak cutting'+(hj?' <i>'+hj+' habis</i>':'')+'</small></span></button>'})()+(n2?'<span class="wb w2">&#9888; '+n2+' tertahan / lewat tanggal</span>':'')+(n1?'<span class="wb w1">'+n1+' mendekati batas</span>':'')+'</div></div>'
+ $('pbody').innerHTML='<div class="sk2"><div class="pbar">'+(gl.length>1?'<select onchange="pg=this.value;flowView()"><option value="Semua"'+(pg==='Semua'?' selected':'')+'>Semua gudang</option>'+gl.map(g=>'<option value="'+esc(g.id)+'"'+(g.id===pg?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select>':'')+'<input id="pq" placeholder="Cari produk" value="'+esc(pq)+'" oninput="pfs(this.value)">'+(()=>{const hc=lkHabis('bahan'),hj=lkHabis('cutting');return '<button class="btn sec lkb lkc" onclick="printKerja(\'bahan\')" title="Cetak lembar kerja tim Cutting dari rak bahan (A4). Stok diambil terbaru dulu.">'+MS('scissors')+'<span><b>Lembar Cutting</b><small>dari rak bahan'+(hc?' <i>'+hc+' habis</i>':'')+'</small></span></button><button class="btn sec lkb lkj" onclick="printKerja(\'cutting\')" title="Cetak lembar kerja tim Jahit dari rak cutting (A4). Stok diambil terbaru dulu.">'+MS('shirt')+'<span><b>Lembar Jahit</b><small>dari rak cutting'+(hj?' <i>'+hj+' habis</i>':'')+'</small></span></button>'})()+(n2?'<span class="wb w2">&#9888; '+n2+' tertahan / lewat tanggal</span>':'')+(n1?'<span class="wb w1">'+n1+' mendekati batas</span>':'')+'</div></div>'
  +'<div class="sbs kb">'+RS2.map(box).join('')+'</div>';
  document.querySelectorAll('#pbody .sb').forEach(s=>{const e=s.querySelector('.sbl');if(e&&_sv[s.dataset.st])e.scrollTop=_sv[s.dataset.st]});
  stk();kdInit();kbInit()}
@@ -384,7 +386,7 @@ function ppOpen(k){const G=groups().find(x=>x.k===k);if(!G)return;if(isV(G))retu
 function ppClose(){const m=$('pp');if(m&&m.classList.contains('on')){m.classList.remove('on');psel='';document.querySelectorAll('.vr.on,.sb.cur').forEach(b=>b.classList.remove('on','cur'))}}
 addEventListener('keydown',e=>{if(e.key==='Escape')ppClose()});
 const gabH=G=>'<div class="sec2"><b>Isi gabungan</b>'+G.parts.map(p=>'<div class="dr2"><span>'+esc(p.j.no||'')+(p.j.due?' <small class="muted">butuh '+fdt(p.j.due)+'</small>':'')+'</span><span>'+dz(p.it.qty)+' <button type="button" class="jh" onclick="showHist(\''+p.j.id+'\')" title="Riwayat" aria-label="Riwayat">'+HIC+'</button></span></div>').join('')+'</div>';
-const ppHead=(G,W)=>'<div class="pph">'+schip(G.st)+wbadge(W)+'<span class="ppa">'+(isAdm&&G.st!=='selesai'?'<button class="ppx ppe" onclick="ppEdit(\''+esc(G.k)+'\')" title="Edit pesanan" aria-label="Edit pesanan">'+IC('pencil')+'</button>':'')+(OWN()?'<button class="ppx ppd" onclick="pHapus(\''+esc(G.k)+'\')" title="Hapus seluruh pesanan (Owner)" aria-label="Hapus seluruh pesanan">'+IC('trash')+'</button>':'')+'<button class="ppx" onclick="ppClose()" title="Tutup" aria-label="Tutup">'+XIC+'</button></span></div><div class="pn">'+esc(G.name)+'</div>';
+const ppHead=(G,W)=>'<div class="pph">'+schip(G.st)+wbadge(W)+'<span class="ppa">'+(isAdm&&G.st!=='selesai'?'<button class="ppx ppe" onclick="ppEdit(\''+esc(G.k)+'\')" title="Edit pesanan" aria-label="Edit pesanan">'+MS('pencil')+'</button>':'')+(OWN()?'<button class="ppx ppd" onclick="pHapus(\''+esc(G.k)+'\')" title="Hapus seluruh pesanan (Owner)" aria-label="Hapus seluruh pesanan">'+MS('trash')+'</button>':'')+'<button class="ppx" onclick="ppClose()" title="Tutup" aria-label="Tutup">'+XIC+'</button></span></div><div class="pn">'+esc(G.name)+'</div>';
 function panel(G,W){if(G.st==='rencana')return panelR(G,W);
  const ix=RS.indexOf(G.st),nx=RS[ix+1]||'selesai',pv=RS[ix-1],oth=GL().filter(x=>x.id!==G.loc),k=esc(G.k),ni='type="text" inputmode="numeric" data-n',cet=G.st==='cetak';
  const meta=['<b>'+dzf(G.qty)+'</b>',cet?'di vendor '+W.age+' hari':W.age+' hari di tahap ini (batas '+W.lim+')'];
@@ -397,8 +399,8 @@ function panel(G,W){if(G.st==='rencana')return panelR(G,W);
   +'<label class="ppl" for="rj">Reject</label><div class="rjr"><input '+ni+' id="rj" placeholder="0 pcs" oninput="prc(\''+k+'\')" aria-label="Reject (pcs)"><input id="nt" placeholder="Catatan…" aria-label="Catatan"></div><div id="rjx" hidden>'+rjSel+'</div>'
   +'<button class="btn wide go" style="'+scv(nx)+'" onclick="padv(\''+k+'\')">'+(nx==='selesai'?'Selesai: masuk stok POS':'Pindahkan ke '+STL[nx])+'</button>'
   +(oth.length>1?'<select id="kt" class="kts" aria-label="Gudang tujuan">'+oth.map(x=>'<option value="'+esc(x.id)+'">Kirim ke '+esc(x.name)+'</option>').join('')+'</select>':'')
-  +'<div class="pp2">'+(oth.length?'<button class="btn sec" onclick="psend(\''+k+'\')">'+IC('truck')+(one?'Kirim ke '+esc(oth[0].name):'Kirim')+'</button>':'')
-  +'<button class="btn sec bk2" onclick="pback(\''+k+'\')">'+IC('undo')+'Kembali '+STL[pv]+'</button></div>';
+  +'<div class="pp2">'+(oth.length?'<button class="btn sec" onclick="psend(\''+k+'\')">'+MS('truck')+(one?'Kirim ke '+esc(oth[0].name):'Kirim')+'</button>':'')
+  +'<button class="btn sec bk2" onclick="pback(\''+k+'\')">'+MS('undo')+'Kembali '+STL[pv]+'</button></div>';
   return h+'<details><summary>Rincian & riwayat</summary>'+gabH(G)+'</details></div>'}
  h+='<label class="ppl" for="dl">'+(cet?'Diterima dari vendor':'Sudah jadi')+'</label><div class="f2"><input '+ni+' id="dl" value="'+Math.floor(G.qty/12)+'" oninput="prc(\''+k+'\')" aria-label="Lusin"><span>lusin</span><input '+ni+' id="dp" value="'+G.qty%12+'" oninput="prc(\''+k+'\')" aria-label="Pcs"><span>pcs</span></div><div id="sisa" class="muted"></div>'
  +(cet?'<label class="ppl" for="tg">Masuk ke gudang</label><select id="tg">'+GL().map(g=>'<option value="'+esc(g.id)+'"'+(g.id===(pg!=='Semua'?pg:GL()[0].id)?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select>'

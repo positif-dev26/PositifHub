@@ -9,22 +9,30 @@
 (function () {
   var POS_API = 'https://script.google.com/macros/s/AKfycbwUEqf4lS9mn3Gdyo3vpDmTl3u9gxQzIEIf83dJMeopMDDQpHu_-pcG9puoPFHfMOOBkA/exec';
   var LOGO = 'logo-positif.png';
+  /* Ikon = Google Material Symbols (Sharp). Ganti ikon: ubah nama di bawah
+     (nama dari fonts.google.com/icons, huruf kecil, spasi jadi garis bawah). */
   var ICO = {
-    receipt: '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
-    chart: '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
-    box: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
-    layers: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
-    factory: '<path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/>',
-    clipboard: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
-    rekap: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
-    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-    grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
-    sticker: '<path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/>',
-    key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
-    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
-    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
+    receipt: 'shopping_cart',          /* Kasir */
+    chart: 'bar_chart',                /* Penjualan */
+    box: 'inventory_2',                /* Produk */
+    layers: 'layers',                  /* Stok bahan baku */
+    factory: 'factory',                /* Produksi */
+    clipboard: 'assignment',           /* Pesanan custom */
+    rekap: 'assignment_turned_in',     /* Rekap order */
+    users: 'group',                    /* Kinerja */
+    grid: 'apps',                      /* Aplikasi lain */
+    sticker: 'sticky_note_2',          /* Layout stiker */
+    key: 'key',                        /* Ganti PIN */
+    settings: 'settings',              /* Pengaturan */
+    logout: 'logout'                   /* Keluar */
   };
-  var ic = function (n) { return '<svg class="pb-ico" viewBox="0 0 24 24" aria-hidden="true">' + (ICO[n] || '') + '</svg>'; };
+  (function () {
+    if (document.querySelector('link[data-ms]')) return;
+    var l = document.createElement('link'); l.rel = 'stylesheet'; l.setAttribute('data-ms', '1');
+    l.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block';
+    (document.head || document.documentElement).appendChild(l);
+  })();
+  var ic = function (n) { return '<span class="pb-ico" aria-hidden="true">' + (ICO[n] || n) + '</span>'; };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
 
   function cred() {
@@ -50,8 +58,7 @@
       ['produksi', 'factory', 'Produksi', 'produksi.html', any(['prod_lihat', 'prod_buat'])],
       ['pesanan', 'clipboard', 'Pesanan custom', 'pesanan-custom.html', !!me() && (me().role === 'admin' || me().role === 'supervisor')],
       ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', any(['rekap_kedawung', 'rekap_wonodadi'])],
-      ['kinerjaR', 'users', 'Kinerja Rejosari', 'kinerja.html?ws=g2', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji']) || (!!me() && me().role === 'supervisor')],
-      ['kinerjaK', 'users', 'Kinerja Kedawung', 'kinerja.html?ws=g1', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji']) || (!!me() && me().role === 'supervisor')]
+      ['kinerja', 'users', 'Kinerja', 'kinerja.html', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji'])]
     ];
   }
   var HUB = [['Resi Print', 'resi_print.html', 'app_resi_print'], ['Resi Video Packing', 'resi_video_packing.html', 'app_resi_video'], ['Resi Pickup Kurir', 'resi_pickup-kurir.html', 'app_resi_pickup']];
@@ -65,14 +72,15 @@
     '.pbar .pb-nv:hover{color:#f4f4f2;background:rgba(255,255,255,.07)}' +
     '.pbar .pb-nv .pb-nl{display:none}.pbar .pb-nv.on{background:#d4ff3f;color:#0a0a0a;box-shadow:0 0 24px -6px rgba(212,255,63,.7)}.pbar .pb-nv.on .pb-nl{display:inline}' +
     '.pbar .pb-hub{border:1px solid rgba(255,255,255,.12)}' +
-    '.pbar .pb-ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}' +
+    '.pb-ico{font-family:"Material Symbols Sharp";font-weight:400;font-style:normal;font-size:24px;width:1em;height:1em;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;overflow:hidden;direction:ltr;-webkit-font-smoothing:antialiased;font-feature-settings:"liga";-webkit-font-feature-settings:"liga";font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24;transition:font-variation-settings .15s;flex:none;display:block;user-select:none}' +
+    '.pbar .pb-nv.on .pb-ico{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}' +
     '.pbar .pb-tools{display:flex;align-items:center;gap:8px;flex:none}' +
     '.pbar .pb-clk{margin-left:auto;font-size:13px;color:#8f8f8a;white-space:nowrap;font-variant-numeric:tabular-nums;flex:none}.pbar .pb-clk b{color:#f4f4f2;font-size:14px}' +
     '.pbar .pb-acc{flex:none;border:1px solid rgba(212,255,63,.35);background:#060606;color:#f4f4f2;font:600 14px Barlow,sans-serif;padding:6px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}.pbar .pb-acc:hover{border-color:#d4ff3f}' +
     '.pb-menu{position:fixed;z-index:200;min-width:220px;padding:6px;background:#111;color:#f4f4f2;border:1px solid rgba(212,255,63,.5);border-radius:14px;box-shadow:0 0 30px -10px rgba(212,255,63,.5),0 20px 50px rgba(0,0,0,.6);display:none;font:15px Barlow,system-ui,sans-serif}' +
     '.pb-menu.on{display:block}.pb-menu .pb-h{padding:8px 10px 10px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:4px}.pb-menu .pb-h b{display:block;font-size:16px}.pb-menu .pb-h span{font-size:13px;color:#8f8f8a}' +
     '.pb-menu a{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;color:#f4f4f2;text-decoration:none;font-weight:600;cursor:pointer}.pb-menu a:hover{background:rgba(212,255,63,.1)}' +
-    '.pb-menu a .pb-ico{width:19px;height:19px;fill:none;stroke:#d4ff3f;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.pb-menu a.dg,.pb-menu a.dg .pb-ico{color:#ff8a8a;stroke:#ff8a8a}' +
+    '.pb-menu a .pb-ico{font-size:20px;color:#d4ff3f}.pb-menu a.dg,.pb-menu a.dg .pb-ico{color:#ff8a8a}' +
     '.pb-menu hr{border:0;border-top:1px solid rgba(255,255,255,.1);margin:4px 2px}' +
     '.pb-block{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:20px;background:#060606;color:#f4f4f2;font:16px Barlow,system-ui,sans-serif}' +
     '.pb-block div{width:min(380px,100%);text-align:center;padding:28px 24px;border-radius:22px;background:#0f0f0f;border:1.5px solid rgba(212,255,63,.5);box-shadow:0 0 44px -14px rgba(212,255,63,.55)}' +
