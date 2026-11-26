@@ -12,6 +12,48 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tema.css?v=20261123a">
+<style>
+/* ===== Keranjang kasir: baris, ringkasan, diskon, uang cepat, panel bawah di hp ===== */
+.ch{display:flex;align-items:center;gap:8px;margin:0 0 6px}
+.ch h2{margin:0;font-size:24px}.ch .sp{flex:1}
+.cnt{min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--text);color:var(--bg);font:600 13px/22px Barlow,sans-serif;text-align:center}
+.cnt:empty{display:none}
+.lk{background:none;border:0;color:var(--muted);cursor:pointer;font:500 14px Barlow,sans-serif;padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
+.lk:hover{color:var(--text)}.lk:disabled{display:none}
+.cx{display:none}
+.emp{padding:18px 4px;color:var(--muted);line-height:1.5}.emp b{display:block;color:var(--text);font-size:17px}
+.line .lt{text-align:right;font-weight:600}
+.line .lm{grid-column:1/-1;color:var(--muted);font-size:13px}
+.qty button:disabled{opacity:.35;cursor:not-allowed}
+.qty .rm,.qty .dl{display:inline-grid;place-items:center;padding:0}
+.qty .rm{border-color:transparent;background:transparent;color:var(--muted)}
+.qty .rm:hover{color:var(--bad)}
+.dsc{display:flex;align-items:center;gap:8px}.dsc input{width:100px}
+.dseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dseg button{border:0;background:var(--bg);color:var(--muted);padding:0 12px;height:34px;font:600 14px Barlow,sans-serif;cursor:pointer}
+.dseg button.on{background:var(--text);color:var(--bg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin:0 0 8px}.chips:empty{display:none}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:999px;padding:6px 12px;min-height:32px;font:500 14px Barlow,sans-serif;cursor:pointer}
+.chip.on{border-color:var(--text);font-weight:600}
+.gh{min-height:18px;font-size:13px;margin:6px 0 0;text-align:center;color:var(--muted)}
+.cbar,.cbd{display:none}
+.toast.ut{pointer-events:auto}.toast.ut i{font-style:normal}
+.toast.ut button{margin-left:6px;background:none;border:0;color:#6fcf97;font:700 14px Barlow,sans-serif;cursor:pointer;text-decoration:underline;padding:2px 4px}
+@media(max-width:860px){
+ #grid{padding-bottom:80px}
+ #cartc{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:46;max-height:90vh;max-height:90dvh;border-radius:20px 20px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));transform:translateY(105%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s;box-shadow:0 -14px 40px rgba(0,0,0,.55)}
+ #cartc.open{transform:none;visibility:visible;transition:transform .25s ease}
+ .cx{display:inline-grid;place-items:center;font-size:20px}
+ .cbd{display:block;position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .2s}
+ .cbd.open{opacity:1;pointer-events:auto}
+ .cbar{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:18;align-items:center;gap:10px;min-height:54px;padding:0 16px;border-radius:16px;font-size:16px}
+ .cbar.on{display:flex}
+ .cbar .cb-t{margin-left:auto;font-size:18px;font-weight:700}.cbar .cb-a{font-weight:500;opacity:.8}
+ body:has(#cbar.on) #toasts{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+ body:has(#cartc.open) #toasts{bottom:auto;top:calc(var(--hh,52px) + 10px)}
+}
+@media(prefers-reduced-motion:reduce){#cartc,.cbd{transition:none}}
+</style>
 </head>
 <body>
 <header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
@@ -26,24 +68,28 @@
 <div id="zm" class="modal" onclick="if(event.target===this)zClose()"><div class="card wide" id="zmc"></div></div>
 <div id="plabels"></div>
 <script>window.PAGE_TABS=["kasir"];window.PAGE_HOME="kasir";</script>
-<script src="inti.js?v=20261124a"></script>
+<script src="inti.js?v=20261126a"></script>
 <script>
 /* ---------- KASIR ---------- */
 /* keranjang disimpan di perangkat: pindah menu atau refresh tidak menghapus isinya */
 const CK=()=>'positif_cart:'+USR;let cartLd=false;
 function cartSave(){try{localStorage.setItem(CK(),JSON.stringify(cart))}catch(e){}}
 function cartLoad(){if(cartLd||!USR)return;cartLd=true;try{const c=JSON.parse(localStorage.getItem(CK())||'[]');if(Array.isArray(c)&&!cart.length)cart=c.filter(x=>x&&findV(x.id))}catch(e){}}
-function vKasir(){cartLoad();
+function vKasir(){cartLoad();dm='rp';
  $('view').innerHTML=`<div class="pos"><section class="fl">
  <div class="bar fn"><input id="q" placeholder="Scan barcode atau cari produk..." value="${esc(q)}" oninput="q=this.value;grid()" onkeydown="scanKey(event)" autocomplete="off" autofocus><select id="cat" onchange="cat=this.value;grid()">${[HID,...cats()].map(c=>`<option ${c===cat?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
  <div id="msg" class="muted fn" style="min-height:22px;margin:-4px 0 8px"></div><div id="grid" class="grid fs"></div></section>
- <aside class="card fl"><h2 class="fn" style="margin:0 0 4px;font-size:24px">Keranjang</h2><div id="lines" class="fs"></div><div class="fn">
- <div class="row"><span>Diskon (Rp)</span><input id="disc" type="text" inputmode="numeric" data-n min="0" value="0" style="width:130px" oninput="calc()"></div>
+ <aside class="card fl" id="cartc" role="dialog" aria-label="Keranjang"><div class="ch fn"><h2>Keranjang</h2><span class="cnt" id="cn"></span><span class="sp"></span><button type="button" class="lk" id="clr" onclick="clearCart()" disabled>Kosongkan</button><button type="button" class="x cx" onclick="closeSheet()" aria-label="Tutup keranjang">&times;</button></div><div id="lines" class="fs"></div><div class="fn">
+ <div class="row"><span class="muted">Subtotal <span id="sc"></span></span><span id="sub" class="num">Rp0</span></div>
+ <div class="row"><span>Diskon</span><div class="dsc"><div class="dseg" role="group" aria-label="Jenis diskon"><button type="button" id="dm-rp" class="on" onclick="setDM('rp')">Rp</button><button type="button" id="dm-pct" onclick="setDM('pct')">%</button></div><input id="disc" type="text" inputmode="numeric" data-n min="0" value="0" oninput="calc()" aria-label="Diskon dalam rupiah"></div></div>
+ <div class="chips" id="dch"></div>
+ <div class="row" id="dsrow" style="display:none"><span class="muted">Hemat</span><b id="dsv" class="ok"></b></div>
  <div class="row"><span>Pembayaran</span><select id="pay" onchange="calc()"><option>Transfer</option><option>Tunai</option><option>QRIS</option></select></div>
  <div class="row" id="paidrow"><span>Uang diterima</span><input id="paid" type="text" inputmode="numeric" data-n min="0" style="width:130px" oninput="calc()"></div>
+ <div class="chips" id="qc"></div>
  <div class="row"><span class="muted">Total bayar</span><span id="tot" class="num total">Rp0</span></div>
- <div class="row"><span class="muted">Kembalian</span><b id="chg">Rp0</b></div>
- <button class="btn big" id="go" onclick="checkout()">Bayar</button></div></aside></div>`;
+ <div class="row"><span class="muted" id="chgl">Kembalian</span><b id="chg">Rp0</b></div>
+ <button class="btn big" id="go" onclick="checkout()">Bayar</button><div class="gh" id="gh" aria-live="polite"></div></div></aside></div><button type="button" id="cbar" class="btn cbar" onclick="openSheet()"><b id="cbn"></b><span class="cb-t" id="cbt"></span><span class="cb-a">Lihat &rsaquo;</span></button><div id="cbd" class="cbd" onclick="closeSheet()"></div>`;
  grid();lines();$('q').focus();
 }
 function grid(){
@@ -66,28 +112,64 @@ function closePk(){pk=null;$('pk').classList.remove('on');const i=$('q');if(i)i.
 function renderPk(){pkSide();const p=S.products.find(x=>x.id===pk);if(!p)return;
  $('pkc').innerHTML=`<h2 style="margin:0 0 4px;font-size:24px">${esc(p.name)}</h2><p class="muted" style="margin:0 0 10px">Pilih varian. Klik beberapa kali untuk menambah jumlah.</p><div class="grid">${p.variants.map(v=>{const c=cart.find(c=>c.id===v.id);return `<button class="p" ${v.stock<1?'disabled':''} onclick="addV(${v.id})">${v.img?`<img src="${v.img}" alt="">`+zb(p.id,v.id):''}<b>${esc(vl(v))}</b><small>${v.stock>=9999?'jasa':'stok '+nf(v.stock)}${c?', di keranjang '+c.qty:''}</small><span class="num">${rp(vp(p,v))}</span></button>`}).join('')}</div><div class="row"><span></span><button class="btn" onclick="closePk()">Selesai</button></div>`}
 function addV(id){const x=findV(id);if(!x)return;const c=cart.find(c=>c.id===id);
- if(c){if(c.qty<x.v.stock)c.qty++}else if(x.v.stock>0)cart.push({id,name:cn(x.p,x.v),price:vp(x.p,x.v),qty:1});
+ if(c){if(c.qty<x.v.stock)c.qty++;else note('Stok '+cn(x.p,x.v)+' hanya '+nf(x.v.stock),1)}else if(x.v.stock>0)cart.push({id,name:cn(x.p,x.v),price:vp(x.p,x.v),qty:1});
  lines();if(pk)renderPk();else{const i=$('q');if(i)i.focus()}}
-function setQty(id,v){const c=cart.find(x=>x.id===id),x=findV(id);v=Math.floor(+v||0);if(!c)return;if(x&&v>x.v.stock){note('Stok hanya '+nf(x.v.stock),1);v=x.v.stock}if(v<1)cart=cart.filter(y=>y.id!==id);else c.qty=v;lines();const q=$('q');if(q)q.focus()}
-function chg(id,d){const c=cart.find(x=>x.id===id),x=findV(id);c.qty+=d;if(x&&c.qty>x.v.stock)c.qty=x.v.stock;if(c.qty<1)cart=cart.filter(x=>x.id!==id);lines()}
+const TR='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7h15M10 7V4.5h4V7M6.5 7l.9 12.5h9.2L17.5 7"/></svg>';
+let dm='rp';
+const itemsN=()=>cart.reduce((a,c)=>a+c.qty,0);
+const sheetOpen=()=>{const a=$('cartc');return !!a&&a.classList.contains('open')};
+function openSheet(){const a=$('cartc'),b=$('cbd');if(a)a.classList.add('open');if(b)b.classList.add('open')}
+function closeSheet(){const a=$('cartc'),b=$('cbd');if(a)a.classList.remove('open');if(b)b.classList.remove('open')}
+addEventListener('keydown',e=>{if(e.key==='Escape'&&sheetOpen()&&!document.querySelector('.ubx'))closeSheet()});
+function undoToast(m,fn){let h=$('toasts');if(!h){h=document.createElement('div');h.id='toasts';document.body.appendChild(h)}
+ const t=document.createElement('div');t.className='toast ut';t.innerHTML='<span>&#10003;</span><i></i><button type="button">Urungkan</button>';t.querySelector('i').textContent=m;
+ let done=0;t.querySelector('button').onclick=()=>{if(done)return;done=1;t.remove();fn()};
+ h.appendChild(t);setTimeout(()=>{if(!done){t.classList.add('out');setTimeout(()=>t.remove(),400)}},6000)}
+function fq(){const i=$('q');if(i&&!sheetOpen())i.focus()}
+function setQty(id,v){const c=cart.find(x=>x.id===id),x=findV(id);v=Math.floor(+v||0);if(!c)return;if(x&&v>x.v.stock){note('Stok hanya '+nf(x.v.stock),1);v=x.v.stock}if(v<1){delL(id);return}c.qty=v;lines();fq()}
+function chg(id,d){const c=cart.find(x=>x.id===id),x=findV(id);if(!c)return;const n=c.qty+d;if(n<1){delL(id);return}c.qty=x&&n>x.v.stock?x.v.stock:n;lines()}
+function delL(id){const i=cart.findIndex(c=>c.id===id);if(i<0)return;const it=cart.splice(i,1)[0];lines();fq();
+ undoToast(it.name+' dihapus',()=>{if(!cart.some(c=>c.id===it.id)){cart.splice(Math.min(i,cart.length),0,it);lines()}})}
+async function clearCart(){if(!cart.length)return;const n=itemsN();
+ if(!await uiConfirm('Kosongkan keranjang? '+nf(n)+' item akan dihapus.','Kosongkan',true))return;
+ const old=cart.map(c=>({...c}));cart=[];lines();closeSheet();
+ undoToast('Keranjang dikosongkan',()=>{if(!cart.length){cart=old;lines()}})}
+function setDM(m){dm=m;$('dm-rp').classList.toggle('on',m==='rp');$('dm-pct').classList.toggle('on',m==='pct');$('disc').value=0;$('disc').setAttribute('aria-label',m==='pct'?'Diskon dalam persen':'Diskon dalam rupiah');calc()}
+function setDisc(v){$('disc').value=v;calc()}
+function setPaid(v){$('paid').value=v;calc()}
+function quick(t){const o=[t];[10000,20000,50000,100000].forEach(u=>{const v=Math.ceil(t/u)*u;if(!o.includes(v))o.push(v)});return o.slice(0,4)}
 function lines(){
  cart=cart.filter(c=>findV(c.id));cartSave();
- $('lines').innerHTML=cart.length?cart.map(c=>`<div class="line"><b>${esc(c.name)}</b><span>${rp(c.price*c.qty)}</span><div class="qty"><button onclick="chg(${c.id},-1)" aria-label="Kurangi">-</button><input type="text" inputmode="numeric" data-n value="${c.qty}" style="width:52px;text-align:center;height:30px" onchange="setQty(${c.id},this.value)" aria-label="Jumlah"><button onclick="chg(${c.id},1)" aria-label="Tambah">+</button></div><span class="muted">@ ${rp(c.price)}</span></div>`).join(''):'<p class="muted">Scan barcode atau pilih produk untuk mulai transaksi.</p>';
+ $('lines').innerHTML=cart.length?cart.map(c=>{const x=findV(c.id),st=x?x.v.stock:1e9,mx=st<9999&&c.qty>=st,nm=esc(c.name);
+  return `<div class="line"><b>${nm}</b><span class="lt">${rp(c.price*c.qty)}</span><div class="qty">${c.qty>1?`<button type="button" onclick="chg(${c.id},-1)" aria-label="Kurangi">&minus;</button>`:`<button type="button" class="dl" onclick="delL(${c.id})" aria-label="Hapus ${nm}">${TR}</button>`}<input type="text" inputmode="numeric" data-n value="${c.qty}" style="width:52px;text-align:center;height:30px" onchange="setQty(${c.id},this.value)" aria-label="Jumlah"><button type="button" onclick="chg(${c.id},1)" aria-label="Tambah" ${mx?'disabled':''}>+</button>${c.qty>1?`<button type="button" class="x rm" onclick="delL(${c.id})" aria-label="Hapus ${nm}">${TR}</button>`:''}</div><span class="muted">@ ${rp(c.price)}</span>${mx?`<small class="lm">Maks. stok ${nf(st)}</small>`:''}</div>`}).join('')
+  :'<div class="emp"><b>Keranjang masih kosong</b>Scan barcode atau pilih produk untuk mulai transaksi.</div>';
  calc();
 }
 function calc(){
- const sub=cart.reduce((a,c)=>a+c.price*c.qty,0),d=Math.min(Math.max(+$('disc').value||0,0),sub),t=sub-d,cash=$('pay').value==='Tunai';
+ const sub=cart.reduce((a,c)=>a+c.price*c.qty,0),cash=$('pay').value==='Tunai',n=itemsN();
+ let raw=+$('disc').value||0;if(dm==='pct'&&raw>100){raw=100;$('disc').value=100}
+ const d=Math.min(Math.max(dm==='pct'?Math.round(sub*raw/100):raw,0),sub),t=sub-d,paid=+$('paid').value||0;
+ $('sub').textContent=rp(sub);$('sc').textContent=n?'('+nf(n)+' item)':'';
+ $('dsrow').style.display=d>0?'flex':'none';$('dsv').textContent='\u2212'+rp(d)+(dm==='pct'&&raw?' ('+raw+'%)':'');
+ $('dch').innerHTML=dm==='pct'?[5,10,15,20].map(p=>`<button type="button" class="chip${raw===p?' on':''}" onclick="setDisc(${p})">${p}%</button>`).join(''):'';
  $('tot').textContent=rp(t);$('paidrow').style.display=cash?'flex':'none';
- const paid=+$('paid').value||0;
- $('chg').textContent=cash?rp(Math.max(paid-t,0)):'-';$('chg').className=cash&&paid<t?'bad':'ok';
- $('go').disabled=!cart.length;return{sub,d,t,cash,paid}
+ $('qc').innerHTML=cash&&t>0?quick(t).map((v,i)=>`<button type="button" class="chip${paid===v?' on':''}" onclick="setPaid(${v})">${i?rp(v):'Uang pas'}</button>`).join(''):'';
+ const short=cash&&paid>0&&paid<t;
+ $('chgl').textContent=short?'Kurang':'Kembalian';
+ $('chg').textContent=cash&&paid>0?rp(Math.abs(paid-t)):'-';$('chg').className=short?'bad':'ok';
+ const need=cart.length>0&&cash&&paid<t;
+ $('go').disabled=!cart.length||need;
+ $('gh').textContent=need?(paid?'Uang diterima masih kurang '+rp(t-paid):'Isi uang diterima untuk menyelesaikan'):'';
+ $('cn').textContent=n?nf(n):'';$('clr').disabled=!cart.length;
+ $('cbn').textContent=n?nf(n)+' item':'';$('cbt').textContent=rp(t);$('cbar').classList.toggle('on',cart.length>0);
+ return{sub,d,t,cash,paid}
 }
 function checkout(){
  const{sub,d,t,cash,paid}=calc();if(!cart.length)return;
  if(cash&&paid<t){alert('Uang diterima masih kurang dari total.');return}
  const s={id:invId(),date:new Date().toISOString(),items:cart.map(c=>({...c})),sub,disc:d,total:t,pay:$('pay').value,paid:cash?paid:t};
  cart.forEach(c=>{const x=findV(c.id);if(x&&!isJ(x.v)){logS(x,'Penjualan',x.v.stock,x.v.stock-c.qty,s.id);x.v.stock-=c.qty}});
- S.sales.unshift(s);save();cart=[];receipt(s);render();
+ S.sales.unshift(s);save();cart=[];closeSheet();receipt(s);render();
 }
 function setCS(v){CS=v;document.documentElement.dataset.cs=v;try{localStorage.setItem('positif_cs',v)}catch(e){}}
 function csCtl(){if($('cs'))return;const h=`<label class="si" title="Ukuran thumbnail">${IC('thumb')}<select id="cs" onchange="setCS(this.value)" aria-label="Ukuran thumbnail"><option value="l">Large thumbnail</option><option value="m">Medium thumbnail</option><option value="s">Small thumbnail</option></select></label>`;let a=$('cat')||($('pfq')&&$('pfq').nextElementSibling);if(a){a.insertAdjacentHTML('afterend',h);$('cs').value=CS}}
