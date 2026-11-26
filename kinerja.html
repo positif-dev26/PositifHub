@@ -95,6 +95,12 @@ td input.sm{width:58px;min-height:34px;padding:4px 6px;text-align:center}
 .pl{display:flex;flex-direction:column;margin-top:8px;border-top:1px solid var(--line)}.pr{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.pr>span{flex:1;min-width:0}.pr .t{color:var(--mu);font-size:12px;min-width:38px}
 .bs{min-height:36px;padding:4px 12px;font-size:13px}
 .tp{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid #262626;border-radius:12px;background:#101010;margin-bottom:6px;cursor:pointer}.tp>span.tx{flex:1;font-size:14px}.tp .pill{flex:none}.tp input{width:20px;min-height:20px;flex:none}.tp:not(.on)>span.tx{color:var(--mu);text-decoration:line-through}
+.x{border:0;background:transparent;color:inherit;font-size:15px;line-height:1;padding:0 0 0 4px;cursor:pointer;opacity:.7}
+.sopl{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.45}
+.task>b{margin-left:auto;font-size:22px}
+.chip.on{background:var(--ac);border-color:var(--ac);color:#0a0a0a}
+button.pill{background:transparent;color:var(--ac);font-family:inherit;cursor:pointer}
+table.lbr td{vertical-align:top;font-size:13px;line-height:1.5}table.lbr td small{font-size:12px}
 .tp button{flex:none;width:30px;height:30px;border-radius:8px;border:1px solid #333;background:#151515;color:var(--rd);font-size:18px;line-height:1}
 .stat{padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
 .stat small{display:block;font-size:11px;letter-spacing:.05em;color:var(--mu)}
@@ -119,6 +125,8 @@ dialog h3{font-size:24px;margin-bottom:10px}
 @media print{
  body{background:#fff;color:#000}
  .pbar,#tabs,main,#toast{display:none!important}
+ body.plbr main{display:block!important}body.plbr .noprint,body.plbr .seg,body.plbr #hd{display:none!important}
+ body.plbr .card{background:#fff;border:0;color:#000}body.plbr table.lbr td,body.plbr table.lbr th{border-top:1px solid #999;color:#000}body.plbr .mu{color:#444}
  .slip{display:block;break-after:page;font:12pt/1.4 Barlow,Arial,sans-serif;color:#000;padding:10mm}
  .slip h2{font-size:20pt}.slip table td,.slip table th{border-top:1px solid #999;color:#000;padding:4px 6px}
 }
@@ -157,7 +165,7 @@ var gN=function(id){var g=(D.gudang||[]).filter(function(x){return String(x.id)=
 var kG=function(k){return k.gud||D.cfg.loc||''};
 var sTg=function(){return D.akt.filter(function(a){return a.jenis==='setor'&&(a.st==='tunggu'||a.st==='proses')})};
 /* v7: semua isian (setor, hasil, tugas, kegiatan) menunggu diperiksa; laporan supervisor diperiksa Owner */
-var PERIKSA=['setor','hasil','tugas','kegiatan'];
+var PERIKSA=['setor','hasil','tugas','kegiatan','kerja'];
 function isSpv(k){return /supervisor/i.test(String((k||{}).posisi||''))}
 function bisaPeriksa(a){return !!D.me.gaji||!isSpv(D.K[a.kid])}
 function nPeriksa(){return D.akt.filter(function(a){return a.st==='tunggu'&&PERIKSA.indexOf(a.jenis)>=0&&D.K[a.kid]&&bisaPeriksa(a)}).length}
@@ -240,7 +248,8 @@ function sumK(kid,w){
     else if(a.jenis==='hasil'){if(a.st!=='ok'){o.tunggu++;return}o.hasil+=+a.d.q||0;o.rj+=+a.d.rj||0}
     else if(a.jenis==='tugas'){if(a.st!=='ok'){o.tunggu++;return}o.tugas[dayOf(a.tgl)]=(o.tugas[dayOf(a.tgl)]||0)+1}
     else if(a.jenis==='minus')o.minus.push(a.d.note);
-    else if(a.jenis==='kegiatan'){if(a.st==='ok')o.keg++;else o.tunggu++}});
+    else if(a.jenis==='kegiatan'){if(a.st==='ok')o.keg++;else o.tunggu++}
+    else if(a.jenis==='kerja'){if(a.st==='ok')o.kerja=(o.kerja||0)+1;else o.tunggu++}});
   D.akt.forEach(function(a){if(a.jenis==='reject'&&a.st!=='batal'&&a.d.target===kid&&inWeek(a.tgl,w))o.rj+=+a.d.q||0});
   var k=D.K[kid]||{};o.out=(k.kerja||[]).some(function(x){return x==='jahit'||x==='potong'})?o.poin:o.hasil;
   o.outPcs=o.pcs+o.hasil;return o}
@@ -263,7 +272,9 @@ function nilai(kid,w,ck,ovr,ckAll){
   if(!U&&!rj){fl.push('tidak ada hasil tercatat')}
   Mt=rj<=a.mB?'B':rj<=a.mC?'C':'K';
   var nm=s.minus.length,pct=null;
-  if((k.cek||[]).length){var hari=ck?ck.hadir:6,isi=Object.keys(s.tugas).reduce(function(t,d){return t+Math.min(s.tugas[d],k.cek.length)},0);pct=hari?isi/(hari*k.cek.length)*100:100}
+  var hari=ck?ck.hadir:6,tn=tjNilai(kid,w,hari),eT=0,dT=0;
+  if((k.cek||[]).length){eT=hari*k.cek.length;dT=Object.keys(s.tugas).reduce(function(t,d){return t+Math.min(s.tugas[d],k.cek.length)},0)}
+  if(eT+tn.exp)pct=hari||tn.exp?Math.min(dT+tn.done,eT+tn.exp)/(eT+tn.exp)*100:100;
   J=(pct==null||pct>=a.jB)&&!nm?'B':((pct==null||pct>=a.jC)&&nm<=1)?'C':'K';
   if(pct!=null&&pct<a.jB)fl.push('jobdesk '+Math.round(pct)+'%');
   if(nm)fl.push(nm+' catatan disiplin');
@@ -312,7 +323,8 @@ function vOrang(){aktif();
     +'<label class="f">Reject / rusak (pcs)</label>'+stepH('hr',0)+'<input id="hk" placeholder="Keterangan (opsional)"><button class="btn pri big" onclick="simpanHasil()">Simpan hasil</button><div class="mu" style="font-size:12px">Hasil diperiksa '+(isSpv(k)?'Owner':'supervisor')+' sebelum masuk nilai.</div></div></div>';
   if(k.kerja.indexOf('qc')>=0)h+='<div class="sec"><button class="btn big" onclick="rejOpen()">+ Catat reject (QC)</button></div>';
   h+='<div id="secTugas">'+tugasH(k)+'</div>';
-  h+='<div class="sec"><h2>Sedang apa? <span class="mu" style="font:500 14px Barlow,sans-serif">saat tidak produksi</span></h2><div class="chips">'+D.keg.map(function(g){return '<button class="chip" onclick="kegiatan(\''+esc(g)+'\')">'+esc(g)+'</button>'}).join('')+'</div></div>';
+  h+='<div id="secTerjadi">'+terjadiH(k)+'</div>';
+  h+=lainH();
   if(k.jobdesk)h+='<div class="sec"><h2>Jobdesk</h2><div class="card mu" style="white-space:pre-line">'+esc(k.jobdesk)+'</div></div>';
   h+='<div class="sec"><h2>Catatan hari ini</h2><div class="card tl" id="secCat">'+catH(k)+'</div></div>';
   return h}
@@ -323,16 +335,17 @@ function panduanH(k){var L=[],sp=isSpv(k)?'Owner':'supervisor';
   if(k.kerja.indexOf('potong')>=0)L.push('<b>Setor hasil potong</b>: isi jumlah yang sudah selesai dipotong di barang yang dikerjakan, lalu tekan <b>Setor</b>.');
   if(k.kerja.indexOf('hasil')>=0)L.push('<b>Catat hasil</b> '+esc(k.hasil||k.posisi||'')+': isi jumlah, lalu tekan <b>Simpan hasil</b>.');
   if(k.kerja.indexOf('qc')>=0)L.push('Ada barang rusak? Tekan <b>Catat reject</b>.');
-  if((k.cek||[]).length)L.push('Tekan <b>Tugas hari ini</b> satu per satu setelah benar-benar dikerjakan.');
-  L.push('Saat tidak produksi, pilih <b>Sedang apa?</b>');
+  if((k.cek||[]).length||tugasLainH(k))L.push('Tekan <b>Tugas hari ini</b> satu per satu setelah benar-benar dikerjakan.');
+  if(tjSaya(k.id).length)L.push('Kerjakan tugas <b>tanggung jawab</b> ('+tjSaya(k.id).map(function(t){return esc(t.nama)}).join(', ')+'). Ketuk tugasnya untuk melihat SOP.');
+  L.push('Mengerjakan hal lain di luar tugas utama? Pilih di <b>Pekerjaan lain</b>. Ada hambatan? Pilih di <b>Kendala</b>.');
   return '<div class="card guide" style="margin-bottom:14px"><b>Cara mengisi</b><ol>'+L.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ol><div class="mu" style="font-size:12px;margin-top:6px">Semua isian diperiksa '+sp+' dulu sebelum masuk nilai. Statusnya terlihat di <b>Catatan hari ini</b>.</div></div>'}
-function tugasH(k){if(!(k.cek||[]).length)return '';var dn={};hariIni(k).filter(function(a){return a.jenis==='tugas'}).forEach(function(a){if(a.st!=='tolak'||!dn[a.d.item])dn[a.d.item]=a});
+function tugasH(k){var ex=tugasLainH(k);if(!(k.cek||[]).length&&!ex)return '';var dn={};hariIni(k).filter(function(a){return a.jenis==='tugas'}).forEach(function(a){if(a.st!=='tolak'||!dn[a.d.item])dn[a.d.item]=a});
   return '<div class="sec"><h2>Tugas hari ini</h2><div style="display:flex;flex-direction:column;gap:8px">'+k.cek.map(function(t,i){var a=dn[t],on=a&&a.st!=='tolak',sub='';
     if(a)sub=a._tmp?'<small class="mu">menyimpan…</small>':a.st==='tolak'?'<small class="bad">✗ ditolak'+(a.d.tolak?': '+esc(a.d.tolak):'')+' — kerjakan lalu tekan lagi</small>':a.st==='ok'?'<small class="ok">✓ dikonfirmasi</small>':'<small class="warn">⏳ menunggu diperiksa</small>';
-    return '<button class="task'+(on?' done':'')+'" '+(on?'disabled':'onclick="tugas('+i+')"')+'><i>'+(on?'✓':'')+'</i><span>'+esc(t)+sub+'</span></button>'}).join('')+'</div></div>'}
+    return '<button class="task'+(on?' done':'')+'" '+(on?'disabled':'onclick="tugas('+i+')"')+'><i>'+(on?'✓':'')+'</i><span>'+esc(t)+sub+'</span></button>'}).join('')+ex+'</div></div>'}
 function catH(k){var A=hariIni(k);return A.length?A.map(aktLine).join(''):'<span class="mu">Belum ada.</span>'}
 /* ganti bagian yang berubah saja, supaya isian lain di layar tidak hilang */
-function rPart(){if(TAB==='jobdesk'&&SES&&$('secTugas')){var k=D.K[SES.kid];$('secTugas').innerHTML=tugasH(k);$('secCat').innerHTML=catH(k)}else render()}
+function rPart(){if(TAB==='jobdesk'&&SES&&$('secTugas')){var k=D.K[SES.kid];$('secTugas').innerHTML=tugasH(k);$('secCat').innerHTML=catH(k);if($('secTerjadi'))$('secTerjadi').innerHTML=terjadiH(k)}else render()}
 function stepH(id,v){return '<div class="step"><button aria-label="Kurangi" onclick="stp(\''+id+'\',-1)">−</button><input id="'+id+'" type="number" inputmode="numeric" min="0" value="'+v+'" aria-label="Jumlah"><button class="p" aria-label="Tambah" onclick="stp(\''+id+'\',1)">+</button></div>'}
 function stp(id,d){var e=$(id),mx=e.max?+e.max:1e9;e.value=Math.max(0,Math.min(mx,(+e.value||0)+d));aktif();if(e.oninput)e.oninput()}
 function setorH(k,st){if(!D.jobsOk&&!D.jobs.length)return '<div class="sec"><div class="card mu">Memuat daftar barang produksi…</div></div>';var g=kG(k),L=D.jobs.filter(function(j){return j.st===st&&j.qty>0&&(!g||j.loc===g)}).sort(function(a,b){return String(a.due||'9')<String(b.due||'9')?-1:1});
@@ -360,7 +373,7 @@ async function kirim(p,d,msg){if(!SES)return;aktif();var ses=SES,k=D.K[ses.kid];
   var a={id:'tmp'+(++TMPN),tgl:new Date().toISOString(),kid:k.id,jenis:p.jenis,d:d,st:p.jenis==='reject'?'rak':'tunggu',oleh:k.nama,_tmp:1};
   D.akt.push(a);rPart();sync(1,'Menyimpan…');
   try{var r=await kj('catat',Object.assign({},p,ses)),i=D.akt.indexOf(a);
-    if(r&&r.dup){if(i>=0)D.akt.splice(i,1)}else if(r&&r.a){if(i>=0)D.akt[i]=r.a}else delete a._tmp;
+    if(r&&r.dup){if(i>=0)D.akt.splice(i,1);simpanCache();toast(r.oleh?'Sudah dikerjakan '+r.oleh+' hari ini':'Sudah tercatat sebelumnya');return}else if(r&&r.a){if(i>=0)D.akt[i]=r.a}else delete a._tmp;
     simpanCache();toast('✓ '+msg)}
   catch(e){var j=D.akt.indexOf(a);if(j>=0)D.akt.splice(j,1);toast('Gagal tersimpan: '+e.message+'. Coba lagi.',1)}
   finally{sync(0);rPart()}}
@@ -397,9 +410,238 @@ function aktLine(a){var k=D.K[a.kid]||{},d=a.d,t='';
   else if(a.jenis==='hasil')t=esc(d.label)+' · <b>'+nf(d.q)+' '+esc(d.satuan)+'</b>'+(d.rj?' · reject '+d.rj:'')+(d.ket?' · '+esc(d.ket):'')+(d.qAsli!=null?' <span class="mu">(dicatat '+nf(d.qAsli)+')</span>':'')+stPill(a);
   else if(a.jenis==='reject')t='Reject '+d.q+' pcs · '+esc(d.produk||'-')+' · '+esc(d.alasan)+' · jahitan '+esc(d.target?(D.K[d.target]||{}).nama||'?':'tanpa kartu')+(a.st==='putus'?' · '+esc(d.putus):'');
   else if(a.jenis==='tugas')t='Tugas: '+esc(d.item)+stPill(a);
-  else if(a.jenis==='kegiatan')t='Sedang: '+esc(d.label)+(d.ket?' · '+esc(d.ket):'')+stPill(a);
+  else if(a.jenis==='kegiatan')t=(d.grup==='Kendala'?'<span class="warn">Kendala:</span> ':d.grup?'Pekerjaan lain: ':'Sedang: ')+esc(d.label==='Lainnya'&&d.ket?d.ket:d.label)+(d.q?' · <b>'+nf(d.q)+' '+esc(d.sat||'')+'</b>':'')+(d.ket&&d.label!=='Lainnya'?' · '+esc(d.ket):'')+stPill(a);
+  else if(a.jenis==='kerja')t=esc(d.item)+' <span class="mu">· '+(d.src==='beri'?'tugas dari '+esc(d.dari||''):esc(d.tjNama||''))+(d.sop?' · '+esc(d.sop):'')+'</span>'+(cekTeks(d)?'<br><small>'+cekTeks(d)+'</small>':'')+stPill(a);
+  else if(a.jenis==='beri')t='<span class="mu">Tugas tambahan dari '+esc(a.oleh)+':</span> '+esc(d.item)+(a.st==='batal'?' <span class="pill">dibatalkan</span>':'');
   else if(a.jenis==='minus')t='<span class="bad">Catatan disiplin: '+esc(d.note)+'</span> <span class="mu">(oleh '+esc(a.oleh)+')</span>';
   return '<div><b class="t">'+hm(a.tgl)+'</b><span>'+t+'</span></div>'}
+
+/* =================== v8: SOP, TANGGUNG JAWAB, TUGAS TAMBAHAN, PEKERJAAN LAIN =================== */
+function SOPD(){return D.sop||{divisi:[],tj:[],sop:[],lain:[]}}
+function sopBy(kode){return (SOPD().sop||[]).filter(function(x){return x.kode===kode})[0]}
+function tjSaya(kid){return (SOPD().tj||[]).filter(function(t){return (t.orang||[]).indexOf(kid)>=0})}
+/* minggu kerja dimulai Sabtu */
+function sab0(day){var t=new Date(day+'T00:00:00');t.setDate(t.getDate()-((t.getDay()+1)%7));return ymd(t)}
+var HARI=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+function kapanL(w){return w.kapan==='harian'?'Harian':w.kapan==='mingguan'?'Mingguan · '+HARI[w.hari==null?6:w.hari]:'Saat terjadi'}
+/* pekerjaan mingguan muncul mulai hari yang ditentukan sampai akhir minggu kerja (Jumat) */
+function jatuh(w,day){if(w.kapan==='harian')return true;if(w.kapan!=='mingguan')return false;
+  var i=(new Date(day+'T00:00').getDay()+1)%7,h=((w.hari==null?6:w.hari)+1)%7;return i>=h}
+function kerjaAda(w,day){return D.akt.filter(function(a){return a.jenis==='kerja'&&a.st!=='tolak'&&a.st!=='batal'&&a.d.src==='tj'&&a.d.ref===w.id
+  &&(w.kapan==='harian'?dayOf(a.tgl)===day:sab0(dayOf(a.tgl))===sab0(day))})[0]}
+function beriSaya(kid,day){return D.akt.filter(function(a){return a.jenis==='beri'&&a.kid===kid&&(a.st==='aktif'||a.st==='selesai')&&String(a.d.tgl||'')<=day})}
+function beriKerja(b){return D.akt.filter(function(a){return a.jenis==='kerja'&&a.d.ref===b.id&&a.st!=='batal'}).sort(function(x,y){return x.tgl<y.tgl?1:-1})[0]}
+function subSt(a){return a._tmp?'<small class="mu">menyimpan…</small>':a.st==='tolak'?'<small class="bad">✗ ditolak'+(a.d.tolak?': '+esc(a.d.tolak):'')+' — kerjakan lalu tekan lagi</small>':a.st==='ok'?'<small class="ok">✓ dikonfirmasi</small>':'<small class="warn">⏳ menunggu diperiksa</small>'}
+function cekTeks(d){var c=d.cek||{};return Object.keys(c).filter(function(x){return String(c[x]).trim()}).map(function(x){return esc(x)+': <b>'+esc(c[x])+'</b>'}).join(' · ')}
+
+/* ---- Jobdesk HP: tugas dari tanggung jawab & tugas tambahan ---- */
+function tugasLainH(k){var day=ymd(new Date()),h='';
+  tjSaya(k.id).forEach(function(t){(t.kerja||[]).forEach(function(w){if(!jatuh(w,day))return;var a=kerjaAda(w,day),on=!!a,mine=a&&a.kid===k.id;
+    h+='<button class="task'+(on?' done':'')+'" '+(on?'disabled':'onclick="kerjaBuka(\'tj\',\''+t.id+'\',\''+w.id+'\')"')+'><i>'+(on?'✓':'')+'</i><span>'+esc(w.nama)
+      +'<small class="mu">'+esc(t.nama)+(w.sop?' · '+esc(w.sop):'')+(w.kapan==='mingguan'?' · minggu ini':'')+'</small>'
+      +(a?(mine?subSt(a):'<small class="ok">sudah dikerjakan '+esc(a.oleh)+'</small>'):'')+'</span>'+(on?'':'<b class="mu" aria-hidden="true">›</b>')+'</button>'})});
+  beriSaya(k.id,day).forEach(function(b){var a=beriKerja(b),on=a&&a.st!=='tolak'&&b.st==='selesai',telat=String(b.d.tgl)<day&&!on;
+    if(b.st==='selesai'&&a&&dayOf(a.tgl)!==day&&a.st!=='tolak')return;
+    h+='<button class="task'+(on?' done':'')+'" '+(on?'disabled':'onclick="kerjaBuka(\'beri\',\''+b.id+'\')"')+'><i>'+(on?'✓':'')+'</i><span>'+esc(b.d.item)
+      +'<small class="mu">Tugas tambahan dari '+esc(b.oleh)+(b.d.sop?' · '+esc(b.d.sop):'')+(telat?' · <span class="bad">terlambat, untuk '+fdl(b.d.tgl)+'</span>':'')+'</small>'+(a?subSt(a):'')+'</span>'+(on?'':'<b class="mu" aria-hidden="true">›</b>')+'</button>'});
+  return h}
+function terjadiH(k){var T=[];tjSaya(k.id).forEach(function(t){(t.kerja||[]).forEach(function(w){if(w.kapan==='terjadi')T.push([t,w])})});if(!T.length)return '';
+  var day=ymd(new Date());
+  return '<div class="sec"><h2>Tanggung jawab <span class="mu" style="font:500 14px Barlow,sans-serif">tekan saat dikerjakan</span></h2><div class="chips">'+T.map(function(x){
+    var n=D.akt.filter(function(a){return a.jenis==='kerja'&&a.d.ref===x[1].id&&dayOf(a.tgl)===day&&a.st!=='tolak'&&a.st!=='batal'}).length;
+    return '<button class="chip" onclick="kerjaBuka(\'tj\',\''+x[0].id+'\',\''+x[1].id+'\')">'+esc(x[1].nama)+(n?' <span class="pill ok">'+n+'×</span>':'')+'</button>'}).join('')+'</div></div>'}
+function lainH(){var L=SOPD().lain||[],g={},ord=[];L.forEach(function(r,i){var gr=r[2]||'Umum';if(gr==='Kendala')return;if(!g[gr]){g[gr]=[];ord.push(gr)}g[gr].push(i)});
+  var K=L.map(function(r,i){return r[2]==='Kendala'?i:-1}).filter(function(i){return i>=0});
+  var ch=function(i){return '<button class="chip" onclick="lainBuka('+i+')">'+esc(L[i][0])+'</button>'};
+  return '<div class="sec"><h2>Pekerjaan lain <span class="mu" style="font:500 14px Barlow,sans-serif">di luar tugas utama</span></h2>'
+   +ord.map(function(gr){return '<div class="mu" style="font-size:12px;margin:8px 0 4px;letter-spacing:.06em;text-transform:uppercase">'+esc(gr)+'</div><div class="chips">'+g[gr].map(ch).join('')+'</div>'}).join('')
+   +'<div class="chips" style="margin-top:8px"><button class="chip" onclick="lainBuka(-1)">Lainnya…</button></div></div>'
+   +(K.length?'<div class="sec"><h2>Kendala <span class="mu" style="font:500 14px Barlow,sans-serif">yang menghambat kerja</span></h2><div class="chips">'+K.map(ch).join('')+'</div></div>':'')}
+async function lainBuka(i){if(!SES)return;aktif();
+  if(i<0){var t=await tanya('Pekerjaan apa?','');if(t===null)return;if(!t.trim())return toast('Tulis pekerjaannya',1);
+    return kirim({jenis:'kegiatan',label:'Lainnya',ket:t,grup:'Lainnya'},{label:'Lainnya',ket:t,grup:'Lainnya'},'Tercatat, menunggu diperiksa')}
+  var r=SOPD().lain[i];if(!r)return;
+  if(!r[1])return kirim({jenis:'kegiatan',label:r[0],grup:r[2]},{label:r[0],grup:r[2]},'Tercatat: '+r[0]);
+  var d=$('dlg');d.innerHTML='<h3>'+esc(r[0])+'</h3><label class="f">Jumlah ('+esc(r[1])+') <span class="mu">— boleh dikosongkan</span></label>'+stepH('lq',0)
+   +'<input id="lk" placeholder="Keterangan (opsional)" style="margin-top:10px"><div class="dfoot row"><span class="sp"></span><button class="btn" onclick="$(\'dlg\').close()">Batal</button><button class="btn pri" onclick="lainSimpan('+i+')">Simpan</button></div>';
+  d.showModal()}
+function lainSimpan(i){var r=SOPD().lain[i],q=+$('lq').value||0,ket=$('lk').value.trim();$('dlg').close();
+  var p={jenis:'kegiatan',label:r[0],grup:r[2],ket:ket},dd={label:r[0],grup:r[2],ket:ket};if(q>0){p.q=dd.q=q;p.sat=dd.sat=r[1]}
+  kirim(p,dd,'Tercatat: '+r[0]+(q>0?' '+q+' '+r[1]:''))}
+/* lembar SOP: langkah + titik cek */
+var KB=null;
+function kerjaBuka(src,a,b){if(!SES)return;aktif();var item,sk,meta,baik;
+  if(src==='tj'){var t=(SOPD().tj||[]).filter(function(x){return x.id===a})[0];if(!t)return;var w=(t.kerja||[]).filter(function(x){return x.id===b})[0];if(!w)return;
+    item=w.nama;sk=w.sop;meta=t.nama+' · '+kapanL(w);baik=w.baik;KB={src:'tj',tj:t.id,ref:w.id,item:item,sop:sk,tjNama:t.nama}}
+  else{var bb=D.akt.filter(function(x){return x.id===a})[0];if(!bb)return;item=bb.d.item;sk=bb.d.sop;meta='Tugas tambahan dari '+bb.oleh;KB={src:'beri',ref:bb.id,item:item,sop:sk,dari:bb.oleh}}
+  var s=sk?sopBy(sk):null;if(s&&!baik)baik=s.baik;
+  if(!s&&!baik)return kerjaSelesai();
+  var d=$('dlg');
+  d.innerHTML='<h3>'+esc(item)+'</h3><div class="mu" style="font-size:13px;margin:-6px 0 10px">'+esc(meta)+'</div>'
+   +(s?'<div class="card" style="background:#0d0d0d"><div class="row"><b>'+esc(s.kode)+' · '+esc(s.judul)+'</b><span class="sp"></span><span class="pill">v'+s.versi+'</span></div><ol class="sopl">'+s.langkah.map(function(l){return '<li>'+esc(l)+'</li>'}).join('')+'</ol></div>':'')
+   +(baik?'<div style="margin:10px 0;font-size:14px"><b>Baik bila:</b> '+esc(baik)+'</div>':'')
+   +(s&&s.cek.length?'<div style="margin-top:8px"><b>Titik cek</b>'+s.cek.map(function(c,i){
+      var inp=c.jenis==='angka'?'<input id="kc'+i+'" type="number" min="0" inputmode="numeric">':c.jenis==='pilihan'?'<div class="chips" id="kc'+i+'" data-v="">'+(c.opsi||[]).map(function(o){return '<button type="button" class="chip" onclick="kcPilih('+i+',this)">'+esc(o)+'</button>'}).join('')+'</div>':'<input id="kc'+i+'" placeholder="opsional">';
+      return '<label class="f" style="margin-top:8px"><span>'+esc(c.label)+(c.jenis==='teks'?'':' <b class="bad">*</b>')+'</span>'+inp+'</label>'}).join('')+'</div>':'')
+   +'<div class="dfoot row"><span class="sp"></span><button class="btn" onclick="$(\'dlg\').close()">Batal</button><button class="btn pri" onclick="kerjaSelesai()">✓ Selesai</button></div>';
+  d.showModal()}
+function kcPilih(i,b){var w=$('kc'+i);w.dataset.v=b.textContent;w.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',x===b)})}
+function kerjaSelesai(){var s=KB.sop?sopBy(KB.sop):null,cek={};
+  if(s)for(var i=0;i<s.cek.length;i++){var c=s.cek[i],e=$('kc'+i);if(!e)continue;var v=c.jenis==='pilihan'?e.dataset.v:e.value.trim();
+    if(c.jenis!=='teks'&&v==='')return toast('Isi "'+c.label+'" dulu',1);cek[c.label]=v}
+  if($('dlg').open)$('dlg').close();
+  var p={jenis:'kerja',src:KB.src,ref:KB.ref,cek:cek},dd={src:KB.src,ref:KB.ref,item:KB.item,cek:cek};
+  if(KB.src==='tj'){p.tj=KB.tj;dd.tj=KB.tj;dd.tjNama=KB.tjNama}else dd.dari=KB.dari;
+  if(KB.sop)dd.sop=KB.sop;
+  kirim(p,dd,KB.item+': tercatat, menunggu diperiksa')}
+
+/* ---- Hasil kerja: beri tugas tambahan ---- */
+function beriOpen(){var K=D.kar.filter(kF).filter(function(k){return D.me.gaji||!isSpv(k)}),d=$('dlg');
+  d.innerHTML='<h3>Beri tugas tambahan</h3><label class="f">Untuk<select id="bk">'+K.map(function(k){return '<option value="'+k.id+'">'+esc(k.nama)+(k.posisi?' — '+esc(k.posisi):'')+'</option>'}).join('')+'</select></label>'
+   +'<label class="f" style="margin-top:8px">Tugas<input id="bi" maxlength="160" placeholder="mis. Tata kain baru ke rak B"></label>'
+   +'<div class="gr" style="margin-top:8px"><label class="f">Tanggal<input id="bt" type="date" value="'+ymd(new Date())+'"></label><label class="f">Pakai SOP<select id="bs"><option value="">— tanpa SOP —</option>'+(SOPD().sop||[]).map(function(s){return '<option value="'+esc(s.kode)+'">'+esc(s.kode+' · '+s.judul)+'</option>'}).join('')+'</select></label></div>'
+   +'<div class="mu" style="font-size:12px;margin-top:8px">Tugas muncul di Jobdesk HP orang itu mulai tanggal tersebut sampai dikerjakan.</div>'
+   +'<div class="dfoot row"><span class="sp"></span><button class="btn" onclick="$(\'dlg\').close()">Batal</button><button class="btn pri" onclick="beriSimpan(this)">Beri tugas</button></div>';
+  d.showModal()}
+async function beriSimpan(b){var it=$('bi').value.trim();if(!it)return toast('Tulis tugasnya',1);
+  var r=await run('beri',{kid:$('bk').value,item:it,tgl:$('bt').value,sop:$('bs').value},'Tugas diberikan',b);
+  if(r&&r.a){D.akt.push(r.a);simpanCache();$('dlg').close();render()}}
+async function beriHapus(id){if(!(await yakin('Batalkan tugas tambahan?','Tugas hilang dari HP karyawan.','Ya, batalkan')))return;
+  var r=await run('hapusAkt',{id:id},'Tugas dibatalkan');if(r){var a=D.akt.filter(function(x){return x.id===id})[0];if(a)a.st='batal';simpanCache();render()}}
+function beriAktifH(){var B=D.akt.filter(function(a){return a.jenis==='beri'&&a.st==='aktif'&&kF(D.K[a.kid])}).sort(function(a,b){return a.d.tgl<b.d.tgl?-1:1});
+  return '<div class="sec"><div class="row"><h2>Tugas tambahan belum dikerjakan <span class="mu" style="font:500 15px Barlow,sans-serif">'+B.length+'</span></h2><span class="sp"></span><button class="btn pri" onclick="beriOpen()">+ Beri tugas</button></div>'
+   +(B.length?'<div class="card"><div class="pl" style="margin-top:0;border-top:0">'+B.map(function(b){var tl=String(b.d.tgl)<ymd(new Date());return '<div class="pr"><b class="t">'+fdl(b.d.tgl)+'</b><span><b>'+esc((D.K[b.kid]||{}).nama||'?')+'</b> · '+esc(b.d.item)+(b.d.sop?' <span class="pill">'+esc(b.d.sop)+'</span>':'')+' <span class="mu">dari '+esc(b.oleh)+'</span>'+(tl?' <span class="pill bad">terlambat</span>':'')+'</span>'+(D.me.gaji||!isSpv(D.K[b.kid])?'<button class="btn dg bs" onclick="beriHapus(\''+b.id+'\')">Batalkan</button>':'')+'</div>'}).join('')+'</div></div>'
+    :'<div class="card mu">Tidak ada tugas tambahan yang menunggu.</div>')+'</div>'}
+
+/* ---- pekerjaan tanggung jawab yang terlewat (penanggung jawab utama, hari yang sudah lewat) ---- */
+/* SOP mulai berlaku sejak pertama kali disimpan Owner; hari Minggu dan hari tanpa catatan (tidak masuk) tidak dihitung terlewat */
+function sopMulai(){var a=SOPD().at;return a?dayOf(a):'9999-12-31'}
+function terlewat(kid,day){var out=[];if(day>=ymd(new Date())||day<sopMulai()||new Date(day+'T00:00').getDay()===0)return out;
+  if(!D.akt.some(function(a){return a.kid===kid&&dayOf(a.tgl)===day&&a.st!=='batal'}))return out;
+  (SOPD().tj||[]).forEach(function(t){if((t.orang||[])[0]!==kid)return;(t.kerja||[]).forEach(function(w){
+    if(w.kapan==='harian'&&!kerjaAda(w,day))out.push(w.nama);
+    if(w.kapan==='mingguan'&&new Date(day+'T00:00').getDay()===5&&!kerjaAda(w,day))out.push(w.nama+' (mingguan)')})});
+  return out}
+/* nilai Jobdesk: tugas posisi + pekerjaan tanggung jawab (utama) + tugas tambahan, yang sudah dikonfirmasi */
+function tjNilai(kid,w,hari){var exp=0,done=0,ok=function(a){return a.st==='ok'},m=sopMulai();
+  if(m>addD(w,6))hari=0;else if(m>w){var n=0;for(var i=0;i<7;i++){var d=addD(w,i);if(d>=m&&new Date(d+'T00:00').getDay()!==0)n++}hari=Math.min(hari,n)}
+  (SOPD().tj||[]).forEach(function(t){var utama=(t.orang||[])[0]===kid,ikut=(t.orang||[]).indexOf(kid)>=0;if(!ikut)return;
+    (t.kerja||[]).forEach(function(x){if(x.kapan==='terjadi')return;
+      var A=D.akt.filter(function(a){return a.jenis==='kerja'&&a.d.ref===x.id&&inWeek(a.tgl,w)&&ok(a)});
+      if(utama){var e=x.kapan==='harian'?hari:(m>addD(w,6)?0:1);exp+=e;done+=Math.min(e,x.kapan==='harian'?[...new Set(A.map(function(a){return dayOf(a.tgl)}))].length:(A.length?1:0))}
+      else done+=0})});
+  var B=D.akt.filter(function(a){return a.jenis==='beri'&&a.kid===kid&&a.st!=='batal'&&a.d.tgl>=w&&a.d.tgl<=addD(w,6)});
+  exp+=B.length;B.forEach(function(b){if(D.akt.some(function(a){return a.jenis==='kerja'&&a.d.ref===b.id&&ok(a)}))done++});
+  return{exp:exp,done:done}}
+
+/* ---- lembar kerja mingguan per orang ---- */
+var HK='',HW='';
+function lembar(kid){HK=kid;HS='lembar';if(!HW)HW=ymd(satOf(new Date()));render();scrollTo(0,0)}
+function hLembar(){var k=D.K[HK];if(!k){HS='laporan';return hLaporan()}if(!HW)HW=ymd(satOf(new Date()));
+  var w=HW,n=nilai(k.id,w,null),today=ymd(new Date()),rows='',tot={h:0,t:0,tt:0,k:0,l:0,kd:0,tw:0};
+  for(var i=0;i<7;i++){var day=addD(w,i);if(day>today)break;
+    var A=D.akt.filter(function(a){return a.kid===k.id&&dayOf(a.tgl)===day&&a.st!=='batal'});
+    var st=function(a){return a.st==='ok'?'<span class="ok">✓</span>':a.st==='tolak'?'<span class="bad">✗</span>':'<span class="warn">⏳</span>'};
+    var hs=A.filter(function(a){return a.jenis==='setor'||a.jenis==='hasil'}).map(function(a){return st(a)+' '+(a.jenis==='setor'?esc(a.d.nama)+' '+a.d.q+' pcs':nf(a.d.q)+' '+esc(a.d.satuan))});
+    var tg=A.filter(function(a){return a.jenis==='tugas'}),tgOk=tg.filter(function(a){return a.st==='ok'}).length;
+    var kj=A.filter(function(a){return a.jenis==='kerja'}).map(function(a){return st(a)+' '+esc(a.d.item)+(a.d.src==='beri'?' <span class="mu">(tambahan)</span>':'')+(cekTeks(a.d)?'<br><small class="mu">'+cekTeks(a.d)+'</small>':'')});
+    var lw=terlewat(k.id,day).map(function(x){return '<span class="bad">✗ terlewat: '+esc(x)+'</span>'});
+    var lain=A.filter(function(a){return a.jenis==='kegiatan'&&a.d.grup!=='Kendala'}).map(function(a){return st(a)+' '+esc(a.d.label==='Lainnya'?a.d.ket:a.d.label)+(a.d.q?' '+nf(a.d.q)+' '+esc(a.d.sat||''):'')});
+    var kd=A.filter(function(a){return a.jenis==='kegiatan'&&a.d.grup==='Kendala'}).map(function(a){return st(a)+' '+esc(a.d.label)});
+    tot.h+=hs.length;tot.t+=tgOk;tot.k+=kj.length;tot.l+=lain.length;tot.kd+=kd.length;tot.tw+=A.filter(function(a){return a.st==='tunggu'}).length;
+    var c=function(L){return L.length?L.join('<br>'):'<span class="mu">—</span>'};
+    rows+='<tr><td><b>'+HARI[new Date(day+'T00:00').getDay()]+'</b><br><span class="mu">'+fdl(day)+'</span></td><td>'+c(hs)+'</td><td class="num">'+((k.cek||[]).length?tgOk+'/'+k.cek.length:'—')+'</td><td>'+c(kj.concat(lw))+'</td><td>'+c(lain)+'</td><td>'+c(kd)+'</td></tr>'}
+  return '<div class="row noprint" style="margin-bottom:10px"><button class="btn" onclick="HS=\'laporan\';render()">← Laporan harian</button><span class="sp"></span><button class="btn" onclick="HW=addD(HW,-7);render()" aria-label="Minggu sebelumnya">‹</button><b>'+fdl(w)+' – '+fdl(addD(w,6))+'</b><button class="btn" onclick="HW=addD(HW,7);render()" aria-label="Minggu berikutnya">›</button><button class="btn" onclick="document.body.classList.add(\'plbr\');print();document.body.classList.remove(\'plbr\')">Cetak</button></div>'
+   +'<div class="card"><div class="row"><div><h2 style="font-size:26px;margin:0">Lembar kerja — '+esc(k.nama)+'</h2><div class="mu" style="font-size:13px">'+esc(k.posisi||k.bagian||'')+(tjSaya(k.id).length?' · Tanggung jawab: '+tjSaya(k.id).map(function(t){return esc(t.nama)+((t.orang||[])[0]===k.id?' ★':'')}).join(', '):'')+'</div></div><span class="sp"></span>'
+   +'<div style="text-align:right"><div class="mu" style="font-size:12px">PERKIRAAN NILAI</div><b style="font:700 34px Barlow Condensed">'+n.g+'</b> <span class="mu">Hasil '+LBK[n.H]+' · Mutu '+LBK[n.M]+' · Jobdesk '+LBK[n.J]+'</span></div></div>'
+   +(n.fl.length?'<div class="warn" style="font-size:13px;margin-top:4px">'+n.fl.map(esc).join(' · ')+'</div>':'')
+   +'<div class="scroll" style="margin-top:10px"><table class="lbr"><tr><th>HARI</th><th>HASIL UTAMA</th><th class="num">TUGAS POSISI</th><th>TANGGUNG JAWAB &amp; TUGAS TAMBAHAN</th><th>PEKERJAAN LAIN</th><th>KENDALA</th></tr>'+rows+'</table></div>'
+   +'<div class="mu" style="font-size:12px;margin-top:8px">✓ dikonfirmasi · ⏳ menunggu diperiksa ('+tot.tw+') · ✗ ditolak/terlewat. Hanya yang dikonfirmasi masuk nilai.</div></div>'}
+
+/* ---- menu Peraturan → SOP & Tanggung jawab ---- */
+var PT='doc';
+function perTab(){return '<div class="seg">'+[['doc','Peraturan & Jobdesk'],['sop','SOP & Tanggung jawab']].map(function(b){return '<button class="'+(PT===b[0]?'on':'')+'" onclick="PT=\''+b[0]+'\';render()">'+b[1]+'</button>'}).join('')+'</div>'}
+function kNama(id){return (D.K[id]||{}).nama||'(lain workshop)'}
+function vSop(){var S=SOPD(),own=!!D.me.gaji,dv=[...new Set((S.divisi||[]).concat((S.tj||[]).map(function(t){return t.divisi})))].filter(Boolean);
+  var h=perTab()+'<div class="row" style="margin-bottom:12px"><h1 style="font-size:32px">SOP &amp; Tanggung jawab</h1><span class="mu" style="font-size:13px">'+(S.tj||[]).length+' tanggung jawab · '+(S.sop||[]).length+' SOP'+(S.by?' · diubah '+esc(S.by):S.bawaan?' · draf awal':'')+'</span><span class="sp"></span>'
+   +(own?'<button class="btn" onclick="sopEdit(\'\')">+ SOP</button><button class="btn pri" onclick="tjEdit(\'\')">+ Tanggung jawab</button>':'')+'</div>';
+  dv.forEach(function(d){var T=(S.tj||[]).filter(function(t){return t.divisi===d});if(!T.length)return;
+    h+='<div class="mu" style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 6px">'+esc(d)+'</div>';
+    T.forEach(function(t){
+      h+='<div class="card" style="margin-bottom:10px"><div class="row"><b style="font-size:19px">'+esc(t.nama)+'</b><span class="mu" style="font-size:13px">'+(t.kerja||[]).length+' pekerjaan</span><span class="sp"></span>'
+       +(own?'<button class="btn bs" onclick="tjEdit(\''+t.id+'\')">✎ Ubah</button><button class="btn dg bs" onclick="tjHapus(\''+t.id+'\')">Hapus</button>':'')+'</div>'
+       +'<div class="row" style="margin:8px 0;gap:6px"><span class="mu" style="font-size:13px">Penanggung jawab:</span>'
+       +((t.orang||[]).length?(t.orang||[]).map(function(id,i){return '<span class="pill'+(i?'':' ok')+'"'+(own&&i?' style="cursor:pointer" title="Jadikan utama" onclick="orangUtama(\''+t.id+'\',\''+id+'\')"':'')+'>'+(i?'':'★ ')+esc(kNama(id))+(own?' <button class="x" aria-label="Lepas '+esc(kNama(id))+'" onclick="event.stopPropagation();orangLepas(\''+t.id+'\',\''+id+'\')">×</button>':'')+'</span>'}).join(''):'<span class="warn" style="font-size:13px">belum ada</span>')
+       +(own?'<select style="width:auto;min-height:34px;padding:2px 8px" onchange="orangTambah(\''+t.id+'\',this.value)" aria-label="Tambah penanggung jawab"><option value="">+ Tambah orang</option>'+D.kar.filter(function(k){return (t.orang||[]).indexOf(k.id)<0}).map(function(k){return '<option value="'+k.id+'">'+esc(k.nama)+'</option>'}).join('')+'</select>':'')
+       +'</div>'+((t.orang||[]).length>1?'<div class="mu" style="font-size:12px;margin:-4px 0 6px">★ utama, lainnya cadangan. Pekerjaan muncul di HP semua penanggung jawab; siapa yang mengerjakan duluan dicatat.'+(own?' Ketuk nama untuk menjadikan utama.':'')+'</div>':'')
+       +'<div class="pl">'+(t.kerja||[]).map(function(w){return '<div class="pr"><span><b>'+esc(w.nama)+'</b> <span class="pill'+(w.kapan==='harian'?' ok':'')+'">'+esc(kapanL(w))+'</span>'+(w.sop?' <button class="pill" style="cursor:pointer" onclick="sopLihat(\''+esc(w.sop)+'\')">'+esc(w.sop)+'</button>':'')+(w.baik?'<br><small class="mu">Baik bila: '+esc(w.baik)+'</small>':'')+'</span>'
+          +(own?'<button class="btn bs" onclick="kerjaEdit(\''+t.id+'\',\''+w.id+'\')" aria-label="Ubah">✎</button><button class="btn dg bs" onclick="kerjaHapus(\''+t.id+'\',\''+w.id+'\')" aria-label="Hapus">×</button>':'')+'</div>'}).join('')+'</div>'
+       +(own?'<button class="btn bs" style="margin-top:8px" onclick="kerjaEdit(\''+t.id+'\',\'\')">+ Tambah pekerjaan</button>':'')+'</div>'})});
+  h+='<h2 style="margin-top:22px">Daftar SOP</h2><div class="g2" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">'+(S.sop||[]).map(function(s){return '<button class="card it" style="text-align:left;cursor:pointer" onclick="sopLihat(\''+esc(s.kode)+'\')"><span class="mu" style="font-size:12px">'+esc(s.kode)+' · '+esc(s.divisi)+' · v'+s.versi+'</span><b style="font-size:17px">'+esc(s.judul)+'</b><span class="mu" style="font-size:13px">'+s.langkah.length+' langkah'+(s.cek.length?' · '+s.cek.length+' titik cek':'')+'</span></button>'}).join('')+'</div>';
+  var L=S.lain||[];
+  h+='<h2 style="margin-top:22px">Pekerjaan lain &amp; kendala</h2><div class="card"><div class="mu" style="font-size:13px;margin-bottom:8px">Tombol yang tampil di Jobdesk HP untuk pekerjaan di luar tugas utama. Satuan diisi bila jumlahnya perlu dicatat.</div><div class="chips">'
+   +L.map(function(r,i){return '<span class="chip" style="cursor:default">'+esc(r[0])+(r[1]?' <span class="mu">('+esc(r[1])+')</span>':'')+' <span class="mu" style="font-size:11px">'+esc(r[2])+'</span>'+(own?' <button class="x" aria-label="Hapus '+esc(r[0])+'" onclick="lainHapus('+i+')">×</button>':'')+'</span>'}).join('')+'</div>'
+   +(own?'<div class="row" style="margin-top:10px;gap:6px"><input id="ln" placeholder="Nama pekerjaan" style="flex:2;min-width:160px"><input id="ls" placeholder="Satuan (opsional)" style="flex:1;min-width:110px"><select id="lg" style="width:auto">'+['Gudang','Produksi','Pengiriman','Umum','Kendala'].map(function(g){return '<option>'+g+'</option>'}).join('')+'</select><button class="btn" onclick="lainTambah()">+ Tambah</button></div>':'')+'</div>';
+  return h}
+function sopCopy(){return JSON.parse(JSON.stringify(SOPD()))}
+async function sopSimpan(S,msg,btn){var r=await run('sopSave',S,msg||'Tersimpan',btn);if(r&&r.sop){D.sop=r.sop;simpanCache();if($('dlg').open)$('dlg').close();render()}return r}
+function tjEdit(id){var S=SOPD(),t=id?(S.tj||[]).filter(function(x){return x.id===id})[0]:{nama:'',divisi:(S.divisi||[])[0]||''},d=$('dlg');
+  d.innerHTML='<h3>'+(id?'Ubah tanggung jawab':'Tanggung jawab baru')+'</h3><label class="f">Nama<input id="tn" maxlength="60" value="'+esc(t.nama)+'" placeholder="mis. Pengelola stok bahan baku"></label>'
+   +'<label class="f" style="margin-top:8px">Divisi<select id="td">'+(S.divisi||[]).map(function(x){return '<option'+(x===t.divisi?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select></label>'
+   +'<div class="dfoot row"><span class="sp"></span><button class="btn" onclick="$(\'dlg\').close()">Batal</button><button class="btn pri" onclick="tjSimpan(\''+(id||'')+'\',this)">Simpan</button></div>';d.showModal()}
+function tjSimpan(id,b){var n=$('tn').value.trim();if(!n)return toast('Isi nama',1);var S=sopCopy();
+  if(id){var t=S.tj.filter(function(x){return x.id===id})[0];t.nama=n;t.divisi=$('td').value}else S.tj.push({id:'',nama:n,divisi:$('td').value,orang:[],kerja:[]});
+  sopSimpan(S,'Tanggung jawab tersimpan',b)}
+async function tjHapus(id){var S=sopCopy(),t=S.tj.filter(function(x){return x.id===id})[0];if(!(await yakin('Hapus '+esc(t.nama)+'?','Pekerjaannya tidak muncul lagi di HP penanggung jawab. Catatan yang sudah ada tetap tersimpan.','Ya, hapus')))return;
+  S.tj=S.tj.filter(function(x){return x.id!==id});sopSimpan(S,'Tanggung jawab dihapus')}
+function orangTambah(id,kid){if(!kid)return;var S=sopCopy(),t=S.tj.filter(function(x){return x.id===id})[0];t.orang.push(kid);sopSimpan(S,kNama(kid)+' ditambahkan')}
+function orangLepas(id,kid){var S=sopCopy(),t=S.tj.filter(function(x){return x.id===id})[0];t.orang=t.orang.filter(function(x){return x!==kid});sopSimpan(S,kNama(kid)+' dilepas')}
+function orangUtama(id,kid){var S=sopCopy(),t=S.tj.filter(function(x){return x.id===id})[0];t.orang=[kid].concat(t.orang.filter(function(x){return x!==kid}));sopSimpan(S,kNama(kid)+' jadi penanggung jawab utama')}
+function kerjaEdit(tid,wid){var S=SOPD(),t=S.tj.filter(function(x){return x.id===tid})[0],w=wid?t.kerja.filter(function(x){return x.id===wid})[0]:{nama:'',kapan:'harian',hari:6,sop:'',baik:''},d=$('dlg');
+  d.innerHTML='<h3>'+(wid?'Ubah pekerjaan':'Pekerjaan baru')+' — '+esc(t.nama)+'</h3><label class="f">Nama pekerjaan<input id="wn" maxlength="80" value="'+esc(w.nama)+'"></label>'
+   +'<div class="gr" style="margin-top:8px"><label class="f">Kapan muncul<select id="wk" onchange="$(\'whr\').style.display=this.value===\'mingguan\'?\'\':\'none\'">'+[['harian','Harian'],['mingguan','Mingguan'],['terjadi','Saat terjadi']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===w.kapan?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></label>'
+   +'<label class="f" id="whr"'+(w.kapan==='mingguan'?'':' style="display:none"')+'>Mulai hari<select id="wh">'+[6,0,1,2,3,4,5].map(function(i){return '<option value="'+i+'"'+(i===(w.hari==null?6:w.hari)?' selected':'')+'>'+HARI[i]+'</option>'}).join('')+'</select></label></div>'
+   +'<label class="f" style="margin-top:8px">SOP<select id="ws"><option value="">— tanpa SOP —</option>'+(S.sop||[]).map(function(s){return '<option value="'+esc(s.kode)+'"'+(s.kode===w.sop?' selected':'')+'>'+esc(s.kode+' · '+s.judul)+'</option>'}).join('')+'</select></label>'
+   +'<label class="f" style="margin-top:8px">Baik bila <span class="mu">(kosong = pakai standar SOP)</span><input id="wb" maxlength="200" value="'+esc(w.baik||'')+'"></label>'
+   +'<div class="mu" style="font-size:12px;margin-top:8px">Harian: muncul setiap hari kerja. Mingguan: muncul mulai hari yang dipilih sampai Jumat. Saat terjadi: tombol yang ditekan ketika dikerjakan (mis. barang datang).</div>'
+   +'<div class="dfoot row"><span class="sp"></span><button class="btn" onclick="$(\'dlg\').close()">Batal</button><button class="btn pri" onclick="kerjaSimpan(\''+tid+'\',\''+(wid||'')+'\',this)">Simpan</button></div>';d.showModal()}
+function kerjaSimpan(tid,wid,b){var n=$('wn').value.trim();if(!n)return toast('Isi nama pekerjaan',1);var S=sopCopy(),t=S.tj.filter(function(x){return x.id===tid})[0];
+  var o={nama:n,kapan:$('wk').value,hari:+$('wh').value,sop:$('ws').value,baik:$('wb').value.trim()};
+  if(wid)Object.assign(t.kerja.filter(function(x){return x.id===wid})[0],o);else t.kerja.push(Object.assign({id:''},o));
+  sopSimpan(S,'Pekerjaan tersimpan',b)}
+async function kerjaHapus(tid,wid){var S=sopCopy(),t=S.tj.filter(function(x){return x.id===tid})[0],w=t.kerja.filter(function(x){return x.id===wid})[0];
+  if(!(await yakin('Hapus pekerjaan?',esc(w.nama)+' tidak muncul lagi di HP.','Ya, hapus')))return;t.kerja=t.kerja.filter(function(x){return x.id!==wid});sopSimpan(S,'Pekerjaan dihapus')}
+function sopLihat(kode){var s=sopBy(kode);if(!s)return toast('SOP tidak ditemukan',1);var d=$('dlg');
+  d.innerHTML='<h3>'+esc(s.judul)+'</h3><div class="mu" style="font-size:13px;margin:-6px 0 10px">'+esc(s.kode)+' · '+esc(s.divisi)+' · versi '+s.versi+(s.tgl?' · '+fdl(s.tgl):'')+'</div>'
+   +'<ol class="sopl">'+s.langkah.map(function(l){return '<li>'+esc(l)+'</li>'}).join('')+'</ol>'
+   +(s.cek.length?'<div style="margin-top:10px"><b>Titik cek di HP:</b> '+s.cek.map(function(c){return esc(c.label)+' <span class="mu">('+(c.jenis==='pilihan'?(c.opsi||[]).map(esc).join(' / '):c.jenis)+')</span>'}).join(' · ')+'</div>':'')
+   +(s.baik?'<div style="margin-top:8px"><b>Baik bila:</b> '+esc(s.baik)+'</div>':'')
+   +'<div class="dfoot row">'+(D.me.gaji?'<button class="btn dg" onclick="sopHapus(\''+esc(s.kode)+'\')">Hapus</button>':'')+'<span class="sp"></span><button class="btn" onclick="$(\'dlg\').close()">Tutup</button>'+(D.me.gaji?'<button class="btn pri" onclick="sopEdit(\''+esc(s.kode)+'\')">✎ Ubah SOP</button>':'')+'</div>';d.showModal()}
+var SC=[];
+function sopEdit(kode){var S=SOPD(),s=kode?sopBy(kode):{kode:'',judul:'',divisi:(S.divisi||[])[0]||'',langkah:[],cek:[],baik:''},d=$('dlg');SC=JSON.parse(JSON.stringify(s.cek||[]));
+  d.innerHTML='<h3>'+(kode?'Ubah '+esc(kode):'SOP baru')+'</h3><div class="gr n"><label class="f">Judul<input id="sj" maxlength="80" value="'+esc(s.judul)+'"></label><label class="f">Kode<input id="sk" maxlength="20" value="'+esc(s.kode)+'" placeholder="SOP-GB-04"'+(kode?' readonly':'')+'></label></div>'
+   +'<label class="f" style="margin-top:8px">Divisi<select id="sd">'+(S.divisi||[]).map(function(x){return '<option'+(x===s.divisi?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select></label>'
+   +'<label class="f" style="margin-top:8px">Langkah kerja <span class="mu">— satu langkah per baris</span><textarea id="sl" rows="8">'+esc(s.langkah.join('\n'))+'</textarea></label>'
+   +'<div style="margin-top:10px"><b>Titik cek</b> <span class="mu" style="font-size:12px">— isian wajib di HP, maks. 5. Angka & pilihan wajib diisi, teks opsional.</span><div id="scl"></div></div>'
+   +'<label class="f" style="margin-top:8px">Baik bila<input id="sb" maxlength="300" value="'+esc(s.baik||'')+'"></label>'
+   +(kode?'<div class="mu" style="font-size:12px;margin-top:6px">Versi naik otomatis bila isi SOP berubah (sekarang v'+s.versi+').</div>':'')
+   +'<div class="dfoot row"><span class="sp"></span><button class="btn" onclick="$(\'dlg\').close()">Batal</button><button class="btn pri" onclick="sopSimpanEdit(\''+esc(kode||'')+'\',this)">Simpan SOP</button></div>';
+  d.showModal();scDraw()}
+function scDraw(){$('scl').innerHTML=SC.map(function(c,i){return '<div class="row" style="gap:6px;margin-top:6px;flex-wrap:nowrap"><input value="'+esc(c.label)+'" placeholder="Label" oninput="SC['+i+'].label=this.value" style="flex:2;min-width:0"><select style="width:auto;flex:none" onchange="SC['+i+'].jenis=this.value;scDraw()">'+['angka','pilihan','teks'].map(function(j){return '<option'+(j===c.jenis?' selected':'')+'>'+j+'</option>'}).join('')+'</select>'
+   +(c.jenis==='pilihan'?'<input value="'+esc((c.opsi||[]).join(', '))+'" placeholder="Pilihan, pisah koma" oninput="SC['+i+'].opsi=this.value.split(\',\').map(function(x){return x.trim()}).filter(Boolean)" style="flex:2;min-width:0">':'')
+   +'<button class="btn dg bs" style="flex:none" onclick="SC.splice('+i+',1);scDraw()" aria-label="Hapus titik cek">×</button></div>'}).join('')
+   +(SC.length<5?'<button class="btn bs" style="margin-top:6px" onclick="SC.push({label:\'\',jenis:\'teks\'});scDraw()">+ Titik cek</button>':'')}
+function sopSimpanEdit(kode,b){var S=sopCopy(),k=(kode||$('sk').value).trim().toUpperCase(),j=$('sj').value.trim();if(!k||!j)return toast('Isi judul dan kode',1);
+  if(!kode&&S.sop.some(function(x){return x.kode===k}))return toast('Kode '+k+' sudah dipakai',1);
+  var o={kode:k,judul:j,divisi:$('sd').value,langkah:$('sl').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),cek:SC.filter(function(c){return String(c.label).trim()}),baik:$('sb').value.trim()};
+  if(!o.langkah.length)return toast('Isi minimal satu langkah',1);
+  if(kode){var i=S.sop.findIndex(function(x){return x.kode===kode});o.versi=S.sop[i].versi;o.tgl=S.sop[i].tgl;S.sop[i]=o}else S.sop.push(o);
+  sopSimpan(S,'SOP tersimpan',b)}
+async function sopHapus(kode){var S=sopCopy(),n=0;S.tj.forEach(function(t){t.kerja.forEach(function(w){if(w.sop===kode)n++})});
+  if(!(await yakin('Hapus '+esc(kode)+'?',n?n+' pekerjaan memakai SOP ini dan akan menjadi tanpa SOP.':'SOP ini tidak dipakai pekerjaan mana pun.','Ya, hapus')))return;
+  S.sop=S.sop.filter(function(x){return x.kode!==kode});S.tj.forEach(function(t){t.kerja.forEach(function(w){if(w.sop===kode)w.sop=''})});sopSimpan(S,'SOP dihapus')}
+function lainTambah(){var n=$('ln').value.trim();if(!n)return toast('Isi nama pekerjaan',1);var S=sopCopy();S.lain.push([n,$('ls').value.trim(),$('lg').value]);sopSimpan(S,n+' ditambahkan')}
+function lainHapus(i){var S=sopCopy(),n=S.lain[i][0];S.lain.splice(i,1);sopSimpan(S,n+' dihapus')}
 
 /* =================== HASIL KERJA (laporan + periksa) =================== */
 var HS='periksa',HF='',HD='';
@@ -409,11 +651,13 @@ function vHasil(){var gs=[...new Set(D.kar.map(kG))].filter(Boolean);if(HF&&gs.i
   var nR=D.akt.filter(function(a){return a.jenis==='reject'&&a.st==='rak'&&(!HF||kF(D.K[a.kid]))}).length;
   var h='<div class="row" style="margin-bottom:10px"><h1 style="font-size:30px">Hasil kerja</h1>'+(D.me.gud?'<span class="pill ok">'+esc(gN(D.me.gud))+'</span>':'')+'<span class="sp"></span>'
    +(!D.me.gud&&gs.length>1?'<select style="width:auto" onchange="HF=this.value;render()" aria-label="Workshop"><option value="">Semua workshop</option>'+gs.map(function(g){return '<option value="'+esc(g)+'"'+(g===HF?' selected':'')+'>'+esc(gN(g))+'</option>'}).join('')+'</select>':'')+'</div>';
-  h+='<div class="seg">'+[['periksa','Perlu diperiksa',nP],['laporan','Laporan harian',0],['reject','Rak reject & disiplin',nR]].map(function(b){return '<button class="'+(HS===b[0]?'on':'')+'" onclick="HS=\''+b[0]+'\';render()">'+b[1]+(b[2]?'<span class="n">'+b[2]+'</span>':'')+'</button>'}).join('')+'</div>';
-  return h+(HS==='laporan'?hLaporan():HS==='reject'?hReject():hPeriksa())}
+  var tabsH=[['periksa','Perlu diperiksa',nP],['laporan','Laporan harian',0],['reject','Rak reject & disiplin',nR]];if(HS==='lembar'&&D.K[HK])tabsH.push(['lembar','Lembar kerja: '+D.K[HK].nama,0]);
+  h+='<div class="seg noprint">'+tabsH.map(function(b){return '<button class="'+(HS===b[0]?'on':'')+'" onclick="HS=\''+b[0]+'\';render()">'+b[1]+(b[2]?'<span class="n">'+b[2]+'</span>':'')+'</button>'}).join('')+'</div>';
+  return h+(HS==='lembar'?hLembar():HS==='laporan'?hLaporan():HS==='reject'?hReject():hPeriksa())}
 function isiTeks(a){var d=a.d;
   if(a.jenis==='tugas')return 'Tugas: <b>'+esc(d.item)+'</b>';
-  if(a.jenis==='kegiatan')return 'Sedang: <b>'+esc(d.label)+'</b>'+(d.ket?' · '+esc(d.ket):'');
+  if(a.jenis==='kegiatan')return (d.grup==='Kendala'?'<span class="warn">Kendala:</span> ':d.grup?'Pekerjaan lain: ':'Sedang: ')+'<b>'+esc(d.label==='Lainnya'&&d.ket?d.ket:d.label)+'</b>'+(d.q?' · <b>'+nf(d.q)+' '+esc(d.sat||'')+'</b>':'')+(d.ket&&d.label!=='Lainnya'?' · '+esc(d.ket):'');
+  if(a.jenis==='kerja')return '<b>'+esc(d.item)+'</b> <span class="mu">· '+(d.src==='beri'?'tugas dari '+esc(d.dari||''):esc(d.tjNama||''))+(d.sop?' · '+esc(d.sop):'')+'</span>'+(cekTeks(d)?'<br><small>'+cekTeks(d)+'</small>':'');
   if(a.jenis==='hasil')return esc(d.label)+' · <b>'+nf(d.q)+' '+esc(d.satuan)+'</b>'+(d.rj?' <span class="bad">reject '+d.rj+'</span>':'')+(d.ket?' · '+esc(d.ket):'')+cocok(a);
   return ''}
 function hPeriksa(){var h='';
@@ -431,18 +675,19 @@ function hPeriksa(){var h='';
   ord.sort(function(x,y){var a=x.split('|'),b=y.split('|');return a[1]<b[1]?-1:a[1]>b[1]?1:String((D.K[a[0]]||{}).nama).localeCompare(String((D.K[b[0]]||{}).nama))});
   h+='<div class="sec"><div class="row"><h2>Laporan menunggu diperiksa <span class="warn">'+L.length+'</span></h2></div><div class="mu" style="font-size:13px;margin:-4px 0 8px">Centang tugas, catat hasil, dan kegiatan baru masuk nilai setelah dinyatakan sesuai.</div>'
    +(ord.length?'<div style="display:flex;flex-direction:column;gap:10px">'+ord.map(function(key){var A=G[key].sort(function(a,b){return a.tgl<b.tgl?-1:1}),k=D.K[A[0].kid],day=dayOf(A[0].tgl),bp=bisaPeriksa(A[0]);
-     return '<div class="card"><div class="row"><div><b style="font-size:18px">'+esc(k.nama)+'</b> <span class="mu" style="font-size:13px">'+esc(k.posisi||k.bagian||'')+' · '+fdl(day)+'</span></div><span class="sp"></span>'+(bp?'<button class="btn pri bs" onclick="periksaGrup(\''+k.id+'\',\''+day+'\')">✓ Semua sesuai</button>':'<span class="pill">diperiksa Owner</span>')+'</div>'
+     return '<div class="card"><div class="row"><div><b style="font-size:18px;cursor:pointer;text-decoration:underline dotted" onclick="lembar(\''+k.id+'\')">'+esc(k.nama)+'</b> <span class="mu" style="font-size:13px">'+esc(k.posisi||k.bagian||'')+' · '+fdl(day)+'</span></div><span class="sp"></span>'+(bp?'<button class="btn pri bs" onclick="periksaGrup(\''+k.id+'\',\''+day+'\')">✓ Semua sesuai</button>':'<span class="pill">diperiksa Owner</span>')+'</div>'
       +'<div class="pl">'+A.map(function(a){return '<div class="pr"><b class="t">'+hm(a.tgl)+'</b><span>'+isiTeks(a)+'</span>'+(bp?(a.jenis==='hasil'?'<button class="btn bs" onclick="cekUbah(\''+a.id+'\','+a.d.q+')">Ubah</button>':'')+'<button class="btn dg bs" onclick="periksa1(\''+a.id+'\',false)" aria-label="Tolak">✗</button><button class="btn pri bs" onclick="periksa1(\''+a.id+'\',true)" aria-label="Sesuai">✓</button>':'')+'</div>'}).join('')+'</div></div>'}).join('')+'</div>'
     :'<div class="card mu">Semua laporan sudah diperiksa.</div>')+'</div>';
-  return h}
+  return h+beriAktifH()}
 function hLaporan(){if(!HD)HD=ymd(new Date());
-  var h='<div class="row" style="margin-bottom:12px"><span class="mu">Semua isian karyawan per hari, beserta statusnya.</span><span class="sp"></span><input type="date" value="'+HD+'" style="width:auto" onchange="HD=this.value;render()" aria-label="Tanggal"></div><div class="g2" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">';
+  var h='<div class="row" style="margin-bottom:12px"><span class="mu">Semua isian karyawan per hari, beserta statusnya. Klik nama untuk lembar kerja mingguan.</span><span class="sp"></span><input type="date" value="'+HD+'" style="width:auto" onchange="HD=this.value;render()" aria-label="Tanggal"></div><div class="g2" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">';
   h+=D.kar.filter(kF).map(function(k){var A=D.akt.filter(function(a){return a.kid===k.id&&dayOf(a.tgl)===HD&&a.st!=='batal'}).sort(function(a,b){return a.tgl<b.tgl?-1:1});
     var R=D.akt.filter(function(a){return a.jenis==='reject'&&a.d.target===k.id&&dayOf(a.tgl)===HD&&a.st!=='batal'});
     var pcs=0,poin=0,hs=0,tw=0;A.forEach(function(a){if(a.st==='tunggu'||a.st==='proses')tw++;if(a.jenis==='setor'&&a.st==='ok'){pcs+=+a.d.q;poin+=a.d.q*a.d.poin}if(a.jenis==='hasil'&&a.st==='ok')hs+=+a.d.q});
     var tg=A.filter(function(a){return a.jenis==='tugas'&&a.st==='ok'}).length;
     var sum=[];if(pcs)sum.push('<b>'+pcs+' pcs</b> ('+nf(poin)+' poin)');if(hs)sum.push('<b>'+nf(hs)+' '+esc(k.satuan||'pcs')+'</b>');if(R.length)sum.push('<span class="bad">reject '+R.reduce(function(a,x){return a+x.d.q},0)+' pcs</span>');if((k.cek||[]).length)sum.push('tugas '+tg+'/'+k.cek.length);if(tw)sum.push('<span class="warn">'+tw+' menunggu diperiksa</span>');
-    return '<div class="card"><div class="row"><b style="font-size:18px">'+esc(k.nama)+'</b><span class="mu" style="font-size:13px">'+esc(k.posisi||k.bagian||'')+'</span></div><div style="margin:4px 0 6px;font-size:14px">'+(sum.join(' · ')||'<span class="warn">Belum ada catatan</span>')+'</div>'
+    var lw=terlewat(k.id,HD);if(lw.length)sum.push('<span class="bad">terlewat: '+lw.map(esc).join(', ')+'</span>');
+    return '<div class="card"><div class="row"><b style="font-size:18px;cursor:pointer;text-decoration:underline dotted" onclick="lembar(\''+k.id+'\')" title="Buka lembar kerja mingguan">'+esc(k.nama)+'</b><span class="mu" style="font-size:13px">'+esc(k.posisi||k.bagian||'')+'</span><span class="sp"></span><button class="btn bs" onclick="lembar(\''+k.id+'\')">Lembar kerja</button></div><div style="margin:4px 0 6px;font-size:14px">'+(sum.join(' · ')||'<span class="warn">Belum ada catatan</span>')+'</div>'
      +'<div class="tl">'+A.map(aktLine).join('')+R.map(function(a){return '<div><b class="t">'+hm(a.tgl)+'</b><span class="bad">Reject jahitannya '+a.d.q+' pcs ('+esc(a.d.alasan)+') dicatat '+esc(a.oleh)+'</span></div>'}).join('')+'</div></div>'}).join('');
   return h+'</div>'}
 function hReject(){var w=ymd(satOf(new Date()));
@@ -604,11 +849,11 @@ function mdH(src){
    Semua akun membaca. Owner (kinerja_gaji) mengubah isi, status, dan daftar jobdesk. */
 var DOC=null,PE=false,PJ=null,PF='Semua',PPV=false;
 async function docLoad(){sync(1);try{DOCF=0;await docPrefetch();if(!DOC)throw new Error('Gagal memuat peraturan');render()}catch(e){toast(e.message,1)}finally{sync(0)}}
-function vPer(){if(!DOC||!DOCF){if(!DOCP)docLoad();if(!DOC)return '<div class="load">Memuat peraturan…</div>'}
+function vPer(){if(PT==='sop'&&!PE)return vSop();if(!DOC||!DOCF){if(!DOCP)docLoad();if(!DOC)return perTab()+'<div class="load">Memuat peraturan…</div>'}
   if(PE)return vPerEdit();
   var m=DOC.meta||{},J=DOC.jobs||[],P=['Semua'].concat(J.map(function(r){return r[0]}).filter(function(v,i,a){return a.indexOf(v)===i}));
   if(P.indexOf(PF)<0)PF='Semua';
-  var h='<div class="row" style="margin-bottom:12px"><h1 style="font-size:34px">Peraturan Kerja &amp; Jobdesk</h1>'
+  var h=perTab()+'<div class="row" style="margin-bottom:12px"><h1 style="font-size:34px">Peraturan Kerja &amp; Jobdesk</h1>'
    +(m.status==='berlaku'?'<span class="pill ok">BERLAKU'+(m.berlaku?' SEJAK '+fdl(m.berlaku).toUpperCase():'')+'</span>':'<span class="pill warn">DRAF · BELUM DITANDATANGANI</span>')
    +'<span class="mu" style="font-size:13px">'+esc(m.nomor||'')+(m.versi?' · versi '+fdl(m.versi):'')+(DOC.by?' · diubah '+esc(DOC.by):'')+'</span><span class="sp"></span>'
    +'<a class="btn" href="peraturan-kerja.html" target="_blank" rel="noopener">Halaman cetak</a>'+(D.me.gaji?'<button class="btn pri" onclick="perUbah()">Ubah peraturan &amp; jobdesk</button>':'')+'</div>'
@@ -717,6 +962,7 @@ function karEdit(id){KE_ID=id||'';if(!DOCF)docPrefetch();
   d.innerHTML='<h3>'+(id?'Ubah '+esc(k.nama):'Karyawan baru')+'</h3><div class="gr n"><label class="f">Nama<input id="e_nama" value="'+esc(k.nama||'')+'"></label><label class="f">ID ceklok<input id="e_cid" value="'+esc(k.cid||'')+'"></label></div>'
    +'<div class="gr" style="margin-top:8px"><label class="f">Posisi (dari Jobdesk)<select id="e_pos" onchange="posGanti()">'+posOpt(ps,k.posisi)+'</select></label><label class="f">Bagian (tampil di slip)<input id="e_bag" value="'+esc(k.bagian||'')+'" placeholder="mis. Penjahit"></label></div>'
    +'<div class="row" style="margin:14px 0 2px"><b style="font-size:15px">Tugas posisi ini</b><span class="sp"></span><span class="pill" id="e_set"></span></div><div class="mu" style="font-size:12px;margin-bottom:8px">Hilangkan centang untuk tugas yang tidak dikerjakan orang ini. Tugas harian yang dicentang menjadi checklist di HP.</div><div id="e_tp"></div>'
+   +(id&&tjSaya(id).length?'<div style="margin-top:10px"><b style="font-size:15px">Tanggung jawab tambahan</b> <span class="mu" style="font-size:12px">— diatur di Peraturan → SOP &amp; Tanggung jawab</span><div class="chips" style="margin-top:6px">'+tjSaya(id).map(function(t){return '<span class="pill'+((t.orang||[])[0]===id?' ok':'')+'">'+((t.orang||[])[0]===id?'★ ':'')+esc(t.nama)+'</span>'}).join('')+'</div></div>':'')
    +'<div class="g2" style="margin-top:12px"><label class="f">Workshop<select id="e_gud"><option value="">'+(D.cfg.loc?'Bawaan ('+esc(gN(D.cfg.loc))+')':'Belum diatur')+'</option>'+(D.gudang||[]).map(function(g){return '<option value="'+esc(g.id)+'"'+(String(g.id)===String(k.gud||'')?' selected':'')+'>'+esc(wsN(g.name))+'</option>'}).join('')+'</select></label>'
    +'<label class="f">Unit setoran (mis. Tim Jahit Rejosari)<input id="e_unit" value="'+esc(k.unit||'')+'" list="units" placeholder="kosong = atas nama sendiri"></label>'
    +'<label class="f">Area HP<select id="e_area" onchange="areaBaru(this)"><option value="">— tanpa area —</option>'+ar.map(function(a){return '<option'+(a===k.area?' selected':'')+'>'+esc(a)+'</option>'}).join('')+'<option value="__baru">+ Area baru…</option></select></label>'
