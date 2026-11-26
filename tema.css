@@ -560,3 +560,31 @@ header .clk+#sync{margin-left:14px}
 .bhl{max-height:50vh;overflow:auto;display:flex;flex-direction:column;gap:4px;text-align:left}
 .bhc{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;border:1px solid var(--line);cursor:pointer}
 .bhc input{width:18px;height:18px;accent-color:var(--acc)}.bhc span{display:flex;flex-direction:column}.bhc small{color:var(--muted);font-size:12px}
+
+/* ---------- mode Detail di Kasir (seperti Windows Explorer) ---------- */
+[data-cs=d] #grid{display:flex;flex-direction:column;gap:0;overflow-x:auto}
+[data-cs=d] #grid .kd-h,[data-cs=d] #grid .p.kd{flex:none;display:grid;grid-template-columns:var(--w1,380px) var(--w2,110px) var(--w3,110px) var(--w4,160px) minmax(0,1fr);min-width:var(--tw,760px);align-items:stretch}
+.kd-h{position:sticky;top:0;z-index:3;height:32px;background:var(--bg);border-bottom:1px solid var(--line);color:var(--muted);font:600 13px Barlow,sans-serif;user-select:none;-webkit-user-select:none}
+.kd-hc{position:relative;display:flex;align-items:center;gap:6px;min-width:0;padding:0 10px;cursor:pointer;border-right:1px solid var(--line)}
+.kd-hc>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kd-hc.r{justify-content:flex-end}
+.kd-hc:hover,.kd-hc.on{color:var(--text)}
+.kd-hc:hover{background:color-mix(in srgb,var(--text) 8%,transparent)}
+.kd-hc:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.kd-hc .ar{flex:none}
+.kd-rz{position:absolute;top:0;right:-5px;width:11px;height:100%;cursor:col-resize;z-index:4;touch-action:none}
+.kd-rz:hover{background:linear-gradient(90deg,transparent 4px,var(--acc) 4px,var(--acc) 6px,transparent 6px)}
+body.kd-rs{cursor:col-resize;user-select:none;-webkit-user-select:none}
+[data-cs=d] #grid .p.kd{height:36px;min-height:0;padding:0;gap:0;margin:0;border:0!important;border-bottom:1px solid color-mix(in srgb,var(--line) 55%,transparent)!important;border-radius:0;box-shadow:none!important;background:transparent;align-items:center;font:500 15px Barlow,sans-serif}
+[data-cs=d] #grid .p.kd:hover:not(:disabled){background:color-mix(in srgb,var(--text) 9%,transparent)}
+[data-cs=d] #grid .p.kd:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.kd .kc{min-width:0;padding:0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+.kd .kc.r{text-align:right}
+.kd .kc:nth-child(n+2){color:var(--muted)}
+.kd .kc:nth-child(4){color:var(--text);font-weight:600}
+.kd .kc i{font-style:normal;font-weight:400;font-size:12px;color:var(--muted);margin-right:2px}
+@media(max-width:600px){
+[data-cs=d] #grid .kd-h,[data-cs=d] #grid .p.kd{grid-template-columns:minmax(0,1fr) 52px 128px;min-width:0}
+.kd-v,.kd-rz{display:none!important}
+[data-cs=d] #grid .p.kd{height:44px}
+}
