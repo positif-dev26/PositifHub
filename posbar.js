@@ -20,7 +20,7 @@
     clipboard: 'assignment',           /* Pesanan custom */
     rekap: 'assignment_turned_in',     /* Rekap order */
     users: 'group',                    /* Kinerja */
-    grid: 'apps',                      /* Aplikasi lain */
+    grid: 'qr_code_scanner',           /* Aplikasi lain */
     sticker: 'sticky_note_2',          /* Layout stiker */
     key: 'key',                        /* Ganti PIN */
     settings: 'settings',              /* Pengaturan */
