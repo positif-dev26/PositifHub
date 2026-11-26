@@ -108,7 +108,7 @@ function kdFit(i){const g=$('grid');if(!g)return;const hc=g.querySelectorAll('.k
  let w=0;const meas=(txt,el)=>{t.style.font=getComputedStyle(el).font;t.textContent=txt;return t.offsetWidth};
  w=meas(hc.textContent,hc)+36;rows.forEach(r=>{const c=r.children[i];if(c)w=Math.max(w,meas(c.textContent,c)+24)});t.remove();
  DW[i]=Math.max(KMIN[i],Math.min(900,Math.ceil(w)));kdVars();kdSave()}
-function kdHead(){return '<div class="kd-h" role="row">'+KC.map(([k,t,r],i)=>{const on=DS.k===k;return `<div class="kd-hc${r?' r':''}${on?' on':''}${i===1?' kd-v':''}" role="columnheader" tabindex="0" aria-sort="${on?(DS.d>0?'ascending':'descending'):'none'}" title="Klik untuk mengurutkan" onclick="kdSort('${k}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kdSort('${k}')}"><span>${t}</span>${on?`<svg class="ar" viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${DS.d>0?'M2 6.5L5 3.5L8 6.5':'M2 3.5L5 6.5L8 3.5'}"/></svg>`:''}<i class="kd-rz" title="Tarik untuk mengubah lebar, klik ganda untuk pas isi" onpointerdown="kdRz(event,${i})" ondblclick="kdFit(${i})" onclick="event.stopPropagation()"></i></div>`}).join('')+'</div>'}
+function kdHead(){return '<div class="kd-h" role="row">'+KC.map(([k,t,r],i)=>{const on=DS.k===k;return `<div class="kd-hc${r?' r':''}${on?' on':''}${i===1?' kd-v':''}" role="columnheader" tabindex="0" aria-sort="${on?(DS.d>0?'ascending':'descending'):'none'}" title="Klik untuk mengurutkan" onclick="kdSort('${k}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kdSort('${k}')}"><span>${t}</span>${on?`<span class="ms ar" style="font-size:14px" aria-hidden="true">${DS.d>0?'arrow_upward':'arrow_downward'}</span>`:''}<i class="kd-rz" title="Tarik untuk mengubah lebar, klik ganda untuk pas isi" onpointerdown="kdRz(event,${i})" ondblclick="kdFit(${i})" onclick="event.stopPropagation()"></i></div>`}).join('')+'</div>'}
 function grid(){
  const ql=q.toLowerCase();
  if(cat===HID&&!q.trim()){$('grid').innerHTML='<p class="muted">Produk disembunyikan. Pilih kategori di kanan atas, atau ketik nama produk / scan barcode.</p>';return}
@@ -136,7 +136,7 @@ function renderPk(){pkSide();const p=S.products.find(x=>x.id===pk);if(!p)return;
 function addV(id){const x=findV(id);if(!x)return;const c=cart.find(c=>c.id===id);
  if(c){if(c.qty<x.v.stock)c.qty++;else note('Stok '+cn(x.p,x.v)+' hanya '+nf(x.v.stock),1)}else if(x.v.stock>0)cart.push({id,name:cn(x.p,x.v),price:vp(x.p,x.v),qty:1});
  lines();if(pk)renderPk();else{const i=$('q');if(i)i.focus()}}
-const TR='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7h15M10 7V4.5h4V7M6.5 7l.9 12.5h9.2L17.5 7"/></svg>';
+const TR='<span class="ms" style="font-size:18px" aria-hidden="true">delete</span>';
 let dm='rp';
 const itemsN=()=>cart.reduce((a,c)=>a+c.qty,0);
 const sheetOpen=()=>{const a=$('cartc');return !!a&&a.classList.contains('open')};

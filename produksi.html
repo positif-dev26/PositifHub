@@ -379,7 +379,7 @@ function kbInit(){if(!kbOn){kbOn=true;const q=()=>{if(!kbR)kbR=requestAnimationF
 if(!ICO.truck)ICO.truck='<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>';
 if(!ICO.pencil)ICO.pencil='<path d="M21.17 6.81a1 1 0 0 0-3.98-3.98L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/>';
 if(!ICO.undo)ICO.undo='<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>';
-const XIC='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+const XIC='<span class="ms" style="font-size:20px" aria-hidden="true">close</span>';
 function ppOpen(k){const G=groups().find(x=>x.k===k);if(!G)return;if(isV(G))return toast('Masih menyimpan, tunggu sebentar.',1);
  psel=k;$('ppc').innerHTML=panel(G,warn(G));$('pp').classList.add('on');if($('sisa'))prc(k);
  document.querySelectorAll('.vr.on').forEach(b=>b.classList.remove('on'));}
@@ -691,7 +691,7 @@ async function delG(id){if(!can('gudang'))return;const used=realJ().filter(j=>RS
  if(GL().length<=1){toast('Minimal harus ada satu gudang.',1);return}
  if(used.length){toast('Gudang masih berisi '+nf(tq(used))+' pcs barang. Kirim dulu ke gudang lain.',1);return}
  if(!(await askC('Hapus gudang ini?')))return;ensureG();S.gudang=S.gudang.filter(x=>x.id!==id);if(pg===id)pg='Semua';save();render()}
-const HIC='<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
+const HIC='<span class="ms" style="font-size:18px" aria-hidden="true">schedule</span>';
 const jl=j=>esc(jn(j))+' <button type="button" class="jh" onclick="showHist(\''+j.id+'\')" title="Lihat riwayat petugas" aria-label="Lihat riwayat petugas">'+HIC+'</button>';
 function showHist(id){const j=realJ().find(x=>x.id===id);if(!j)return;const ev=[];
  (j.hist||[]).forEach(h=>ev.push({d:h.date||'',st:h.kind==='kirim'?'Kirim antar gudang':h.kind==='konfirm'?'Konfirmasi cetak vendor':h.kind?'Dipecah / reject':h.back?'Dikembalikan ke '+stn(h.stage):h.fix?'Perbaikan → '+stn(h.stage):stn(h.stage||'-'),s:h.kind?'':h.stage,by:h.by,note:h.note+(h.q?' ('+h.q+' pcs)':''),rj:0}));
