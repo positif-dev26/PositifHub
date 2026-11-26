@@ -253,6 +253,21 @@ dialog label.cbx,.cbx{position:relative;display:inline-grid;place-items:center;w
 @media(max-width:760px){.sbar{bottom:84px;padding:10px 12px}.sbar>.mu{display:none}.orw{grid-template-columns:24px 1fr auto;row-gap:6px}.orw>:nth-child(4){grid-column:2;grid-row:2}.orw>:nth-child(5){grid-column:3;grid-row:2;justify-self:end}
  .mr2{grid-template-columns:1fr 86px auto}.mr2>.mu{display:none}.mr2 input{width:86px!important}.ih h3{font-size:24px}.ir{gap:8px;padding:8px}.irq{font-size:20px;min-width:34px}.g2{grid-template-columns:1fr}}
 @media(max-width:480px){.dvg{grid-template-columns:1fr!important}#sync{display:none}header .sp{display:none}}
+/* ===== HP: bar bawah minimalis menempel ke tepi layar (samakan dengan Positif POS) ===== */
+@media(max-width:760px){
+ html,body{overscroll-behavior-y:none}
+ #rail{left:0;right:0;bottom:0;top:auto;width:auto;height:calc(56px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);gap:0;border:0;border-top:1px solid var(--bd);border-radius:0;box-shadow:none;background:#0c0c0c;-webkit-backdrop-filter:none;backdrop-filter:none;justify-content:space-around;overflow-x:auto;transform:translate3d(0,0,0);will-change:transform}
+ #rail .ri{flex:1 0 auto;width:auto;min-width:56px;height:56px;gap:3px;border:0;border-radius:0;background:transparent!important;box-shadow:none!important;color:#8d8d88;font:500 11px/1 "Barlow Semi Condensed",sans-serif}
+ #rail .ri:hover{background:transparent;border:0;color:#8d8d88}
+ #rail .ri svg{width:23px;height:23px;stroke-width:1.7}
+ #rail .ri.on{background:transparent!important;box-shadow:none!important;color:var(--ac)!important;font-weight:600}
+ #rail .ri.on svg{fill:currentColor;stroke:#0c0c0c}
+ #rail .bg{top:3px;right:calc(50% - 24px)}
+ .app{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+ .rmm{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+ .sbar{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+ #toast{bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+}
 .mvn{min-width:48px}
 </style>
 <script src="posbar.js?v=20261123a"></script>
@@ -296,9 +311,9 @@ var GNM={"1":"Gudang Pusat","2":"Gudang Kedawung"},GN=function(){return GNM[W]||
 
 // ---- ikon ----
 var ICO={dash:'<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
-swap:'<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
+swap:'<path fill="none" stroke="currentColor" d="M8 3 4 7l4 4"/><path fill="none" stroke="currentColor" d="M4 7h16"/><path fill="none" stroke="currentColor" d="m16 21 4-4-4-4"/><path fill="none" stroke="currentColor" d="M20 17H4"/>',
 box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
-layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path fill="none" stroke="currentColor" d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path fill="none" stroke="currentColor" d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
 cart:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
 wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
 user:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>',

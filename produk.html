@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tema.css?v=20261123a">
+<link rel="stylesheet" href="tema.css?v=20261125b">
 <style>
 /* ===== Menu Produk > Stok: satu kotak per varian + tahapan produksi (hanya berlaku di halaman ini) ===== */
 .chsep{width:1px;height:26px;background:var(--line);align-self:center}
@@ -80,6 +80,31 @@
  .ub4{display:none}
  .mo4{grid-area:m;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:10px;border:0;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text);cursor:pointer;padding:0}
 }
+.nbar{display:none}
+/* ===== HP: Stok lebih lega (tampilan desktop tidak tersentuh) ===== */
+@media(max-width:860px){
+ /* header (judul, cari, filter) dan sub-header tidak menempel lagi: layar dipakai untuk isi */
+ #pbody .sk2{position:static!important}
+ .sk4h{position:static;background:transparent;border-bottom:0;box-shadow:none;padding:4px 0 0;margin-bottom:12px}
+ .lg4{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch;gap:14px;margin:4px 0 2px}
+ .lg4::-webkit-scrollbar{display:none}.lg4 span{flex:none}
+ /* kartu produk: bingkai tipis, sudut bulat, ruang dalam lebih besar */
+ .sk4b{gap:16px}
+ .pk4{border:1px solid color-mix(in srgb,var(--acc,#d4ff3f) 40%,transparent);border-radius:20px;padding:16px 14px 8px}
+ .ph4{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 12px;padding:0 4px 14px;margin-bottom:4px}
+ .ph4 h3{grid-column:1;grid-row:1;font-size:22px;line-height:1.15}
+ .ph4 .lnk3{grid-column:2;grid-row:1}
+ .ph4>small{grid-column:1/-1;grid-row:2;font-size:13px}
+ .ph4 .sm4{grid-column:1/-1;grid-row:3;margin:2px 0 0;width:auto;font-size:13px;gap:4px 8px}
+ /* baris varian: lebih tinggi, ukuran & jumlah lebih jelas */
+ .vr4{grid-template-columns:84px minmax(0,1fr) auto;gap:6px 12px;padding:12px 4px;min-height:64px;border-radius:12px}
+ .vr4+.vr4{border-top:1px solid color-mix(in srgb,var(--line) 45%,transparent)}
+ .vw4 b{font-size:16px}.vw4 span{font-size:13px}
+ .s4 b{font-size:19px}
+ .pr4{font-size:12.5px;gap:4px 10px}
+ /* nama produk menempel di bawah nav saat judul kartu tergulung */
+ .nbar.on{display:block;position:fixed;left:0;right:0;height:30px;line-height:30px;padding:0 20px;z-index:6;font:600 13px/30px Barlow,sans-serif;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--acc,#d4ff3f);background:color-mix(in srgb,var(--acc,#d4ff3f) 10%,var(--card));border-bottom:1px solid color-mix(in srgb,var(--acc,#d4ff3f) 40%,transparent);box-shadow:0 6px 10px -8px rgba(0,0,0,.7)}
+}
 </style>
 </head>
 <body>
@@ -96,7 +121,7 @@
 <div id="plabels"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
 <script>window.PAGE_TABS=["produk", "stok"];window.PAGE_HOME="produk";</script>
-<script src="inti.js?v=20261124a"></script>
+<script src="inti.js?v=20261126a"></script>
 <script>
 /* ---------- PRODUK & VARIAN ---------- */
  const addForm=()=>`<div>
@@ -104,7 +129,7 @@
  <p class="muted" style="margin:0 0 8px">Setiap kombinasi warna dan ukuran menjadi satu varian dengan foto, barcode, harga, dan stok sendiri. Barcode varian baru otomatis sama dengan ID varian.</p></div>`;
  const pEd=p=>`<div><div class="form"><input value="${esc(p.name)}" onchange="updP(${p.id},'name',this.value)" aria-label="Nama produk"><input value="${esc(p.cat)}" onchange="updP(${p.id},'cat',this.value)" aria-label="Kategori"><input type="text" inputmode="numeric" data-n value="${p.price}" onchange="updP(${p.id},'price',+this.value)" aria-label="Harga dasar"><button class="btn sec" onclick="addVar(${p.id})">+ Varian</button><button class="btn sec" onclick="printBC(${p.id})">Cetak semua label</button></div>
  <div class="scroll"><table><tr><th>Foto</th><th>Warna</th><th>Ukuran</th><th>Barcode</th><th>Harga (kosong = dasar)</th><th>Stok</th><th></th></tr>
- ${p.variants.map(v=>`<tr><td><label class="thumb" title="Klik untuk mengganti foto">${v.img?`<img src="${v.img}" alt="">`:'+ Foto'}<input type="file" accept="image/*" hidden onchange="setImg(${v.id},this)"></label>${v.img?`<button class="lnk" onclick="delImg(${v.id})">Hapus foto</button>`:''}</td><td><input value="${esc(v.color)}" onchange="updV(${v.id},'color',this.value)"></td><td><input value="${esc(v.size)}" onchange="updV(${v.id},'size',this.value)"></td><td><input value="${esc(v.barcode||'')}" placeholder="${v.id}" onchange="setBC(${v.id},this.value)"></td><td><input type="text" inputmode="numeric" data-n value="${v.price||''}" placeholder="${nf(p.price)}" onchange="updV(${v.id},'price',+this.value)"></td><td><input type="text" inputmode="numeric" data-n value="${v.stock}" onchange="updV(${v.id},'stock',+this.value)"></td><td style="white-space:nowrap"><button class="btn sec" style="padding:4px 8px;margin-right:4px" onclick="printBC(${p.id},${v.id})">Cetak label</button><button class="x" style="width:34px;padding:0" title="Hapus varian" onclick="delV(${v.id})" aria-label="Hapus varian"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 11v6M14 11v6"/></svg></button></td></tr>`).join('')}</table></div></div>`;
+ ${p.variants.map(v=>`<tr><td><label class="thumb" title="Klik untuk mengganti foto">${v.img?`<img src="${v.img}" alt="">`:'+ Foto'}<input type="file" accept="image/*" hidden onchange="setImg(${v.id},this)"></label>${v.img?`<button class="lnk" onclick="delImg(${v.id})">Hapus foto</button>`:''}</td><td><input value="${esc(v.color)}" onchange="updV(${v.id},'color',this.value)"></td><td><input value="${esc(v.size)}" onchange="updV(${v.id},'size',this.value)"></td><td><input value="${esc(v.barcode||'')}" placeholder="${v.id}" onchange="setBC(${v.id},this.value)"></td><td><input type="text" inputmode="numeric" data-n value="${v.price||''}" placeholder="${nf(p.price)}" onchange="updV(${v.id},'price',+this.value)"></td><td><input type="text" inputmode="numeric" data-n value="${v.stock}" onchange="updV(${v.id},'stock',+this.value)"></td><td style="white-space:nowrap"><button class="btn sec" style="padding:4px 8px;margin-right:4px" onclick="printBC(${p.id},${v.id})">Cetak label</button><button class="x" style="width:34px;padding:0" title="Hapus varian" onclick="delV(${v.id})" aria-label="Hapus varian"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 7h15M10 7V4.5h4V7M6.5 7l.9 12.5h9.2L17.5 7"/></svg></button></td></tr>`).join('')}</table></div></div>`;
 let ed=null,addOpen=false,pfq='',pfc='Semua';
 /* ---------- MENU PRODUK (gabungan Produk + Stok Produk) ----------
    Sub menu kiri (HP: bawah): Stok · Katalog · Barcode · Riwayat · Atur */
@@ -200,7 +225,7 @@ function stokFill(){
   const sm=['Stok <b>'+nf(un)+'</b>'];if(h)sm.push('<span class="bad">'+h+' habis</span>');if(mn)sm.push('<span class="mid">'+mn+' menipis</span>');if(dp)sm.push('<span class="dp">'+nf(dp)+' diproduksi</span>');
   return '<section class="pk4"><div class="ph4"><h3>'+esc(p.name)+'</h3><small>'+esc(pcat(p))+' · '+vs.length+' varian</small>'+(can('produk_edit')?'<button class="lnk3" onclick="edFromStok('+p.id+')">Edit produk</button>':'')+'<span class="sm4">'+sm.join('<i>·</i>')+'</span></div>'+vs.map(v=>row(p,v)).join('')+'</section>'};
  w.innerHTML=L.length?L.map(grp).join(''):'<p class="muted">Tidak ada varian yang cocok dengan filter ini.</p>';
- $('skn').textContent=L.length+' produk · '+L.reduce((a,x)=>a+x.vs.length,0)+' varian';stk()}
+ $('skn').textContent=L.length+' produk · '+L.reduce((a,x)=>a+x.vs.length,0)+' varian';stk();nbInit()}
 /* status stok: titik warna + angka; tulisan hanya untuk Habis / Menipis */
 const stok4=v=>{const s=stt(v),c=s==='Habis'?'bad':s==='Menipis'?'mid':'ok';return '<span class="s4 '+c+'"><i></i><b>'+nf(v.stock)+'</b>'+(c==='ok'?'':'<em>'+s+'</em>')+'</span>'};
 /* tahapan: 5 titik, terisi warna tahap sampai tahap terjauh yang sedang berjalan; teks per tahap aktif berwarna tahapnya (merah + ⚠ bila tertahan/lewat tanggal) */
@@ -210,6 +235,17 @@ function tahap4(m){if(!m||!m.tot)return '';let far=-1;PST.forEach(([k],i)=>{if(m
  const t=PST.filter(([k])=>m[k]&&m[k].q).map(([k,l,c,tc])=>{const s=m[k];return '<span class="t4" style="color:'+(s.late?LATE4:tc)+'" title="'+esc(s.tip.join('\n'))+'">'+(s.late?'&#9888; ':'')+l+' <b>'+nf(s.q)+'</b></span>'}).join('');
  return '<span class="pr4">'+d+t+'</span>'}
 const ib4=(id,k,ic,l)=>'<button class="ib4'+(k==='set'?' pri':'')+'" onclick="adj('+id+',\''+k+'\')" title="'+l+'" aria-label="'+l+' stok">'+IC(ic)+'</button>';
+/* ---------- bar nama produk (HP): menempel di bawah nav saat judul kartu produk tergulung ke atas ---------- */
+let nbOn=false,nbR=0;const nbH=30;
+function nbTop(){let e=document.elementFromPoint(innerWidth/2,4),h=0;while(e&&e!==document.body&&e!==document.documentElement){const p=getComputedStyle(e).position;if(p==='fixed'||p==='sticky')h=Math.max(h,e.getBoundingClientRect().bottom);e=e.parentElement}return h||parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hh'))||52}
+function nbUpd(){nbR=0;let b=document.querySelector('.nbar');const cs=[...document.querySelectorAll('#sbs>.pk4')];
+ if(!cs.length||!matchMedia('(max-width:860px)').matches||document.querySelector('.modal.on,#sdm')){if(b)b.classList.remove('on');return}
+ if(!b){b=document.createElement('div');b.className='nbar';b.setAttribute('aria-hidden','true');document.body.appendChild(b)}
+ const T=Math.round(nbTop());let a=null;
+ cs.forEach(c=>{const r=c.getBoundingClientRect(),h=c.querySelector('.ph4 h3');if(r.top<=T&&r.bottom>T+nbH&&h&&h.getBoundingClientRect().bottom<=T+1)a=c});
+ if(!a){b.classList.remove('on');return}
+ const t=a.querySelector('.ph4 h3');b.textContent=t?t.textContent:'';b.style.top=T+'px';b.classList.add('on')}
+function nbInit(){if(!nbOn){nbOn=true;const q=()=>{if(!nbR)nbR=requestAnimationFrame(nbUpd)};addEventListener('scroll',q,{passive:true});addEventListener('resize',q);addEventListener('click',()=>setTimeout(q,60),true)}nbUpd()}
 /* panel ubah stok dari bawah layar (HP) */
 function sheet4(id){sdmClose();const x=findV(id);if(!x)return;const p=x.p,v=x.v,m=canProd()?prodMap()[id]:null;
  const pr=m&&m.tot?'<div class="sh4p"><small>Sedang diproduksi</small>'+PST.filter(([k])=>m[k]&&m[k].q).map(([k,l,c,tc])=>{const s=m[k];return '<div style="color:'+(s.late?LATE4:tc)+'"><b>'+(s.late?'&#9888; ':'')+l+' · '+nf(s.q)+' pcs</b><small>'+s.tip.map(esc).join('<br>')+'</small></div>'}).join('')+'</div>':'';
@@ -235,7 +271,7 @@ function barcodeView(){
  $('pbody').innerHTML='<div class="pfh"><h1 class="pt">Cetak barcode</h1><div class="bar" style="align-items:center;margin:0"><input id="bq" class="srch" placeholder="Cari produk" value="'+esc(bq)+'" oninput="bq=this.value;bcFill()" autocomplete="off">'+(can('produk_edit')?'<button class="btn sec" onclick="fillBC()">Isi barcode kosong</button>':'')+'</div></div><div id="bcl" class="bcg"></div>';bcFill()}
 function bcFill(){const ql=bq.trim().toLowerCase(),l=S.products.filter(p=>!ql||p.name.toLowerCase().includes(ql)||p.variants.some(v=>bcv(v).includes(bq.trim())));
  $('bcl').innerHTML=l.length?l.map(p=>{const vs=p.variants,em=vs.filter(v=>!v.barcode).length,st=vs.reduce((a,v)=>a+(isJ(v)?0:v.stock),0);
-  return '<div class="card bcc"><div><b>'+esc(p.name)+'</b><div class="muted">'+esc(pcat(p))+' · '+vs.length+' varian'+(vs.some(isJ)?'':' · stok '+nf(st))+(em?' · <span class="mid2">'+em+' belum ada barcode</span>':'')+'</div></div><button class="btn" onclick="printBC('+p.id+')">'+IC('printer')+' Cetak label</button></div>'}).join(''):'<p class="muted">Produk tidak ditemukan.</p>'}
+  return '<div class="card bcc"><div><b>'+esc(p.name)+'</b><div class="muted">'+esc(pcat(p))+' · '+vs.length+' varian'+(vs.some(isJ)?'':' · stok '+nf(st))+(em?' · <span class="mid2">'+em+' belum ada barcode</span>':'')+'</div></div><button class="btn sec" onclick="printBC('+p.id+')">Cetak label</button></div>'}).join(''):'<p class="muted">Produk tidak ditemukan.</p>'}
 function aturView(){
  $('pbody').innerHTML='<div class="pfh"><h1 class="pt">Pengaturan stok</h1></div><div class="card atr"><label for="lowi"><b>Batas stok menipis</b><span class="muted">Varian dengan stok sama atau di bawah angka ini ditandai <b class="mid2">Menipis</b>.</span></label><div class="f2"><input id="lowi" type="text" inputmode="numeric" data-n value="'+S.low+'" onkeydown="if(event.key===\'Enter\')setLow(this.value)"><span class="muted">unit</span><button class="btn" onclick="setLow($(\'lowi\').value)">Simpan</button></div></div>'}
 /* ---------- FOTO & CETAK BARCODE ---------- */
