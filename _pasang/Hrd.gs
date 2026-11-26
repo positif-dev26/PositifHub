@@ -12,7 +12,7 @@
  * lalu Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone).
  * Setiap kode diubah: Deploy > Manage deployments > Edit > Version: New.
  */
-const HRD_V = 7;
+const HRD_V = 8;
 const KJ_V = 3; /* versi kontrak dengan kinerja.html */
 const POS_API = 'https://script.google.com/macros/s/AKfycbwUEqf4lS9mn3Gdyo3vpDmTl3u9gxQzIEIf83dJMeopMDDQpHu_-pcG9puoPFHfMOOBkA/exec';
 
@@ -131,7 +131,9 @@ function hash_(user, pin) {
 }
 
 const KJ_SH = {
-  kar: ['KJ Karyawan', ['id', 'cid', 'nama', 'bagian', 'kerja', 'hasil', 'satuan', 'area', 'upah', 'target', 'jobdesk', 'cek', 'pinh', 'on', 'urut', 'gud', 'unit', 'posisi']],
+  kar: ['KJ Karyawan', ['id', 'cid', 'nama', 'bagian', 'kerja', 'hasil', 'satuan', 'area', 'upah', 'target', 'jobdesk', 'cek', 'pinh', 'on', 'urut', 'gud', 'unit', 'posisi', 'sistem']],
+  /* v8: scan ceklok asli per minggu per workshop + koreksi */
+  ck: ['KJ Ceklok', ['id', 'raw', 'kor', 'file', 'periode', 'by', 'at']],
   akt: ['KJ Aktivitas', ['id', 'tgl', 'kid', 'jenis', 'data', 'status', 'oleh', 'dev', 'cekBy', 'cekAt']],
   gaji: ['KJ Gaji', ['id', 'status', 'data', 'by', 'at', 'okBy', 'okAt']],
   doc: ['KJ Dokumen', ['id', 'isi', 'jobs', 'meta', 'by', 'at']]
@@ -151,7 +153,9 @@ const KJ_CFG_DEF = {
   hasilB: 100, hasilC: 75, mutuB: 1, mutuC: 3, jobB: 90, jobC: 70, ujiMulai: '', ujiMinggu: 4, targetUnit: {},
   grade: {A: 9, B: 7, C: 5},
   /* v7 */
-  hariKerja: [1, 2, 3, 4, 5, 6], jamMasuk: '08:00', jamPulang: '16:00', istirahat: '12:00-13:00', upahDef: 0, targetDef: 0, ws: {}, akses: null
+  hariKerja: [1, 2, 3, 4, 5, 6], jamMasuk: '08:00', jamPulang: '16:00', istirahat: '12:00-13:00', upahDef: 0, targetDef: 0, ws: {}, akses: null,
+  /* v8: sistem upah & uang makan per workshop */
+  sistemUpah: 'jam', tarif: {}, tarifDef: 0, makanMode: 'lama', makanJam: 6.5, makanRp: 7500, tunjOn: true, korAjuan: false
 };
 const KJ_KERJA = ['jahit', 'potong', 'hasil', 'qc'];
 const KJ_KEG = ['Menunggu bahan', 'Bantu packing', 'Bantu bagian lain', 'Belanja', 'Mesin / alat bermasalah', 'Bersih-bersih', 'Lainnya'];
@@ -164,7 +168,7 @@ function kinerja_(a, u) {
   const anyK = ['kinerja_input', 'kinerja_cek', 'kinerja_gaji'].some(function (k) { return has_(u, k); }) || peran_(u) === 'supervisor';
   if (!anyK) throw new Error('Akses ditolak: akun Anda tidak punya izin Gaji & Kinerja.');
   switch (act) {
-    case 'load': return kjLoad_(p, u);
+    case 'load': kjMigrasiV8_(); return kjLoad_(p, u);
     case 'jobs': return kjJobsAll_(u);
     case 'docGet': return kjDocGet_();
     case 'docSave': return kjDocSave_(p, u);
@@ -182,6 +186,10 @@ function kinerja_(a, u) {
     case 'gajiSave': return kjGajiSave_(p, u);
     case 'gajiGet': hanyaOwner_(u); return kjGajiGet_(String(p.week || ''));
     case 'gajiTotal': hanyaOwner_(u); return kjGajiTotal_(String(p.week || ''));
+    case 'ckGet': return kjCkGet_(p, u);
+    case 'ckSave': return kjCkSave_(p, u);
+    case 'ckKor': return kjCkKor_(p, u);
+    case 'ckPutus': return kjCkPutus_(p, u);
     case 'migrasi': return kjMigrasi_(u);
     default: throw new Error('Aksi Kinerja tidak dikenal');
   }
@@ -226,7 +234,8 @@ function kjPut_(k, o) {
 function kjJ_(v, d) { if (v && typeof v === 'object') return v; try { const x = JSON.parse(v); return x == null ? d : x; } catch (e) { return d; } }
 /* v7: aturan gaji & nilai disimpan per workshop (cfg.ws[gudang]); yang belum diisi memakai aturan umum lama */
 const KJ_WS_KEYS = ['poin', 'poinDef', 'makan', 'batas', 'penuh', 'setengah', 'jumBatas', 'jumPenuh', 'jumSetengah', 'hadir', 'kerja', 'hasilTangga', 'mutuTangga',
-  'telatMaks', 'cekMin', 'hasilB', 'hasilC', 'mutuB', 'mutuC', 'jobB', 'jobC', 'ujiMulai', 'ujiMinggu', 'targetUnit', 'grade', 'hariKerja', 'jamMasuk', 'jamPulang', 'istirahat', 'upahDef', 'targetDef'];
+  'telatMaks', 'cekMin', 'hasilB', 'hasilC', 'mutuB', 'mutuC', 'jobB', 'jobC', 'ujiMulai', 'ujiMinggu', 'targetUnit', 'grade', 'hariKerja', 'jamMasuk', 'jamPulang', 'istirahat', 'upahDef', 'targetDef',
+  'sistemUpah', 'tarif', 'tarifDef', 'makanMode', 'makanJam', 'makanRp', 'tunjOn', 'korAjuan'];
 function kjCfgRaw_() {
   const c = kjJ_(PropertiesService.getScriptProperties().getProperty('KJ_CFG'), {});
   const o = JSON.parse(JSON.stringify(KJ_CFG_DEF));
@@ -292,7 +301,7 @@ function kjKarOut_(k, gaji) {
   return {id: String(k.id), cid: String(k.cid || ''), nama: k.nama, bagian: k.bagian, kerja: String(k.kerja || '').split(',').filter(Boolean),
     hasil: k.hasil || '', satuan: k.satuan || 'pcs', area: k.area || '', upah: gaji ? (+k.upah || 0) : undefined,
     target: +k.target || 0, jobdesk: k.jobdesk || '', cek: kjJ_(k.cek, []), pin: !!k.pinh, urut: +k.urut || 0,
-    gud: String(k.gud || ''), unit: String(k.unit || ''), posisi: String(k.posisi || ''), on: String(k.on) !== '0'};
+    gud: String(k.gud || ''), unit: String(k.unit || ''), posisi: String(k.posisi || ''), sistem: String(k.sistem || ''), on: String(k.on) !== '0'};
 }
 function kjLoad_(p, u) {
   const cfg = kjCfg_(), gaji = owner_(u), cek = boleh_(u, 'periksa', cfg);
@@ -308,12 +317,12 @@ function kjLoad_(p, u) {
     if (x.jenis === 'setor' && (x.status === 'tunggu' || x.status === 'proses')) return true;
     if (x.jenis === 'beri' && x.status === 'aktif') return true;
     return !from || String(x.tgl) >= from;
-  }).map(function (x) { return {id: x.id, tgl: x.tgl, kid: String(x.kid), jenis: x.jenis, d: kjJ_(x.data, {}), st: x.status, oleh: x.oleh, cekBy: x.cekBy}; });
+  }).map(function (x) { return {id: x.id, tgl: x.tgl, kid: String(x.kid), jenis: x.jenis, d: kjJ_(x.data, {}), st: x.status, oleh: x.oleh, cekBy: x.cekBy, cekAt: x.cekAt}; });
   /* v3: p.lite = daftar barang produksi diambil terpisah (aksi 'jobs') supaya membuka menu lebih cepat */
   const jobs = p.lite ? {list: null, noLoc: null} : posK_(u, 'hrdJobs', {gud: gud, pend: kjPend_(all)});
   /* aturan uang (upah, tunjangan, uang makan) hanya untuk Owner */
   const cf = JSON.parse(JSON.stringify(cfg));
-  if (!gaji) { ['makan', 'hadir', 'kerja', 'upahDef', 'ws', 'akun'].forEach(function (k) { delete cf[k]; }); }
+  if (!gaji) { ['makan', 'hadir', 'kerja', 'upahDef', 'ws', 'akun', 'tarif', 'tarifDef', 'makanRp'].forEach(function (k) { delete cf[k]; }); }
   const out = {v: KJ_V, hrd: HRD_V, cfg: cf, kar: kar, akt: akt, jobs: jobs.list, keg: KJ_KEG, alasan: KJ_ALASAN, sop: kjSopGet_(),
     me: {cek: cek, gaji: gaji, input: boleh_(u, 'jobdesk', cfg), beri: boleh_(u, 'beri', cfg), lembar: boleh_(u, 'lembar', cfg), karyawan: boleh_(u, 'karyawan', cfg),
       peran: owner_(u) ? 'owner' : peran_(u), gud: gud, ws: REQ.ws, user: String(u.user || ''), name: String(u.name || '')},
@@ -702,7 +711,9 @@ function kjKarSave_(p, u) {
       /* upah hanya diubah Owner; karyawan baru memakai upah bawaan workshop */
       upah: own ? Math.max(0, +p.upah || 0) : (old.id ? (+old.upah || 0) : (+cfg.upahDef || 0)), target: Math.max(0, +p.target || 0), jobdesk: String(p.jobdesk || '').slice(0, 2000), cek: cek,
       pinh: pinh, on: p.on === false ? '0' : '1', urut: +p.urut || +old.urut || 0,
-      gud: gud, unit: String(p.unit || '').trim().slice(0, 40), posisi: String(p.posisi || '').trim().slice(0, 60)};
+      gud: gud, unit: String(p.unit || '').trim().slice(0, 40), posisi: String(p.posisi || '').trim().slice(0, 60),
+      /* sistem upah (kosong = ikut workshop) hanya diubah Owner */
+      sistem: own ? (['jam', 'borongan'].indexOf(String(p.sistem || '')) >= 0 ? String(p.sistem) : '') : String(old.sistem || '')};
     kjPut_('kar', row);
     return {ok: 1, id: id, kar: kjKarOut_(row, own)};
   });
@@ -768,6 +779,88 @@ function kjGajiSave_(p, u) {
     kjPut_('gaji', {id: id, status: st === 'final' ? 'final' : 'draf', data: data, by: u.name, at: now,
       okBy: st === 'final' ? u.name : '', okAt: st === 'final' ? now : ''});
     return {ok: 1};
+  });
+}
+
+/* sekali jalan: aturan awal Workshop Kedawung (g1) sesuai keputusan Owner — hanya mengisi yang belum diatur */
+function kjMigrasiV8_() {
+  const P = PropertiesService.getScriptProperties();
+  if (P.getProperty('KJ_MIG_V8')) return;
+  kjLock_(function () {
+    if (P.getProperty('KJ_MIG_V8')) return;
+    const c = kjCfgRaw_(); c.ws = c.ws || {}; const g = c.ws.g1 = c.ws.g1 || {};
+    const D = {hariKerja: [6, 0, 1, 2, 3, 4], sistemUpah: 'borongan', makanMode: 'jam', makanJam: 6.5, makanRp: 7500, tunjOn: false, korAjuan: true};
+    Object.keys(D).forEach(function (k) { if (g[k] === undefined) g[k] = D[k]; });
+    P.setProperty('KJ_CFG', JSON.stringify(c)); P.setProperty('KJ_MIG_V8', '1');
+  });
+}
+/* ======================= CEKLOK (v8) =======================
+   raw = scan asli dari mesin {kid: {tanggal: ['08:01','12:00',...]}} — tidak pernah diubah
+   kor = koreksi {kid: {tanggal: {m, i1, i2, p, status, why, by, at, st: 'ok'|'ajuan'|'tolak', ajuBy}}} */
+function kjCkWeek_(w) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(w || ''))) throw new Error('Minggu tidak valid.'); if (!REQ.ws) throw new Error('Buka dari menu Kinerja workshop.'); return String(w) + '|' + REQ.ws; }
+function kjCkRow_(id) { const g = kjRows_('ck').filter(function (x) { return String(x.id) === id; })[0]; return g ? {raw: kjJ_(g.raw, {}), kor: kjJ_(g.kor, {}), file: g.file, periode: g.periode, by: g.by, at: g.at} : null; }
+function kjCkTerkunci_(w) { const g = kjGajiGet_(w, true); if (g && g.status === 'final') throw new Error('Gaji minggu ini sudah disetujui dan dikunci. Buka kunci dulu.'); }
+function kjCkGet_(p, u) {
+  if (!owner_(u)) butuh_(u, 'periksa');
+  kjGud_(u, kjCfg_());
+  return kjCkRow_(kjCkWeek_(p.week)) || {raw: {}, kor: {}};
+}
+function kjCkSave_(p, u) {
+  hanyaOwner_(u);
+  const id = kjCkWeek_(p.week);
+  kjCkTerkunci_(String(p.week));
+  const raw = {};
+  Object.keys(p.raw || {}).slice(0, 200).forEach(function (kid) {
+    const o = {};
+    Object.keys(p.raw[kid] || {}).slice(0, 7).forEach(function (d) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+      o[d] = (p.raw[kid][d] || []).map(String).filter(function (t) { return /^\d{1,2}:\d{2}$/.test(t); }).slice(0, 8);
+    });
+    raw[String(kid).slice(0, 40)] = o;
+  });
+  return kjLock_(function () {
+    const old = kjCkRow_(id) || {kor: {}}, now = new Date().toISOString();
+    const row = {id: id, raw: raw, kor: old.kor || {}, file: String(p.file || '').slice(0, 120), periode: String(p.periode || '').slice(0, 120), by: u.name, at: now};
+    if (JSON.stringify(row).length > 48000) throw new Error('Data ceklok terlalu besar.');
+    kjPut_('ck', row);
+    return {raw: row.raw, kor: row.kor, file: row.file, periode: row.periode, by: row.by, at: now};
+  });
+}
+function kjCkKor_(p, u) {
+  const own = owner_(u), cfg = kjCfg_();
+  if (!own) { butuh_(u, 'periksa'); if (!cfg.korAjuan) throw new Error('Koreksi ceklok workshop ini hanya oleh Owner.'); }
+  const id = kjCkWeek_(p.week), day = String(p.day || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error('Tanggal tidak valid.');
+  kjCkTerkunci_(String(p.week));
+  const k = kjKarWs_(kjKar_(p.kid), u);
+  if (!own && /supervisor/i.test(String(k.posisi || ''))) throw new Error('Koreksi ceklok supervisor hanya oleh Owner.');
+  const why = String(p.why || '').trim().slice(0, 160); if (!why) throw new Error('Tulis alasan koreksi.');
+  const T = function (v) { v = String(v || '').trim(); if (!v) return ''; if (!/^\d{1,2}:\d{2}$/.test(v)) throw new Error('Format jam harus JJ:MM.'); return v.length === 4 ? '0' + v : v; };
+  const st = ['hadir', 'izin', 'sakit', 'alpa', 'libur'].indexOf(String(p.status || 'hadir')) >= 0 ? String(p.status || 'hadir') : 'hadir';
+  const kr = {m: T(p.m), i1: T(p.i1), i2: T(p.i2), p: T(p.p), status: st, why: why, at: new Date().toISOString()};
+  if (st === 'hadir' && (!kr.m || !kr.p)) throw new Error('Isi jam masuk dan jam pulang.');
+  if (own) { kr.st = 'ok'; kr.by = u.name; } else { kr.st = 'ajuan'; kr.ajuBy = u.name; }
+  return kjLock_(function () {
+    const row = kjCkRow_(id) || {raw: {}, kor: {}, file: '', periode: ''};
+    row.kor = row.kor || {}; row.kor[k.id] = row.kor[k.id] || {};
+    const lama = row.kor[k.id][day];
+    if (own && lama && lama.st === 'ajuan') kr.ajuBy = lama.ajuBy;
+    row.kor[k.id][day] = kr;
+    kjPut_('ck', {id: id, raw: row.raw, kor: row.kor, file: row.file, periode: row.periode, by: row.by || u.name, at: row.at || kr.at});
+    return {kor: row.kor};
+  });
+}
+function kjCkPutus_(p, u) {
+  hanyaOwner_(u);
+  const id = kjCkWeek_(p.week), day = String(p.day || ''), kid = String(p.kid || '');
+  kjCkTerkunci_(String(p.week));
+  return kjLock_(function () {
+    const row = kjCkRow_(id); const kr = row && row.kor[kid] && row.kor[kid][day];
+    if (!kr || kr.st !== 'ajuan') throw new Error('Ajuan koreksi tidak ditemukan.');
+    if (p.ok) { kr.st = 'ok'; kr.by = u.name; } else { kr.st = 'tolak'; kr.by = u.name; kr.tolak = String(p.note || '').slice(0, 160); }
+    kr.putusAt = new Date().toISOString();
+    kjPut_('ck', {id: id, raw: row.raw, kor: row.kor, file: row.file, periode: row.periode, by: row.by, at: row.at});
+    return {kor: row.kor};
   });
 }
 
