@@ -50,7 +50,8 @@
       ['produksi', 'factory', 'Produksi', 'produksi.html', any(['prod_lihat', 'prod_buat'])],
       ['pesanan', 'clipboard', 'Pesanan custom', 'pesanan-custom.html', !!me() && (me().role === 'admin' || me().role === 'supervisor')],
       ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', any(['rekap_kedawung', 'rekap_wonodadi'])],
-      ['kinerja', 'users', 'Kinerja', 'kinerja.html', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji'])]
+      ['kinerjaR', 'users', 'Kinerja Rejosari', 'kinerja.html?ws=g2', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji']) || (!!me() && me().role === 'supervisor')],
+      ['kinerjaK', 'users', 'Kinerja Kedawung', 'kinerja.html?ws=g1', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji']) || (!!me() && me().role === 'supervisor')]
     ];
   }
   var HUB = [['Resi Print', 'resi_print.html', 'app_resi_print'], ['Resi Video Packing', 'resi_video_packing.html', 'app_resi_video'], ['Resi Pickup Kurir', 'resi_pickup-kurir.html', 'app_resi_pickup']];
