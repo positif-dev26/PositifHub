@@ -416,8 +416,8 @@ nav button.on{background:var(--acc);color:var(--acc-t);box-shadow:0 0 24px -6px 
 .ubi{width:100%;margin-top:14px;font-size:18px!important;padding:12px 14px!important;border:2px solid var(--lmb)!important;border-radius:12px!important}
 .uba{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
 .uba .btn{min-width:100px;padding:11px 18px;font-weight:700;border-radius:12px}
-.uba .btn.dgr{background:#ff6b6b;border-color:#ff6b6b;color:#1a0505}
-.uba .btn.dgr:hover{box-shadow:0 0 22px -6px rgba(255,107,107,.7)}
+.uba .btn.dng{background:#ff6b6b;border-color:#ff6b6b;color:#1a0505}
+.uba .btn.dng:hover{box-shadow:0 0 22px -6px rgba(255,107,107,.7)}
 @keyframes ubf{from{opacity:0}}@keyframes ubp{from{transform:scale(.96);opacity:0}}
 @media(max-width:520px){.uba .btn{flex:1}}
 /* ringkasan pindah tahap */

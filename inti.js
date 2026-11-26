@@ -217,7 +217,7 @@ function outSave(){try{localStorage.setItem('positif_outbox',JSON.stringify(OUT)
 /* ===== KOTAK PESAN BERTEMA: pengganti alert / confirm / prompt bawaan browser =====
    uiAlert(pesan) · uiConfirm(pesan, teksTombol, bahaya) · uiPrompt(pesan, isiAwal)  -> semuanya Promise */
 function uiBox(o){return new Promise(res=>{const d=document.createElement('div');d.className='ubx';
- d.innerHTML='<div class="ubc" role="dialog" aria-modal="true">'+(o.title?'<h3 class="ubt"></h3>':'')+'<div class="ubm"></div>'+(o.input!=null?'<input class="ubi" autocomplete="off">':'')+'<div class="uba">'+(o.cancel===false?'':'<button class="btn sec" data-r="0"></button>')+'<button class="btn'+(o.danger?' dgr':'')+'" data-r="1"></button></div></div>';
+ d.innerHTML='<div class="ubc" role="dialog" aria-modal="true">'+(o.title?'<h3 class="ubt"></h3>':'')+'<div class="ubm"></div>'+(o.input!=null?'<input class="ubi" autocomplete="off">':'')+'<div class="uba">'+(o.cancel===false?'':'<button class="btn sec" data-r="0"></button>')+'<button class="btn'+(o.danger?' dng':'')+'" data-r="1"></button></div></div>';
  if(o.title)d.querySelector('.ubt').textContent=o.title;const m=d.querySelector('.ubm');if(o.html)m.innerHTML=o.html;else m.textContent=o.msg||'';
  const inp=d.querySelector('.ubi');if(inp){inp.value=o.input;if(o.num)inp.inputMode='numeric';if(o.ph)inp.placeholder=o.ph}
  d.querySelector('[data-r="1"]').textContent=o.ok||'OK';const c=d.querySelector('[data-r="0"]');if(c)c.textContent=o.cancel||'Batal';
