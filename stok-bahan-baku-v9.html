@@ -410,28 +410,9 @@ var RSEL={},OSEL={},MSEL={};
 var GNM={"1":"Gudang Pusat","2":"Gudang Kedawung"},GN=function(){return GNM[W]||("Gudang "+W)};
 
 // ---- ikon ----
-var ICO={dash:'<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
-swap:'<path fill="none" stroke="currentColor" d="M8 3 4 7l4 4"/><path fill="none" stroke="currentColor" d="M4 7h16"/><path fill="none" stroke="currentColor" d="m16 21 4-4-4-4"/><path fill="none" stroke="currentColor" d="M20 17H4"/>',
-box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
-layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path fill="none" stroke="currentColor" d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path fill="none" stroke="currentColor" d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
-cart:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
-wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
-user:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>',
-users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-chart:'<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
-hist:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
-out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
-inn:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/>',
-chev:'<path d="m6 9 6 6 6-6"/>',
-scissors:'<circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/>',
-shirt:'<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>',
-printer:'<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>',
-tag:'<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
-sticker:'<path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/>',
-receipt:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
-dots:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
-barcode:'<path d="M4 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M16 5v14"/><path d="M20 5v14"/><path d="M6 5v14" stroke-width="3"/><path d="M14 5v14" stroke-width="3"/>'};
-var IC=function(n){return'<svg viewBox="0 0 24 24" aria-hidden="true">'+ICO[n]+'</svg>'};
+var MSN={dash:'dashboard',swap:'swap_horiz',box:'inventory_2',layers:'layers',cart:'shopping_cart',wrench:'build',user:'person',users:'group',chart:'bar_chart',hist:'history',out:'logout',inn:'login',chev:'expand_more',scissors:'content_cut',shirt:'checkroom',printer:'print',tag:'sell',sticker:'sticky_note_2',receipt:'receipt_long',dots:'more_horiz',x:'close',gear:'settings',barcode:'barcode'};
+(function(){if(!document.querySelector('link[data-ms]')){var l=document.createElement('link');l.rel='stylesheet';l.setAttribute('data-ms','1');l.href='https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block';document.head.appendChild(l)}if(!document.getElementById('mscss')){var s=document.createElement('style');s.id='mscss';s.textContent='.ms{font-family:"Material Symbols Sharp";font-weight:400;font-style:normal;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;-webkit-font-smoothing:antialiased;font-feature-settings:"liga";-webkit-font-feature-settings:"liga";font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24;transition:font-variation-settings .15s;user-select:none;overflow:hidden;line-height:1;flex:none;width:1em;height:1em}.ms{display:inline-block;vertical-align:middle;font-size:20px}.dvt .ig .ms{font-size:34px}#rail .ri .ms{font-size:22px;display:block}.acb .ms{font-size:22px}.acb .ms:last-child{font-size:16px}.ddm .ms{font-size:20px;color:var(--mu)}#rail .ri.on .ms,.rmm button.on .ms{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}@media(max-width:760px){#rail .ri .ms{font-size:24px}.dvt .ig .ms{font-size:26px}}';document.head.appendChild(s)}})();
+var IC=function(n){return'<span class="ms" aria-hidden="true">'+(MSN[n]||n)+'</span>'};
 function tgAcc(e){e.stopPropagation();var m=$("accm");if(m)m.classList.toggle("o")}
 document.addEventListener("click",function(){var m=$("accm");if(m)m.classList.remove("o");var r=$("rmm");if(r)r.classList.remove("o")});
 function tgMore(){var r=$("rmm");r.innerHTML=NV.filter(function(v){return v[4]}).map(function(v){var n=(window.CN||{})[v[0]];return'<button class="'+(v[0]==view?"on":"")+'" onclick="go(\''+v[0]+'\')">'+IC(v[2])+v[1]+(n?'<span class="bg2">'+n+'</span>':"")+'</button>'}).join("");r.classList.toggle("o")}
@@ -653,7 +634,7 @@ function vAmbil(){
       return'<div class="pc'+(tot<=0?" off":"")+'" '+(tot>0?'onclick="pick(\''+m.id+'\')"':"")+'><button class="bcb" title="Lihat barcode" onclick="event.stopPropagation();dBar(\''+m.id+'\')">'+IC("barcode")+'</button><b style="padding-right:34px">'+esc(m.nama)+'</b>'+(dv?"":'<span class="mu">'+esc(dn(m.divisi))+'</span>')+'<span class="t '+s+'">'+(k.length?k.length+" variasi, ":"")+'stok '+tot+' '+esc(m.satuan)+'</span>'+(inc?'<span class="info"><b>Dibawa: '+inc+'</b></span>':"")+'</div>'}).join("");
     body=hd+'<div class="gr">'+(cards||'<div class="mu">Tidak ada bahan.</div>')+'</div>'}
   return'<div class="pos"><div>'+top+body+'</div>'+cartPanel()+'</div>'}
-var cartOpen=false,TR='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7h15M10 7V4.5h4V7M6.5 7l.9 12.5h9.2L17.5 7"/></svg>';
+var cartOpen=false,TR='<span class="ms" style="font-size:18px" aria-hidden="true">delete</span>';
 function cOpen(o){cartOpen=!!o;var p=$("cpn"),d=$("cbd");if(p)p.classList.toggle("open",cartOpen);if(d)d.classList.toggle("open",cartOpen)}
 addEventListener("keydown",function(e){if(e.key==="Escape"&&cartOpen&&!($("dlg")&&$("dlg").open))cOpen(0)});
 function uToast(m,cb){var t=$("utoast");if(!t){t=document.createElement("div");t.id="utoast";document.body.appendChild(t)}t.innerHTML="";var s=document.createElement("span");s.textContent=m;var b=document.createElement("button");b.type="button";b.textContent="Urungkan";b.onclick=function(){clearTimeout(t._h);t.style.display="none";cb()};t.appendChild(s);t.appendChild(b);t.style.display="flex";clearTimeout(t._h);t._h=setTimeout(function(){t.style.display="none"},6000)}
