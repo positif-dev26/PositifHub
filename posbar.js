@@ -12,7 +12,7 @@
   /* Ikon = Google Material Symbols (Sharp). Ganti ikon: ubah nama di bawah
      (nama dari fonts.google.com/icons, huruf kecil, spasi jadi garis bawah). */
   var ICO = {
-    receipt: 'shopping_cart',          /* Kasir */
+    receipt: 'universal_currency',     /* Kasir */
     chart: 'bar_chart',                /* Penjualan */
     box: 'package_2',                  /* Produk */
     layers: 'layers',                  /* Stok bahan baku */
