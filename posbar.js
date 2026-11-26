@@ -21,7 +21,7 @@
     rekap: 'assignment_turned_in',     /* Rekap order */
     users: 'group',                    /* Kinerja */
     grid: 'qr_code_scanner',           /* Aplikasi lain */
-    sticker: 'sticky_note_2',          /* Layout stiker */
+    sticker: 'auto_awesome_mosaic',       /* Layout stiker */
     key: 'key',                        /* Ganti PIN */
     settings: 'settings',              /* Pengaturan */
     logout: 'logout'                   /* Keluar */
