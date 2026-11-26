@@ -12,7 +12,7 @@
  * lalu Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone).
  * Setiap kode diubah: Deploy > Manage deployments > Edit > Version: New.
  */
-const HRD_V = 5;
+const HRD_V = 6;
 const KJ_V = 3; /* versi kontrak dengan kinerja.html */
 const POS_API = 'https://script.google.com/macros/s/AKfycbwUEqf4lS9mn3Gdyo3vpDmTl3u9gxQzIEIf83dJMeopMDDQpHu_-pcG9puoPFHfMOOBkA/exec';
 
@@ -21,7 +21,7 @@ function doGet(e) {
   /* halaman Peraturan Kerja (publik, tanpa data pribadi) membaca isi terbaru dari sini */
   if (e && e.parameter && e.parameter.doc === 'peraturan') {
     let out;
-    try { out = {ok: true, data: kjDocGet_()}; } catch (err) { out = {ok: false, error: String(err.message || err)}; }
+    try { const d = kjDocGet_(), so = kjSopGet_(); d.sop = {divisi: so.divisi, sop: so.sop, tj: so.tj.map(function (t) { return {nama: t.nama, divisi: t.divisi, kerja: t.kerja}; })}; out = {ok: true, data: d}; } catch (err) { out = {ok: false, error: String(err.message || err)}; }
     return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
   }
   return ContentService.createTextOutput('Positif HRD API aktif (v' + HRD_V + ').');
@@ -140,6 +140,8 @@ function kinerja_(a, u) {
     case 'jobs': return kjJobsAll_(u);
     case 'docGet': return kjDocGet_();
     case 'docSave': return kjDocSave_(p, u);
+    case 'sopSave': return kjSopSave_(p, u);
+    case 'beri': return kjBeri_(p, u);
     case 'pin': need_(u, 'kinerja_input'); kjAuthK_(p); return {ok: 1};
     case 'setor': return kjSetor_(p, u);
     case 'catat': return kjCatat_(p, u);
@@ -262,11 +264,12 @@ function kjLoad_(p, u) {
   const akt = all.filter(function (x) {
     if (gud && !ks[String(x.kid)]) return false;
     if (x.jenis === 'setor' && (x.status === 'tunggu' || x.status === 'proses')) return true;
+    if (x.jenis === 'beri' && x.status === 'aktif') return true;
     return !from || String(x.tgl) >= from;
   }).map(function (x) { return {id: x.id, tgl: x.tgl, kid: String(x.kid), jenis: x.jenis, d: kjJ_(x.data, {}), st: x.status, oleh: x.oleh, cekBy: x.cekBy}; });
   /* v3: p.lite = daftar barang produksi diambil terpisah (aksi 'jobs') supaya membuka menu lebih cepat */
   const jobs = p.lite ? {list: null, noLoc: null} : posK_(u, 'hrdJobs', {gud: gud, pend: kjPend_(all)});
-  const out = {v: KJ_V, hrd: HRD_V, cfg: cfg, kar: kar, akt: akt, jobs: jobs.list, keg: KJ_KEG, alasan: KJ_ALASAN,
+  const out = {v: KJ_V, hrd: HRD_V, cfg: cfg, kar: kar, akt: akt, jobs: jobs.list, keg: KJ_KEG, alasan: KJ_ALASAN, sop: kjSopGet_(),
     me: {cek: cek, gaji: gaji, input: has_(u, 'kinerja_input'), gud: gud, user: String(u.user || '')}, gudang: info.gudang};
   if (cek && jobs.noLoc != null) out.noLoc = jobs.noLoc;
   if (gaji) out.gaji = kjRows_('gaji').map(function (g) { return {id: String(g.id), status: g.status, by: g.by, at: g.at, okBy: g.okBy, okAt: g.okAt}; });
@@ -412,13 +415,133 @@ function kjCatat_(p, u) {
     d = {item: it};
     st = 'tunggu';
   } else if (j === 'kegiatan') {
-    const lb = String(p.label || '').slice(0, 40); if (!lb) throw new Error('Pilih kegiatan.');
+    const lb = String(p.label || '').slice(0, 60); if (!lb) throw new Error('Pilih kegiatan.');
     d = {label: lb, ket: String(p.ket || '').slice(0, 120)};
+    /* v6: pekerjaan lain bisa diberi jumlah, mis. Unboxing 4 paket */
+    const q = Math.round((+p.q || 0) * 100) / 100;
+    if (q > 0) { d.q = q; d.sat = String(p.sat || '').slice(0, 12); }
+    if (p.grup) d.grup = String(p.grup).slice(0, 20);
+    st = 'tunggu';
+  } else if (j === 'kerja') {
+    d = kjKerjaCek_(p, k, now);
+    if (d.dup) return {ok: 1, dup: 1, oleh: d.oleh};
     st = 'tunggu';
   } else throw new Error('Jenis catatan tidak dikenal.');
   const id = kjId_();
   kjLock_(function () { kjAppend_('akt', [{id: id, tgl: now, kid: k.id, jenis: j, data: d, status: st, oleh: k.nama, dev: u.user}]); });
+  /* tugas tambahan yang sudah dikerjakan tidak terbawa lagi */
+  if (j === 'kerja' && d.src === 'beri') try { kjUpdAkt_([d.ref], function (o) { if (o.jenis !== 'beri') return false; o.status = 'selesai'; }); } catch (e) {}
   return {ok: 1, a: {id: id, tgl: now, kid: k.id, jenis: j, d: d, st: st, oleh: k.nama}};
+}
+/* ---------------- v6: SOP & tanggung jawab ----------------
+   Disimpan sebagai satu baris 'sop' di sheet KJ Dokumen (kolom isi = JSON). */
+const SOP_DEF = {"divisi": ["Produksi", "Finishing & QC", "Gudang & Bahan", "Pengiriman & Belanja", "Admin / Toko online", "Umum"], "tj": [{"id": "tj1", "nama": "Pengelola stok bahan baku", "divisi": "Gudang & Bahan", "orang": [], "kerja": [{"id": "tj1a", "nama": "Terima & tata barang datang", "kapan": "terjadi", "sop": "SOP-GB-01", "baik": ""}, {"id": "tj1b", "nama": "Layani pengambilan bahan", "kapan": "terjadi", "sop": "SOP-GB-02", "baik": ""}, {"id": "tj1c", "nama": "Hitung stok bergilir", "kapan": "harian", "sop": "SOP-GB-03", "baik": ""}, {"id": "tj1d", "nama": "Cek & lapor stok menipis", "kapan": "harian", "sop": "", "baik": "Request order dibuat untuk bahan yang di bawah minimum"}, {"id": "tj1e", "nama": "Rapikan rak bahan", "kapan": "mingguan", "sop": "", "baik": "Rak rapi, label terbaca, tidak ada bahan di lantai", "hari": 6}]}, {"id": "tj2", "nama": "Pengelola gudang barang jadi", "divisi": "Gudang & Bahan", "orang": [], "kerja": [{"id": "tj2a", "nama": "Masukkan barang jadi ke rak", "kapan": "harian", "sop": "", "baik": "Barang jadi hari itu sudah di rak sesuai kode"}, {"id": "tj2b", "nama": "Ambilkan barang untuk packing", "kapan": "terjadi", "sop": "", "baik": ""}, {"id": "tj2c", "nama": "Hitung stok barang jadi bergilir", "kapan": "harian", "sop": "SOP-GB-03", "baik": ""}, {"id": "tj2d", "nama": "Rapikan rak barang jadi", "kapan": "mingguan", "sop": "", "baik": "", "hari": 6}]}, {"id": "tj3", "nama": "Pengiriman, belanja & vendor", "divisi": "Pengiriman & Belanja", "orang": [], "kerja": [{"id": "tj3a", "nama": "Kirim paket hari ini", "kapan": "harian", "sop": "SOP-PB-01", "baik": ""}, {"id": "tj3b", "nama": "Belanja sesuai daftar", "kapan": "terjadi", "sop": "", "baik": "Barang sesuai daftar, nota lengkap"}, {"id": "tj3c", "nama": "Ambil barang ke vendor", "kapan": "terjadi", "sop": "", "baik": "Barang dicek di tempat vendor sebelum dibawa pulang"}, {"id": "tj3d", "nama": "Serahkan nota ke admin", "kapan": "terjadi", "sop": "", "baik": "Nota diserahkan di hari yang sama"}]}, {"id": "tj4", "nama": "Kebersihan & K3 area", "divisi": "Umum", "orang": [], "kerja": [{"id": "tj4a", "nama": "Bersihkan area kerja bersama", "kapan": "harian", "sop": "", "baik": "Lantai dan meja bersama bersih sebelum pulang"}, {"id": "tj4b", "nama": "Buang sampah & sisa kain", "kapan": "harian", "sop": "", "baik": ""}, {"id": "tj4c", "nama": "Cek kotak P3K, kabel & alat pemadam", "kapan": "mingguan", "sop": "", "baik": "Isi P3K lengkap, tidak ada kabel terkelupas", "hari": 6}]}, {"id": "tj5", "nama": "Perawatan mesin", "divisi": "Produksi", "orang": [], "kerja": [{"id": "tj5a", "nama": "Cek & minyaki mesin", "kapan": "mingguan", "sop": "", "baik": "Semua mesin dicek dan diminyaki", "hari": 6}, {"id": "tj5b", "nama": "Catat & lapor mesin rusak", "kapan": "terjadi", "sop": "", "baik": ""}, {"id": "tj5c", "nama": "Atur jadwal servis", "kapan": "terjadi", "sop": "", "baik": ""}]}], "sop": [{"kode": "SOP-GB-01", "judul": "Terima & tata barang datang", "divisi": "Gudang & Bahan", "versi": 1, "tgl": "2026-11-26", "langkah": ["Cocokkan barang dengan daftar order: nama bahan, warna, jumlah, dan toko/vendor pengirim.", "Buka paket di meja terima, bukan di lantai. Pakai cutter hati-hati supaya bahan tidak tergores.", "Cek kondisi: cacat, basah, kotor, salah warna atau ukuran. Pisahkan yang bermasalah dan beri tanda.", "Hitung jumlah yang diterima dengan satuan yang sama seperti di sistem (roll, kg, pcs, cone).", "Beri label tanggal datang, lalu tata di rak sesuai kode. Barang lama di depan, barang baru di belakang (FIFO).", "Konfirmasi di aplikasi Stok Bahan Baku: Sampai gudang → Unboxing → Masuk rak, dengan jumlah yang diterima.", "Lipat kardus dan buang plastik. Area terima kosong kembali."], "cek": [{"label": "Jumlah diterima", "jenis": "pilihan", "opsi": ["Sesuai order", "Kurang", "Lebih"]}, {"label": "Kondisi barang", "jenis": "pilihan", "opsi": ["Baik", "Ada cacat"]}, {"label": "Keterangan", "jenis": "teks"}], "baik": "Selesai di hari barang datang, jumlah tercatat di sistem, rak rapi, area terima bersih."}, {"kode": "SOP-GB-02", "judul": "Pengambilan bahan (barang keluar)", "divisi": "Gudang & Bahan", "versi": 1, "tgl": "2026-11-26", "langkah": ["Bahan hanya diambil oleh penanggung jawab stok, atau dengan sepengetahuannya.", "Tanyakan untuk order atau pekerjaan apa, dan berapa jumlahnya.", "Ambil bahan yang paling lama dulu (FIFO).", "Hitung atau timbang sebelum diserahkan, lalu catat pengambilan di aplikasi Stok Bahan Baku saat itu juga (nama pengambil dan jumlah).", "Sisa bahan yang dikembalikan dicatat sebagai pengembalian.", "Bila stok setelah diambil sudah di bawah batas minimum, buat request order di aplikasi."], "cek": [{"label": "Bahan & jumlah", "jenis": "teks"}, {"label": "Dicatat di aplikasi", "jenis": "pilihan", "opsi": ["Sudah", "Belum"]}], "baik": "Setiap bahan keluar tercatat di hari yang sama; tidak ada pengambilan tanpa catatan."}, {"kode": "SOP-GB-03", "judul": "Hitung stok bergilir", "divisi": "Gudang & Bahan", "versi": 1, "tgl": "2026-11-26", "langkah": ["Pilih 5–10 barang hari ini: yang baru datang, ditambah yang paling lama belum dihitung.", "Hitung fisik dulu, tanpa melihat angka di sistem.", "Bandingkan dengan angka di aplikasi.", "Bila berbeda, hitung ulang sekali. Bila tetap berbeda, catat selisihnya. Jangan mengubah stok sendiri.", "Rapikan rak barang yang sudah dihitung."], "cek": [{"label": "Barang dihitung", "jenis": "angka"}, {"label": "Barang yang selisih", "jenis": "angka"}, {"label": "Rincian selisih", "jenis": "teks"}], "baik": "Dikerjakan setiap hari, selisih dilaporkan ke Owner, tidak ada perubahan stok tanpa persetujuan."}, {"kode": "SOP-PR-01", "judul": "Setor hasil jahit", "divisi": "Produksi", "versi": 1, "tgl": "2026-11-26", "langkah": ["Setor setiap hari sebelum pulang, hanya barang yang benar-benar sudah selesai dijahit.", "Cek ukuran dan jahitan dulu. Yang belum rapi jangan disetor.", "Kumpulkan hasil per order di rak setor, beri kertas nama unit.", "Buka menu Jobdesk di HP workshop, pilih nama, masukkan PIN pribadi.", "Isi jumlah per barang sesuai hitungan fisik, lalu tekan Setor.", "Serahkan barang ke supervisor untuk dihitung dan disetujui."], "cek": [], "baik": "Disetor sebelum pulang, jumlah cocok saat dihitung supervisor, reject unit 0–1 pcs seminggu."}, {"kode": "SOP-PR-02", "judul": "Potong kain", "divisi": "Produksi", "versi": 1, "tgl": "2026-11-26", "langkah": ["Ambil order sesuai urutan prioritas di Lembar Kerja Produksi.", "Cek bahan: jenis, warna, dan arah serat sesuai order. Ambil bahan lewat penanggung jawab stok.", "Gelar kain rata tanpa ditarik. Tinggi tumpukan sesuai batas aman mesin.", "Pasang pola sesuai ukuran. Hemat bahan: pola besar dulu, sisa untuk pola kecil.", "Potong, lalu ikat per ukuran dan beri label order, ukuran, dan jumlah.", "Kumpulkan sisa kain yang masih bisa dipakai di tempat sisa, lalu setor hasil potong lewat HP."], "cek": [], "baik": "Ukuran sesuai pola, jumlah sesuai order, label lengkap, sisa kain terkumpul."}, {"kode": "SOP-PR-03", "judul": "Press DTF", "divisi": "Produksi", "versi": 1, "tgl": "2026-11-26", "langkah": ["Nyalakan mesin press. Atur suhu, tekanan, dan waktu sesuai jenis film dan kaos [isi standar].", "Cek desain, ukuran, dan posisi sesuai order sebelum mulai.", "Bersihkan permukaan kaos dari bulu dan debu, lalu pre-press beberapa detik.", "Tempel film tepat posisi (ukur dari kerah), press, lalu kupas sesuai jenis film (panas atau dingin).", "Cek hasil: tidak mengelupas, tidak miring, tidak gosong. Yang gagal dicatat sebagai reject.", "Matikan mesin setelah selesai dan rapikan sisa film."], "cek": [], "baik": "Posisi dan ukuran sesuai, tidak mengelupas saat dicek tarik, reject dicatat."}, {"kode": "SOP-FQ-01", "judul": "Packing & QC", "divisi": "Finishing & QC", "versi": 1, "tgl": "2026-11-26", "langkah": ["Cek setiap pcs: jahitan, sablon, noda, dan ukuran sesuai label.", "Yang lolos: lipat sesuai standar, masukkan plastik, beri label ukuran.", "Yang tidak lolos: catat reject di HP (alasan dan unit asal jahitan), taruh di rak reject.", "Hitung jumlah per order dan cocokkan dengan pesanan sebelum dikemas.", "Kemas per order dan tempel label nama pemesan."], "cek": [], "baik": "Tidak ada barang cacat lolos ke pelanggan, jumlah per order cocok, reject tercatat dengan unit asalnya."}, {"kode": "SOP-PB-01", "judul": "Kirim paket", "divisi": "Pengiriman & Belanja", "versi": 1, "tgl": "2026-11-26", "langkah": ["Cek daftar paket yang harus dikirim hari ini dan batas waktu kirim marketplace.", "Cocokkan isi paket dengan pesanan (produk, ukuran, jumlah) sebelum ditutup.", "Kemas rapi dan aman. Tempel resi di sisi atas, pastikan barcode terbaca.", "Kelompokkan paket per ekspedisi dan hitung jumlahnya.", "Antar ke ekspedisi sebelum jam tutup, minta bukti serah terima atau scan.", "Laporkan jumlah paket terkirim dan yang tertunda ke admin."], "cek": [{"label": "Paket dikirim", "jenis": "angka"}, {"label": "Paket tertunda", "jenis": "angka"}, {"label": "Keterangan", "jenis": "teks"}], "baik": "Semua paket hari itu terkirim sebelum batas waktu, bukti serah terima ada."}], "lain": [["Terima barang datang", "paket", "Gudang"], ["Unboxing", "paket", "Gudang"], ["Tata bahan ke rak stok", "item", "Gudang"], ["Masukkan barang jadi ke rak", "pcs", "Gudang"], ["Ambil / antar bahan ke bagian lain", "", "Gudang"], ["Hitung stok", "item", "Gudang"], ["Potong DTF", "lembar", "Produksi"], ["Press / sablon", "pcs", "Produksi"], ["Bantu potong kain", "pcs", "Produksi"], ["Sortir ukuran", "pcs", "Produksi"], ["Pasang label / hangtag", "pcs", "Produksi"], ["Lipat & packing", "pcs", "Produksi"], ["Bantu QC", "pcs", "Produksi"], ["Siapkan paket & resi", "paket", "Pengiriman"], ["Antar paket ke ekspedisi", "paket", "Pengiriman"], ["Belanja", "", "Pengiriman"], ["Ambil barang ke vendor", "", "Pengiriman"], ["Bersih-bersih area", "", "Umum"], ["Servis / perbaiki mesin", "", "Umum"], ["Menunggu bahan", "", "Kendala"], ["Mesin / alat rusak", "", "Kendala"], ["Listrik mati", "", "Kendala"]]};
+function kjSopGet_() {
+  const r = kjRows_('doc').filter(function (x) { return String(x.id) === 'sop'; })[0];
+  if (!r) { const d = JSON.parse(JSON.stringify(SOP_DEF)); d.bawaan = true; return d; }
+  const d = kjJ_(r.isi, null) || JSON.parse(JSON.stringify(SOP_DEF));
+  d.by = r.by; d.at = r.at; return d;
+}
+function kjSopSave_(p, u) {
+  need_(u, 'kinerja_gaji');
+  const S = function (v, n) { return String(v == null ? '' : v).trim().slice(0, n); };
+  const lama = kjSopGet_(), lm = {};
+  (lama.sop || []).forEach(function (x) { lm[x.kode] = x; });
+  const today = kjDay_(new Date().toISOString()), kar = {};
+  kjRows_('kar').forEach(function (k) { kar[String(k.id)] = 1; });
+  const divisi = (p.divisi || []).map(function (x) { return S(x, 40); }).filter(Boolean).slice(0, 20);
+  const sop = (p.sop || []).slice(0, 80).map(function (x) {
+    const o = {kode: S(x.kode, 20).toUpperCase(), judul: S(x.judul, 80), divisi: S(x.divisi, 40),
+      langkah: (x.langkah || []).map(function (l) { return S(l, 400); }).filter(Boolean).slice(0, 30),
+      cek: (x.cek || []).slice(0, 5).map(function (c) { const t = ['angka', 'pilihan', 'teks'].indexOf(c.jenis) >= 0 ? c.jenis : 'teks';
+        const o2 = {label: S(c.label, 40), jenis: t}; if (t === 'pilihan') o2.opsi = (c.opsi || []).map(function (v) { return S(v, 30); }).filter(Boolean).slice(0, 6); return o2; }).filter(function (c) { return c.label; }),
+      baik: S(x.baik, 300)};
+    if (!o.kode || !o.judul) throw new Error('Setiap SOP perlu kode dan judul.');
+    /* versi naik bila isi berubah */
+    const l = lm[o.kode], isi = JSON.stringify([o.judul, o.langkah, o.cek, o.baik]);
+    if (!l) { o.versi = 1; o.tgl = today; }
+    else if (JSON.stringify([l.judul, l.langkah, l.cek, l.baik]) !== isi) { o.versi = (+l.versi || 1) + 1; o.tgl = today; }
+    else { o.versi = +l.versi || 1; o.tgl = l.tgl || today; }
+    return o;
+  });
+  const kodes = {}; sop.forEach(function (x) { if (kodes[x.kode]) throw new Error('Kode SOP ' + x.kode + ' dipakai dua kali.'); kodes[x.kode] = 1; });
+  const tj = (p.tj || []).slice(0, 40).map(function (t, i) {
+    const o = {id: S(t.id, 20) || ('tj' + Date.now().toString(36) + i), nama: S(t.nama, 60), divisi: S(t.divisi, 40),
+      orang: (t.orang || []).map(String).filter(function (id) { return kar[id]; }).slice(0, 10),
+      kerja: (t.kerja || []).slice(0, 20).map(function (k, j) {
+        const kp = ['harian', 'mingguan', 'terjadi'].indexOf(k.kapan) >= 0 ? k.kapan : 'harian';
+        const o2 = {id: S(k.id, 24) || ('kj' + Date.now().toString(36) + i + '_' + j), nama: S(k.nama, 80), kapan: kp, sop: S(k.sop, 20).toUpperCase(), baik: S(k.baik, 200)};
+        if (kp === 'mingguan') o2.hari = Math.min(6, Math.max(0, Math.floor(+k.hari >= 0 ? +k.hari : 6)));
+        if (o2.sop && !kodes[o2.sop]) o2.sop = '';
+        return o2;
+      }).filter(function (k) { return k.nama; })};
+    if (!o.nama) throw new Error('Nama tanggung jawab kosong.');
+    return o;
+  });
+  const lain = (p.lain || []).slice(0, 60).map(function (r) { return [S(r[0], 60), S(r[1], 12), S(r[2], 20) || 'Umum']; }).filter(function (r) { return r[0]; });
+  const d = {divisi: divisi.length ? divisi : SOP_DEF.divisi, tj: tj, sop: sop, lain: lain};
+  const at = new Date().toISOString();
+  kjLock_(function () {
+    const sh = kjSheet_('doc'), r = kjRows_('doc').filter(function (x) { return String(x.id) === 'sop'; })[0];
+    const o = {id: 'sop', isi: JSON.stringify(d), jobs: '', meta: '', by: u.name, at: at};
+    if (r) { const row = kjRow_('doc', o); sh.getRange(r._r, 1, 1, row.length).setValues([row]); } else kjAppend_('doc', [o]);
+  });
+  d.by = u.name; d.at = at;
+  return {ok: 1, sop: d};
+}
+/* awal minggu kerja (Sabtu) untuk tanggal lokal */
+function kjSabtu_(day) { const t = new Date(day + 'T00:00:00Z'); return new Date(t.getTime() - ((t.getUTCDay() + 1) % 7) * 864e5).toISOString().slice(0, 10); }
+/* pekerjaan dari tanggung jawab (src tj) atau tugas tambahan (src beri) */
+function kjKerjaCek_(p, k, now) {
+  const src = String(p.src || ''), day = kjDay_(now), so = kjSopGet_(), L = kjRows_('akt', 4000);
+  const cek = {};
+  Object.keys(p.cek || {}).slice(0, 5).forEach(function (x) { cek[String(x).slice(0, 40)] = String(p.cek[x]).slice(0, 300); });
+  let d;
+  const aktif = function (x) { return x.jenis === 'kerja' && x.status !== 'tolak' && x.status !== 'batal'; };
+  if (src === 'tj') {
+    const t = (so.tj || []).filter(function (x) { return x.id === String(p.tj); })[0];
+    if (!t) throw new Error('Tanggung jawab tidak ditemukan. Muat ulang halaman.');
+    if (t.orang.indexOf(k.id) < 0) throw new Error(k.nama + ' bukan penanggung jawab ' + t.nama + '.');
+    const w = (t.kerja || []).filter(function (x) { return x.id === String(p.ref); })[0];
+    if (!w) throw new Error('Pekerjaan tidak ditemukan. Muat ulang halaman.');
+    if (w.kapan !== 'terjadi') {
+      const sb = kjSabtu_(day);
+      const ada = L.filter(function (x) { if (!aktif(x)) return false; const o = kjJ_(x.data, {}); if (o.src !== 'tj' || o.ref !== w.id) return false;
+        const xd = kjDay_(x.tgl); return w.kapan === 'harian' ? xd === day : kjSabtu_(xd) === sb; })[0];
+      if (ada) return {dup: 1, oleh: ada.oleh};
+    }
+    d = {src: 'tj', tj: t.id, ref: w.id, item: w.nama, tjNama: t.nama, kapan: w.kapan};
+    if (w.sop) d.sop = w.sop;
+  } else if (src === 'beri') {
+    const b = L.filter(function (x) { return String(x.id) === String(p.ref) && x.jenis === 'beri'; })[0];
+    if (!b || b.status !== 'aktif') throw new Error('Tugas tambahan sudah tidak berlaku. Muat ulang halaman.');
+    if (String(b.kid) !== k.id) throw new Error('Tugas ini untuk orang lain.');
+    const ada = L.filter(function (x) { return aktif(x) && kjJ_(x.data, {}).ref === String(b.id); })[0];
+    if (ada) return {dup: 1, oleh: ada.oleh};
+    const bd = kjJ_(b.data, {});
+    d = {src: 'beri', ref: String(b.id), item: bd.item, dari: b.oleh};
+    if (bd.sop) d.sop = bd.sop;
+  } else throw new Error('Jenis pekerjaan tidak dikenal.');
+  if (d.sop) { const x = (so.sop || []).filter(function (y) { return y.kode === d.sop; })[0]; if (x) d.versi = x.versi; }
+  d.cek = cek; d.ket = String(p.ket || '').slice(0, 200);
+  return d;
+}
+/* tugas tambahan dari Owner atau supervisor (hanya karyawan di workshopnya; supervisor lain hanya oleh Owner) */
+function kjBeri_(p, u) {
+  kjCekOk_(u);
+  const cfg = kjCfg_(), gud = kjGud_(u, cfg), owner = has_(u, 'kinerja_gaji');
+  const k = kjRows_('kar').filter(function (x) { return String(x.id) === String(p.kid) && String(x.on) !== '0'; })[0];
+  if (!k) throw new Error('Karyawan tidak ditemukan.');
+  if (gud && kjKarGud_(k, cfg) !== gud) throw new Error(k.nama + ' bukan karyawan workshop Anda.');
+  if (!owner && /supervisor/i.test(String(k.posisi || ''))) throw new Error('Tugas untuk supervisor hanya diberikan Owner.');
+  const it = String(p.item || '').trim().slice(0, 160); if (!it) throw new Error('Tulis tugasnya.');
+  const tg = /^\d{4}-\d{2}-\d{2}$/.test(String(p.tgl || '')) ? String(p.tgl) : kjDay_(new Date().toISOString());
+  const so = kjSopGet_(), sop = String(p.sop || '').toUpperCase();
+  const d = {item: it, tgl: tg};
+  if (sop && (so.sop || []).some(function (x) { return x.kode === sop; })) d.sop = sop;
+  const id = kjId_(), now = new Date().toISOString();
+  kjLock_(function () { kjAppend_('akt', [{id: id, tgl: now, kid: String(k.id), jenis: 'beri', data: d, status: 'aktif', oleh: u.name, dev: u.user}]); });
+  return {ok: 1, a: {id: id, tgl: now, kid: String(k.id), jenis: 'beri', d: d, st: 'aktif', oleh: u.name}};
 }
 /* tanggal lokal WIB (UTC+7) untuk "hari ini" */
 function kjDay_(iso) { const t = new Date(iso); return isNaN(t) ? '' : new Date(t.getTime() + 7 * 3600e3).toISOString().slice(0, 10); }
@@ -453,19 +576,23 @@ function kjCek_(p, u) {
   kjRows_('kar').forEach(function (k) { KM[String(k.id)] = k; });
   /* laporan supervisor workshop hanya diperiksa Owner */
   if (!owner) ids.forEach(function (i) { const k = KM[kidOf[i]] || {}; if (/supervisor/i.test(String(k.posisi || ''))) throw new Error('Laporan ' + k.nama + ' (supervisor) hanya diperiksa Owner.'); });
-  const PERIKSA = ['hasil', 'tugas', 'kegiatan'];
+  const PERIKSA = ['hasil', 'tugas', 'kegiatan', 'kerja'];
   const sIds = ids.filter(function (i) { return jenis[i] === 'setor'; }), hIds = ids.filter(function (i) { return PERIKSA.indexOf(jenis[i]) >= 0; });
   if (!sIds.length && !hIds.length) throw new Error('Data tidak ditemukan. Muat ulang halaman.');
   const out = {ok: 1, n: 0, msg: []};
+  const balik = [];
   if (hIds.length) {
     out.n += kjUpdAkt_(hIds, function (o) {
       if (PERIKSA.indexOf(o.jenis) < 0) return false;
       if (gud && kjKarGud_(KM[String(o.kid)] || {}, cfg) !== gud) throw new Error('Laporan ini bukan dari workshop Anda.');
       o.status = ok ? 'ok' : 'tolak'; o.cekBy = u.name; o.cekAt = now;
       if (!ok) o.data.tolak = note || 'ditolak pemeriksa';
+      if (!ok && o.jenis === 'kerja' && o.data.src === 'beri') balik.push(o.data.ref);
       if (ok && one && o.jenis === 'hasil') { o.data.qAsli = o.data.q; o.data.q = +p.q; }
     }).n;
   }
+  /* pekerjaan dari tugas tambahan ditolak: tugasnya muncul lagi di HP */
+  if (balik.length) try { kjUpdAkt_(balik, function (o) { if (o.jenis !== 'beri') return false; o.status = 'aktif'; }); } catch (e) {}
   sIds.forEach(function (id) {
     if (ok && one && !(+p.q > 0)) throw new Error('Jumlah harus lebih dari 0. Gunakan Tolak bila tidak ada yang jadi.');
     const r = kjSetorOk_(id, ok, one ? +p.q : null, note, u, cfg, gud);
