@@ -417,7 +417,7 @@ const can=k=>ROLE==='owner'||ROLE==='admin'||PERM.includes(k);
 /* Owner: 1 akun di atas Admin. Selama server belum punya peran Owner (belum ada akun Owner), Admin bertindak sebagai Owner. */
 const OWN=()=>ROLE==='owner'||(ROLE==='admin'&&!USERS.some(x=>x.r==='owner'));
 const TP={kasir:['kasir'],riwayat:['riwayat'],laporan:['laporan'],produk:['produk_edit','harga_edit','stok_ubah','kasir'],stok:['stok_ubah','kasir'],bahan:['stok_ubah'],produksi:['prod_lihat','prod_buat'],pesanan:[]};
-const tabOk=t=>t==='beranda'||(t==='bahan'&&!!ROLE)||(t==='pesanan'&&(ROLE==='admin'||ROLE==='supervisor'))||((t==='pengguna'||t==='peran')&&OWN())||(t==='cadangan'&&(isAdm||can('backup')))||(t==='rekap'&&(can('rekap_kedawung')||can('rekap_wonodadi')))||(t==='kinerja'&&(can('kinerja_input')||can('kinerja_cek')||can('kinerja_gaji')))||(TP[t]||[]).some(can);
+const tabOk=t=>t==='beranda'||(t==='bahan'&&!!ROLE)||(t==='pesanan'&&(ROLE==='admin'||ROLE==='supervisor'))||((t==='pengguna'||t==='peran')&&isAdm)||(t==='cadangan'&&(isAdm||can('backup')))||(t==='rekap'&&(can('rekap_kedawung')||can('rekap_wonodadi')))||(t==='kinerja'&&(can('kinerja_input')||can('kinerja_cek')||can('kinerja_gaji')))||(TP[t]||[]).some(can);
 function pTabOk(k){if(k==='cetak')return can('prod_buat');if(k==='gudang')return can('prod_lihat')||can('gudang');if(k==='petugas')return isAdm||can('prod_buat');return can('prod_lihat')}
 function ACC(r){USR=r.user||USR;ROLE=r.role||'admin';PERM=Array.isArray(r.perm)?r.perm:ALLP.concat(['pengguna']);USERS=r.users||[];ROLEP=r.roles||ROLEP;WEAK=!!r.weak;
  try{localStorage.setItem('positif_me',JSON.stringify({u:USR,name:r.name||ME,role:ROLE,perm:PERM,ss:r.ss||''}))}catch(e){}
@@ -476,7 +476,7 @@ function accFill(){const m=$('accm');if(!m)return;
  m.innerHTML='<div class="acch"><b>'+esc(ME)+'</b><span>'+(RL[ROLE]||'')+' · @'+esc(USR)+'</span></div>'
  +(WEAK?'<div class="accw">PIN masih bawaan (123456). Segera ganti.</div>':'')
  +I('key','Ganti PIN','accClose();chPin()')
- +((isAdm||can('backup'))?I('settings','Pengaturan',"accClose();go('"+(OWN()?'pengguna':'cadangan')+"')"):'')
+ +((isAdm||can('backup'))?I('settings','Pengaturan',"accClose();go('"+(isAdm?'pengguna':'cadangan')+"')"):'')
  +(can('backup')&&SSURL?'<a class="acci" href="'+esc(SSURL)+'" target="_blank" rel="noopener" onclick="accClose()">'+IC('sheet')+'<span>Buka Google Sheet</span></a>':'')
  +'<hr class="mhr">'+I('logout','Keluar','logout()','dg')}
 /* ---------- petugas = pengguna ---------- */
