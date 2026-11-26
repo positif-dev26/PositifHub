@@ -14,7 +14,7 @@
   var ICO = {
     receipt: 'shopping_cart',          /* Kasir */
     chart: 'bar_chart',                /* Penjualan */
-    box: 'inventory_2',                /* Produk */
+    box: 'package_2',                  /* Produk */
     layers: 'layers',                  /* Stok bahan baku */
     factory: 'factory',                /* Produksi */
     clipboard: 'assignment',           /* Pesanan custom */
