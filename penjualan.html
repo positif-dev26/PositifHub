@@ -11,7 +11,43 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tema.css?v=20261123a">
+<link rel="stylesheet" href="tema.css?v=20261125b">
+<style>
+/* ===== HP: judul tabel/daftar tidak ikut tergulung ===== */
+@media(max-width:760px){
+ /* Riwayat: kartu seukuran layar, judul kolom tetap, hanya baris data yang bergulir */
+ html:has(#pbody .rw){overflow:auto}
+ #view.fit:has(#pbody .rw),#view.fit:has(#pbody .lp){height:auto;overflow:visible;display:block}
+ #view:has(#pbody .rw){padding-bottom:0!important}
+ .card.rw{flex:none;height:calc(100dvh - var(--ctop,170px) - 64px - env(safe-area-inset-bottom,0px));min-height:280px}
+ .card.rw .scroll.fs{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+ .card.rw .rt th{position:sticky;top:0;z-index:2;background:var(--card);box-shadow:inset 0 -1px 0 var(--line)}
+ /* Laporan: judul kartu + judul kolom menempel di atas, kartu terangkat setelah baris terakhir */
+ .card.lp{flex:none;height:auto}
+ .card.lp .fs{flex:none;overflow:visible}
+ .card.lp>h2.ch{position:sticky;top:var(--hh,52px);z-index:3;box-sizing:border-box;height:48px;margin:-14px -14px 0!important;padding:14px 14px 8px;font-size:20px;line-height:26px;background:var(--card);border-radius:inherit}
+ .card.lp .lh{position:sticky;top:calc(var(--hh,52px) + 48px);z-index:2;background:var(--card)}
+}
+
+/* ===== DESKTOP: kolom Riwayat seimbang, bisa di-resize & diurutkan ===== */
+.rt th.sh{cursor:pointer;user-select:none;-webkit-user-select:none}
+.rt th.sh .sa{font-style:normal;margin-left:6px;font-size:10px}
+.rt td.it b{display:block;margin-bottom:3px}
+.rt td.it .il{line-height:1.5}
+.rt td.it .ix[hidden]{display:none}
+.rt .rz{display:none}
+body.rzing,body.rzing *{cursor:col-resize!important;user-select:none!important;-webkit-user-select:none!important}
+@media(min-width:761px){
+ .rt{table-layout:fixed;width:100%}
+ .rt th,.rt td{padding-left:16px;padding-right:16px;overflow-wrap:anywhere}
+ .rt th{position:sticky;top:0;z-index:2;background:var(--card)}
+ .rt th.sh:hover{background-image:linear-gradient(rgba(127,127,127,.14),rgba(127,127,127,.14))}
+ .rt .rz{display:block;position:absolute;right:0;top:0;bottom:0;width:11px;cursor:col-resize;z-index:3}
+ .rt .rz::after{content:"";position:absolute;right:5px;top:22%;bottom:22%;width:1px;background:var(--line,#444)}
+ .rt .rz:hover::after{width:2px;right:4px;background:currentColor;opacity:.7}
+}
+@media(max-width:760px){.rt col{width:auto!important}}
+</style>
 </head>
 <body>
 <header class="noprint"><h1 style="margin:0;line-height:0"><img id="lg" class="logo" alt="Positif Clothing" title="POS" onclick="go('beranda')"></h1><nav id="nav"></nav><span id="clk" class="clk"></span><span id="sync" class="muted" style="font-size:13px;cursor:pointer" onclick="syncNow()" title="Klik untuk sinkron sekarang"></span><span id="acc"></span></header>
@@ -31,12 +67,40 @@
 /* ---------- PENJUALAN: sub menu Riwayat · Laporan ---------- */
 const SUBP=[['riwayat','Riwayat','history','Riwayat penjualan'],['laporan','Laporan','chart','Laporan penjualan']];
 function salesShell(){$('view').innerHTML='<div class="prod"><div class="ptabs rl">'+SUBP.filter(x=>can(x[0])).map(([k,l,i,t])=>'<button class="'+(k===tab?'on':'')+'" title="'+t+'" aria-label="'+t+'" onclick="go(\''+k+'\')">'+IC(i)+'<span>'+l+'</span></button>').join('')+'</div><div id="pbody"></div></div>'}
-function vRiwayat(){
+const RW_DEF=[230,180,380,130,160,100];let rwS={k:null,d:1};
+function rwW(){try{const a=JSON.parse(localStorage.getItem('rwCols'));if(Array.isArray(a)&&a.length===6&&a.every(n=>n>=40))return a}catch(e){}return RW_DEF.slice()}
+function rwSave(a){try{localStorage.setItem('rwCols',JSON.stringify(a))}catch(e){}}
+function rwTbl(){
  const dt=d=>new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}),tm=d=>new Date(d).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
- const its=s=>{const a=s.items.map(i=>esc(i.name)+' x'+i.qty),n=a.length,pc=s.items.reduce((x,i)=>x+i.qty,0);return `<b>${n} item · ${nf(pc)} pcs</b><br>${a.slice(0,2).join(', ')}`+(n>2?`<span hidden>, ${a.slice(2).join(', ')}</span> <button class="lnk" style="display:inline" onclick="const p=this.previousElementSibling;p.hidden=!p.hidden;this.textContent=p.hidden?'+${n-2} item lainnya':'Ringkas'">+${n-2} item lainnya</button>`:'')};
- salesShell();$('pbody').innerHTML=`<div class="card fl"><h2 class="fn" style="margin:0 0 10px">Riwayat penjualan</h2><div class="scroll fs"><table class="rt"><tr><th>No.</th><th>Waktu</th><th>Item</th><th>Bayar</th><th class="r">Total</th><th></th></tr>
- ${S.sales.length?S.sales.map(s=>`<tr><td class="mo">${s.id}</td><td>${dt(s.date)}<br><small>${tm(s.date)}</small></td><td class="it">${its(s)}</td><td><span class="badge">${s.pay}</span></td><td class="r"><b>${rp(s.total)}</b></td><td><button class="btn sec" onclick="receipt(S.sales.find(x=>x.id==='${s.id}'))">Struk</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">Belum ada transaksi. Selesaikan penjualan pertama di menu Kasir.</td></tr>'}</table></div></div>`;
+ const pcs=s=>s.items.reduce((x,i)=>x+i.qty,0);
+ const its=s=>{const a=s.items.map(i=>`${esc(i.name)} x${i.qty}`),n=a.length,head=`<b>${n} item · ${nf(pcs(s))} pcs</b>`;
+  if(n<2)return head+`<div class="il">${a[0]||''}</div>`;
+  return head+`<div class="il">${a[0]} <button class="lnk" style="display:inline" onclick="const p=this.closest('td').querySelector('.ix');p.hidden=!p.hidden;this.textContent=p.hidden?'+${n-1} item lainnya':'Ringkas'">+${n-1} item lainnya</button></div><div class="ix" hidden>${a.slice(1).map(x=>`<div class="il">${x}</div>`).join('')}</div>`};
+ let L=S.sales.slice();
+ if(rwS.k){const f={id:s=>s.id,date:s=>+new Date(s.date),item:pcs,pay:s=>String(s.pay),total:s=>s.total}[rwS.k];
+  L.sort((a,b)=>{const x=f(a),y=f(b);return (typeof x==='string'?x.localeCompare(y,'id',{numeric:true}):x-y)*rwS.d})}
+ const H=[['id','No.',''],['date','Waktu',''],['item','Item',''],['pay','Bayar',''],['total','Total','r']];
+ const th=H.map(([k,l,c],i)=>`<th class="sh ${c}" aria-sort="${rwS.k===k?(rwS.d>0?'ascending':'descending'):'none'}" title="Klik untuk mengurutkan" onclick="rwSort('${k}')">${l}${rwS.k===k?`<i class="sa">${rwS.d>0?'▲':'▼'}</i>`:''}<span class="rz" data-i="${i}" title="Geser untuk ubah lebar · klik 2x untuk reset" onclick="event.stopPropagation()"></span></th>`).join('')+'<th></th>';
+ return `<colgroup>${rwW().map(w=>`<col style="width:${w}px">`).join('')}</colgroup><tr>${th}</tr>`+
+ (L.length?L.map(s=>`<tr><td class="mo">${s.id}</td><td>${dt(s.date)}<br><small>${tm(s.date)}</small></td><td class="it">${its(s)}</td><td><span class="badge">${s.pay}</span></td><td class="r"><b>${rp(s.total)}</b></td><td><button class="btn sec" onclick="receipt(S.sales.find(x=>x.id==='${s.id}'))">Struk</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">Belum ada transaksi. Selesaikan penjualan pertama di menu Kasir.</td></tr>')
 }
+function rwSort(k){if(Date.now()-(window._rzEnd||0)<200)return;rwS=rwS.k===k?{k,d:-rwS.d}:{k,d:1};$('rwt').innerHTML=rwTbl()}
+function rwBind(t){
+ t.addEventListener('mousedown',e=>{
+  const h=e.target.closest('.rz');if(!h||e.button!==0||!matchMedia('(min-width:761px)').matches||!t.rows[0])return;
+  e.preventDefault();e.stopPropagation();
+  const i=+h.dataset.i,cols=[...t.querySelectorAll('col')],w=[...t.rows[0].cells].map(c=>c.getBoundingClientRect().width),x0=e.clientX;
+  cols.forEach((c,j)=>c.style.width=w[j]+'px');document.body.classList.add('rzing');
+  const mv=ev=>{const dx=Math.max(60-w[i],Math.min(w[i+1]-60,ev.clientX-x0));cols[i].style.width=(w[i]+dx)+'px';cols[i+1].style.width=(w[i+1]-dx)+'px'};
+  const up=()=>{removeEventListener('mousemove',mv);removeEventListener('mouseup',up);document.body.classList.remove('rzing');window._rzEnd=Date.now();rwSave(cols.map(c=>Math.round(parseFloat(c.style.width))))};
+  addEventListener('mousemove',mv);addEventListener('mouseup',up)});
+ t.addEventListener('dblclick',e=>{if(!e.target.closest('.rz'))return;rwSave(RW_DEF);t.querySelectorAll('col').forEach((c,j)=>c.style.width=RW_DEF[j]+'px')})
+}
+function vRiwayat(){
+ salesShell();$('pbody').innerHTML=`<div class="card fl rw"><h2 class="fn" style="margin:0 0 10px">Riwayat penjualan</h2><div class="scroll fs"><table class="rt" id="rwt">${rwTbl()}</table></div></div>`;rwBind($('rwt'));rwFit()
+}
+/* tinggi kartu Riwayat di HP: dari posisi atas kartu sampai tepat di atas bar bawah */
+function rwFit(){const m=()=>{const c=document.querySelector('.card.rw');if(!c)return;if(!matchMedia('(max-width:760px)').matches){c.style.removeProperty('--ctop');return}c.style.setProperty('--ctop',Math.round(c.getBoundingClientRect().top+scrollY)+'px')};m();requestAnimationFrame(m);setTimeout(m,300);setTimeout(m,1200);if(!window._rwf){window._rwf=1;addEventListener('resize',m);addEventListener('orientationchange',()=>setTimeout(m,200))}}
 /* ---------- LAPORAN ---------- */
 function vLaporan(){
  const td=S.sales.filter(s=>today(s.date)),sum=a=>a.reduce((x,s)=>x+s.total,0);
@@ -48,8 +112,8 @@ function vLaporan(){
  <div class="card stat"><span>Transaksi hari ini</span><div class="num">${td.length}</div></div>
  <div class="card stat"><span>Total omzet semua</span><div class="num">${rp(sum(S.sales))}</div></div>
  <div class="card stat"><span>Sisa bayar pesanan custom</span><div class="num ${piutang?'bad':''}">${rp(piutang)}</div></div></div>
- <div class="two"><div class="card fl"><h2 class="fn" style="margin:0 0 8px">Produk terlaris</h2><div class="fs"><div class="lh"><span>#</span><span>Produk</span><span>Terjual</span></div>${top.length?top.map((t,i)=>`<div class="lr"><span class="muted">${i+1}</span><div><div>${esc(t[0])}</div><div class="bar2"><i style="width:${Math.round(t[1]/top[0][1]*100)}%"></i></div></div><b>${t[1]} terjual</b></div>`).join(''):'<p class="muted">Belum ada data penjualan.</p>'}</div></div>
- <div class="card fl"><h2 class="fn" style="margin:0 0 8px">Stok menipis atau habis</h2><div class="fs"><div class="lh" style="grid-template-columns:minmax(0,1fr) auto"><span>Produk</span><span>Sisa stok</span></div>${low.length?low.map(x=>`<div class="lr" style="grid-template-columns:minmax(0,1fr) auto"><span>${esc(cn(x.p,x.v))}</span><span class="badge ${x.v.stock<1?'bad':'mid'}">${nf(x.v.stock)}</span></div>`).join(''):'<p class="muted">Semua stok aman.</p>'}</div></div></div>
+ <div class="two"><div class="card fl lp"><h2 class="fn ch" style="margin:0 0 8px">Produk terlaris</h2><div class="fs"><div class="lh"><span>#</span><span>Produk</span><span>Terjual</span></div>${top.length?top.map((t,i)=>`<div class="lr"><span class="muted">${i+1}</span><div><div>${esc(t[0])}</div><div class="bar2"><i style="width:${Math.round(t[1]/top[0][1]*100)}%"></i></div></div><b>${t[1]} terjual</b></div>`).join(''):'<p class="muted">Belum ada data penjualan.</p>'}</div></div>
+ <div class="card fl lp"><h2 class="fn ch" style="margin:0 0 8px">Stok menipis atau habis</h2><div class="fs"><div class="lh" style="grid-template-columns:minmax(0,1fr) auto"><span>Produk</span><span>Sisa stok</span></div>${low.length?low.map(x=>`<div class="lr" style="grid-template-columns:minmax(0,1fr) auto"><span>${esc(cn(x.p,x.v))}</span><span class="badge ${x.v.stock<1?'bad':'mid'}">${nf(x.v.stock)}</span></div>`).join(''):'<p class="muted">Semua stok aman.</p>'}</div></div></div>
  `;
 }
 boot();
