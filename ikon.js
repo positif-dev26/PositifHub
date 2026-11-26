@@ -9,7 +9,8 @@
   var MAP = {
     /* menu samping/bawah halaman Produksi */
     workflow: 'account_tree',   /* Alur */
-    printer: 'print',           /* Cetak */
+    order: 'post_add',          /* Cetak = buat order cetak ke vendor */
+    printer: 'print',           /* tombol Cetak A4 & tahap Cetak vendor */
     factory: 'factory',         /* Vendor */
     check: 'check_circle',      /* Selesai */
     ban: 'cancel',              /* Reject / Batal */
@@ -17,6 +18,7 @@
     users: 'group',             /* Petugas */
     sliders: 'tune',            /* Atur */
     /* tahap produksi */
+    clipboard: 'assignment',    /* Rencana */
     layers: 'layers',           /* Rak bahan */
     scissors: 'content_cut',    /* Cutting */
     shirt: 'checkroom',         /* Jahit */

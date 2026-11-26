@@ -209,7 +209,7 @@ td.lt,.lt{color:#ff8a80;font-weight:600}
 <div id="pp" class="modal" onclick="if(event.target===this)ppClose()"><div class="card ppc" id="ppc" role="dialog" aria-modal="true" aria-label="Proses produksi"></div></div>
 <div id="plabels"></div>
 <script>window.PAGE_TABS=["produksi"];window.PAGE_HOME="produksi";</script>
-<script src="ikon.js?v=1"></script>
+<script src="ikon.js?v=2"></script>
 <script src="inti.js?v=20261126a"></script>
 <script>
 /* =====================================================================
@@ -258,7 +258,7 @@ const vendNames=()=>PC().vendors.filter(v=>v.on!==false).map(v=>v.name);
 /* ---------- menu samping ---------- */
 let pst='alur',pq='',pOnly=true,tgt=0,draft=[],pday='',pdue='';
 const PTS={alur:'Alur',cetak:'Cetak',vendor:'Vendor',selesai:'Selesai',reject:'Reject',gudang:'Gudang',petugas:'Petugas',atur:'Atur'};
-const PTI={alur:'workflow',cetak:'printer',vendor:'factory',selesai:'check',reject:'ban',gudang:'warehouse',petugas:'users',atur:'sliders'};
+const PTI={alur:'workflow',cetak:'order',vendor:'factory',selesai:'check',reject:'ban',gudang:'warehouse',petugas:'users',atur:'sliders'};
 const PT2=[['alur','Alur produksi'],['cetak','Buat order cetak'],['vendor','Konfirmasi cetak vendor'],['selesai','Selesai'],['reject','Reject'],['gudang','Data gudang'],['atur','Pengaturan, vendor & petugas']];
 function vProd(){if(pst==='petugas')pst='atur';ppClose();if(!pTabOk(pst))pst=(PT2.map(t=>t[0]).find(pTabOk)||'alur');if(!pday)pday=ymd(new Date());$('view').classList.toggle('fit',pst==='cetak');
  $('view').innerHTML='<div class="prod"><div class="ptabs rl">'+PT2.filter(t=>pTabOk(t[0])).map(([k,l])=>'<button class="'+(k===pst?'on':'')+'" title="'+l+'" aria-label="'+l+'" onclick="pst=\''+k+'\';vProd();scrollTo(0,0)">'+MS(PTI[k])+'<span>'+PTS[k]+'</span></button>').join('')+'</div><div id="pbody"></div></div>';
