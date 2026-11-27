@@ -457,6 +457,14 @@ body:has(.modal) #toasts{top:24px;transform:translateX(-50%)}
 .hpt input.des{width:90px;text-align:right}
 @media (max-width:1000px){.hppg{grid-template-columns:minmax(0,1fr)}.hjk select{min-width:0;width:100%}.hjk{flex-wrap:wrap}}
 input.uang{text-align:right;font-variant-numeric:tabular-nums}
+/* Harga: lengan panjang, angka rata tengah, judul tetap */
+.hview .plist{top:calc(var(--hh) + 96px);max-height:calc(100vh - var(--hh) - 108px)}
+.hview tr.lp td{background:rgba(212,255,63,.04)}.hview tr.lp td:first-child{padding-left:18px;color:#cbe87a;font-size:13px}
+.hview .pgrid th,.hview .pgrid td,.hview .hpt th,.hview .hpt td,.hview .hpt .r{text-align:center}
+.hview .pgrid th:first-child,.hview .pgrid td:first-child,.hview .hpt th:first-child,.hview .hpt td:first-child{text-align:left}
+.hview input.uang,.hview input.des,.hview input[type=number]{text-align:center}
+.hview .pgrid td .lb{display:block;width:fit-content;margin:3px auto 0}
+.lpt{align-self:center;padding-bottom:10px}
 </style>
 </head>
 <body>
@@ -1692,10 +1700,11 @@ async function saveHpp() {
     S.hppDirty = false; rerenderMain(); toast('Rincian modal disimpan');
   } catch (e) { toast(e.message, true); } finally { loading(false); }
 }
+const LP_RE = /^\s*lengan\s+panjang\s*$/i;
 function kainPerKg(bid, M) { const b = ((M || S.mEdit || S.master).bahan || []).find(x => x.id === bid); const c = b && supCost(b); return c && c.perKg ? c.perKg : 0; }
 function kainPerM(bid, M) { const b = ((M || S.mEdit || S.master).bahan || []).find(x => x.id === bid); const c = b && supCost(b); return c && c.perM ? c.perM : 0; }
-function modalBaris(p, key, bn, M) {
-  const h = HP(p.id), n = num((h.kpk || {})[bn]), kg = kainPerKg(h.kain[key], M);
+function modalBaris(p, key, bn, M, lp) {
+  const h = HP(p.id), n = num(((lp ? h.kpkLP : h.kpk) || {})[bn]), kg = kainPerKg(h.kain[key], M);
   return (n && kg ? kg / n : 0) + (h.komp || []).reduce((s, k) => s + num(k.nilai), 0);
 }
 function tgtOf(p, i) { const t = HP(p.id).target; return num(t[i] != null && t[i] !== '' ? t[i] : t[0]); }
@@ -1718,10 +1727,10 @@ function hppCard(p, key, M) {
     ${h.kain[key] && !kg ? '<div class="warn small" style="margin-bottom:8px">Harga kain ini belum per kg. Isi harga per kg di menu Bahan supaya HPP kain terhitung.</div>' : ''}
     <div class="hppg">
       <div class="hbox"><table class="t hpt"><thead><tr><th>Baris</th><th class="r">Banyak kaos / kg</th><th class="r">HPP kain</th><th class="r">Ongkos lain</th><th class="r">Modal</th></tr></thead><tbody>
-        ${baris.map(b => { const n = num(h.kpk[b.nama]), hk = n && kg ? kg / n : 0; return `<tr><td>${esc(b.nama)}</td><td class="r"><input type="text" inputmode="decimal" class="des" data-hp="${H}.kpk.${esc(b.nama)}" data-re="1" value="${n ? String(n).replace('.', ',') : ''}" placeholder="0"></td><td class="r">${hk ? rp(Math.round(hk)).replace('Rp', '') : '<span class="muted">-</span>'}</td><td class="r muted">${rp(ong).replace('Rp', '')}</td><td class="r"><b>${rp(Math.round(modalBaris(p, key, b.nama, M)))}</b></td></tr>`; }).join('')}
+        ${baris.map(b => [false].concat(p.lp ? [true] : []).map(lp => { const src = lp ? 'kpkLP' : 'kpk'; h[src] = h[src] || {}; const n = num(h[src][b.nama]), hk = n && kg ? kg / n : 0; return `<tr class="${lp ? 'lp' : ''}"><td>${lp ? '↳ Lengan panjang' : esc(b.nama)}</td><td class="r"><input type="text" inputmode="decimal" class="des" data-hp="${H}.${src}.${esc(b.nama)}" data-re="1" value="${n ? String(n).replace('.', ',') : ''}" placeholder="0"></td><td class="r">${hk ? rp(Math.round(hk)).replace('Rp', '') : '<span class="muted">-</span>'}</td><td class="r muted">${rp(ong).replace('Rp', '')}</td><td class="r"><b>${rp(Math.round(modalBaris(p, key, b.nama, M, lp)))}</b></td></tr>`; }).join('')).join('')}
       </tbody></table></div>
       <div class="hbox"><div class="muted small" style="margin-bottom:6px">Ongkos lain per pcs</div>
-        ${(h.komp || []).map((k, x) => `<div class="nrow"><input data-hp="${H}.komp.${x}.nama" value="${esc(k.nama)}" placeholder="Nama ongkos"><input type="text" inputmode="numeric" class="uang" data-hp="${H}.komp.${x}.nilai" data-re="1" value="${num(k.nilai) || ''}" style="flex:0 0 110px;text-align:right" placeholder="0"><button class="btn icon sm ghost" data-act="hpKompDel" data-pid="${p.id}" data-x="${x}">${ic('x')}</button></div>`).join('')}
+        ${(h.komp || []).map((k, x) => `<div class="nrow"><input data-hp="${H}.komp.${x}.nama" value="${esc(k.nama)}" placeholder="Nama ongkos"><input type="text" inputmode="numeric" class="uang" data-hp="${H}.komp.${x}.nilai" data-re="1" value="${num(k.nilai) || ''}" style="flex:0 0 110px" placeholder="0"><button class="btn icon sm ghost" data-act="hpKompDel" data-pid="${p.id}" data-x="${x}">${ic('x')}</button></div>`).join('')}
         <div class="row" style="margin-top:8px;justify-content:space-between"><button class="btn sm" data-act="hpKompAdd" data-pid="${p.id}">${ic('plus')} Ongkos</button><span class="muted small">Total <b style="color:var(--text)">${rp(ong).replace('Rp', '')}</b> / pcs</span></div>
       </div>
     </div>
@@ -1780,7 +1789,7 @@ function plProduk(p, sel, agen, M) {
       const lab = p.bahanSumber === 'jersey' ? 'Kelas ' + kelasNama(k, M) : k;
       return `<div class="plp"><div class="plh">${esc(p.nama)} <span>· ${esc(lab)}</span></div>
         <table class="at"><thead><tr><th>Ukuran</th>${tg.map((t, i) => `<th class="r">${esc(tierLabel(tg, i))}</th>`).join('')}</tr></thead><tbody>
-        ${bs.map(b => { const arr = ((p.harga || {})[k] || {})[b.nama] || []; return `<tr class="le"><td>${esc(b.nama)}</td>${tg.map((t, i) => `<td class="r">${rbS(plHarga(p, arr, i, agen))}</td>`).join('')}</tr>`; }).join('')}
+        ${bs.map(b => { const arr = ((p.harga || {})[k] || {})[b.nama] || [], al = ((p.hargaLP || {})[k] || {})[b.nama] || []; return `<tr class="le"><td>${esc(b.nama)}</td>${tg.map((t, i) => `<td class="r">${rbS(plHarga(p, arr, i, agen))}</td>`).join('')}</tr>${p.lp && al.some(v => num(v)) ? `<tr class="le"><td style="padding-left:4mm;color:#555">↳ Lengan panjang</td>${tg.map((t, i) => `<td class="r">${rbS(plHarga(p, al, i, agen))}</td>`).join('')}</tr>` : ''}`; }).join('')}
         </tbody></table>${n === all.length - 1 ? foot : ''}</div>`;
     }).join('');
   }
@@ -2166,7 +2175,7 @@ function masterView() {
   const v = S.view;
   const head = { harga: ['Harga produk', 'Produk, tabel harga jual, tingkat jumlah, dan biaya tambahan.'], ukuran: ['Ukuran', 'Kelompok ukuran untuk tabel harga dan daftar ukuran siap pakai.'], model: ['Pilihan model', 'Pilihan yang muncul di form pesanan.'] }[v];
   const body = v === 'harga' ? '<div class="hview">' + masterProduk(M) + '</div>' : v === 'ukuran' ? masterUkuran(M) : masterOpsi(M);
-  return pfh(head[0], head[1] + (S.mDirty ? ' <span class="chip amber">belum disimpan</span>' : ''), (v === 'harga' ? ibc('plOpen', 'sell', 'Pricelist') : '') + saveBtns()) + body;
+  return (v === 'harga' ? pfhS : pfh)(head[0], head[1] + (S.mDirty ? ' <span class="chip amber">belum disimpan</span>' : ''), (v === 'harga' ? ibc('plOpen', 'sell', 'Pricelist') : '') + saveBtns()) + body;
 }
 function saveBtns() { return ibc('mReset', 'undo', 'Batal') + ibc('mSave', 'save', 'Simpan', '', 'pri'); }
 /* ---------- MENU BAHAN ---------- */
@@ -2263,6 +2272,7 @@ function masterProduk(M) {
     <label class="f" style="flex:2 1 200px"><span>Nama produk</span><input data-mb="${B}.nama" value="${esc(p.nama)}"></label>
     <label class="f" style="flex:0 1 150px"><span>Potongan agen (%)</span><input type="number" data-mb="${B}.agenPct" value="${num(p.agenPct)}"></label>
     <label class="f" style="flex:3 1 260px"><span>Catatan (muncul saat pilih produk)</span><input data-mb="${B}.catatan" value="${esc(p.catatan)}"></label>
+    ${p.tipe === 'tabel' ? `<label class="row small lpt" style="gap:6px"><input type="checkbox" data-act-change="lpTog" data-pi="${pi}" ${p.lp ? 'checked' : ''} style="width:auto"> Ada lengan panjang</label>` : ''}
     ${p.tipe === 'tabel' ? `<button class="btn sm ${ptab ? 'on' : ''}" data-act="ptabTog" data-pid="${p.id}">${ic('gear')} Pengaturan tabel ${ptab ? '▾' : '▸'}</button>` : ''}</div>`;
   if (p.tipe === 'tabel') {
     const baris = barisOf(p, M), keys = p.bahan || [];
@@ -2282,9 +2292,10 @@ function masterProduk(M) {
         ${keys.length > 1 ? `<div class="seg" style="margin-bottom:10px">${keys.map(k => `<button class="btn ${k === key ? 'on' : ''}" data-act="hkTab" data-pid="${p.id}" data-k="${esc(k)}">${esc(lab(k))}</button>`).join('')}</div>` : ''}
         <div class="scroll"><table class="t pgrid"><thead><tr><th>Baris</th>${tg.map((t, i) => `<th class="right">${esc(tierLabel(tg, i))}</th>`).join('')}</tr>
         ${own ? `<tr class="tgr"><th class="muted small" style="font-weight:500">Target laba %</th>${tg.map((t, i) => `<th><input type="number" data-hp="produk.${p.id}.target.${i}" data-re="1" value="${HP(p.id).target[i] != null ? HP(p.id).target[i] : ''}" placeholder="${i ? (tgtOf(p, 0) || '') : '0'}"></th>`).join('')}</tr>` : ''}</thead><tbody>
-        ${baris.map(b => { const mo = own ? modalBaris(p, key, b.nama, M) : 0; return `<tr><td>${esc(b.nama)}${(b.ukuran || []).length ? '<div class="muted small">' + esc(b.ukuran.join(', ')) + '</div>' : ''}</td>${tg.map((t, i) => { const v = num((((p.harga || {})[key] || {})[b.nama] || [])[i]); return `<td><input type="text" inputmode="numeric" class="uang" data-mprice="${pi}" data-key="${esc(key)}" data-baris="${esc(b.nama)}" data-ti="${i}" value="${v || ''}">${own ? labaChip(v, mo, tgtOf(p, i)) : ''}</td>`; }).join('')}</tr>`; }).join('')}
+        ${baris.map(b => [false].concat(p.lp ? [true] : []).map(lp => { const mo = own ? modalBaris(p, key, b.nama, M, lp) : 0, src = lp ? 'hargaLP' : 'harga'; return `<tr class="${lp ? 'lp' : ''}"><td>${lp ? '↳ Lengan panjang' : esc(b.nama) + ((b.ukuran || []).length ? '<div class="muted small">' + esc(b.ukuran.join(', ')) + '</div>' : '')}</td>${tg.map((t, i) => { const v = num((((p[src] || {})[key] || {})[b.nama] || [])[i]); return `<td><input type="text" inputmode="numeric" class="uang" data-mprice="${pi}" ${lp ? 'data-lp="1"' : ''} data-key="${esc(key)}" data-baris="${esc(b.nama)}" data-ti="${i}" value="${v || ''}">${own ? labaChip(v, mo, tgtOf(p, i)) : ''}</td>`; }).join('')}</tr>`; }).join('')).join('')}
         </tbody></table></div>
         ${own ? `<div class="row" style="margin-top:8px;justify-content:space-between;gap:8px"><span class="muted small">Persen = laba dibanding modal. Hijau sudah capai target, kuning kurang dari 10 poin, merah lebih rendah.</span><button class="btn sm" data-act="hpSaran" data-pi="${pi}" data-k="${esc(key)}">Isi harga saran</button></div>` : ''}
+        ${p.lp ? `<div class="row" style="margin-top:8px;justify-content:flex-end"><button class="btn sm" data-act="lpIsi" data-pi="${pi}">Isi lengan panjang = pendek + …</button></div>` : ''}
       </div></div>`;
     }
     html += titikCard(p, pi, own);
@@ -2305,7 +2316,8 @@ function masterProduk(M) {
   }
   if (p.tipe !== 'bebas' || true) {
     html += `<div class="card" style="margin-top:12px"><h3>Biaya tambahan (per ${esc(p.satuan)})<span class="spacer"></span><button class="btn sm" data-act="mAddTamb" data-pi="${pi}">${ic('plus')} Tambahan</button></h3>
-      ${(p.tambahan || []).map((a, k) => `<div class="row" style="margin-bottom:6px;flex-wrap:nowrap"><input data-mb="${B}.tambahan.${k}.nama" value="${esc(a.nama)}"><input type="text" inputmode="numeric" class="uang" data-mb="${B}.tambahan.${k}.harga" value="${num(a.harga)}" style="max-width:140px"><button class="btn icon sm ghost" data-act="mDelTamb" data-pi="${pi}" data-k="${k}">${ic('x')}</button></div>`).join('') || '<div class="muted small">Tidak ada.</div>'}
+      ${p.lp && (p.tambahan || []).some(a => LP_RE.test(a.nama)) ? '<div class="muted small" style="margin-bottom:6px">Tambahan "Lengan panjang" disembunyikan karena produk ini sudah punya baris lengan panjang.</div>' : ''}
+      ${(p.tambahan || []).map((a, k) => p.lp && LP_RE.test(a.nama) ? '' : `<div class="row" style="margin-bottom:6px;flex-wrap:nowrap"><input data-mb="${B}.tambahan.${k}.nama" value="${esc(a.nama)}"><input type="text" inputmode="numeric" class="uang" data-mb="${B}.tambahan.${k}.harga" value="${num(a.harga)}" style="max-width:140px"><button class="btn icon sm ghost" data-act="mDelTamb" data-pi="${pi}" data-k="${k}">${ic('x')}</button></div>`).join('') || '<div class="muted small">Tidak ada.</div>'}
       <div class="row" style="margin-top:14px"><button class="btn sm danger" data-act="mDelProd" data-pi="${pi}">${ic('trash')} Hapus produk ini</button></div></div>`;
   }
   return `<div class="side">${left}<div>${html}</div></div>`;
@@ -2437,6 +2449,7 @@ const ACT_CHANGE = {
       finally { loading(false); }
     }
   },
+  lpTog: el => { const p = S.mEdit.produk[+el.dataset.pi]; p.lp = el.checked; S.mDirty = true; rerenderMain(); },
   plOn: el => { plCfg().pilih[el.dataset.pid].on = el.checked; rerenderMain(); },
   plKey: el => { const s = plCfg().pilih[el.dataset.pid], k = el.dataset.k; s.keys = s.keys.filter(x => x !== k); if (el.checked) s.keys.push(k); rerenderMain(); },
   nImg: async (el) => {
@@ -2501,9 +2514,9 @@ function onMasterInput(el, committed) {
   const M = S.mEdit;
   if (el.dataset.mprice != null) {
     const p = M.produk[+el.dataset.mprice]; p.harga = p.harga || {};
-    const k = el.dataset.key, b = el.dataset.baris, i = +el.dataset.ti;
-    p.harga[k] = p.harga[k] || {}; p.harga[k][b] = p.harga[k][b] || [];
-    p.harga[k][b][i] = el.value === '' ? 0 : numEl(el);
+    const k = el.dataset.key, b = el.dataset.baris, i = +el.dataset.ti, src = el.dataset.lp ? 'hargaLP' : 'harga';
+    p[src] = p[src] || {}; p[src][k] = p[src][k] || {}; p[src][k][b] = p[src][k][b] || [];
+    p[src][k][b][i] = el.value === '' ? 0 : numEl(el);
   } else if (el.dataset.mcel != null) {
     const p = M.produk[+el.dataset.mcel]; p.hargaCelana = p.hargaCelana || {};
     (p.hargaCelana[el.dataset.kid] = p.hargaCelana[el.dataset.kid] || {})[el.dataset.baris] = el.value === '' ? 0 : numEl(el);
@@ -2597,13 +2610,26 @@ const ACT = {
   hpSave: () => saveHpp(),
   hpKompAdd: el => { HP(el.dataset.pid).komp.push({ nama: '', nilai: 0 }); S.hppDirty = true; rerenderMain(); },
   hpKompDel: el => { HP(el.dataset.pid).komp.splice(+el.dataset.x, 1); S.hppDirty = true; rerenderMain(); },
+  lpIsi: async el => {
+    const M = S.mEdit, p = M.produk[+el.dataset.pi], t = (p.tambahan || []).find(a => LP_RE.test(a.nama)), d0 = t ? num(t.harga) : 10000;
+    modal(`<h3>Isi harga lengan panjang</h3><div class="muted small" style="margin-bottom:10px">Semua baris lengan panjang di semua kelas diisi dengan harga pendek ditambah angka ini.</div>
+      <label class="f"><span>Tambahan per pcs</span><input type="text" inputmode="numeric" class="uang" id="lpAmt" value="${d0}"></label>
+      <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="lpIsiDo" data-pi="${el.dataset.pi}">Isi</button></div>`);
+  },
+  lpIsiDo: el => {
+    const M = S.mEdit, p = M.produk[+el.dataset.pi], a = numEl(document.getElementById('lpAmt')); closeModal();
+    p.hargaLP = p.hargaLP || {};
+    Object.keys(p.harga || {}).forEach(k => { p.hargaLP[k] = p.hargaLP[k] || {}; Object.keys(p.harga[k] || {}).forEach(b => { p.hargaLP[k][b] = (p.harga[k][b] || []).map(v => num(v) ? num(v) + a : 0); }); });
+    S.mDirty = true; rerenderMain(); toast('Harga lengan panjang diisi. Periksa lalu tekan Simpan.');
+  },
   ptabTog: el => { S.ui.ptab = S.ui.ptab || {}; S.ui.ptab[el.dataset.pid] = !S.ui.ptab[el.dataset.pid]; rerenderMain(); },
   hkTab: el => { S.ui.hk = S.ui.hk || {}; S.ui.hk[el.dataset.pid] = el.dataset.k; rerenderMain(); },
   hpSaran: async el => {
     const M = S.mEdit, p = M.produk[+el.dataset.pi], key = el.dataset.k;
     if (!(await ask('Isi semua harga ' + (p.bahanSumber === 'jersey' ? 'kelas ' + kelasNama(key, M) : key) + ' dengan harga saran (modal + target laba, dibulatkan ke ribuan)? Harga lama di tabel ini akan diganti.', 'Isi harga saran'))) return;
     p.harga = p.harga || {}; p.harga[key] = p.harga[key] || {};
-    barisOf(p, M).forEach(b => { const mo = modalBaris(p, key, b.nama, M); if (!mo) return; p.harga[key][b.nama] = (p.tingkat || [1]).map((t, i) => saranHarga(mo, tgtOf(p, i))); });
+    barisOf(p, M).forEach(b => { const mo = modalBaris(p, key, b.nama, M); if (mo) p.harga[key][b.nama] = (p.tingkat || [1]).map((t, i) => saranHarga(mo, tgtOf(p, i)));
+      const ml = p.lp ? modalBaris(p, key, b.nama, M, true) : 0; if (ml && num((HP(p.id).kpkLP || {})[b.nama])) { p.hargaLP = p.hargaLP || {}; p.hargaLP[key] = p.hargaLP[key] || {}; p.hargaLP[key][b.nama] = (p.tingkat || [1]).map((t, i) => saranHarga(ml, tgtOf(p, i))); } });
     S.mDirty = true; rerenderMain(); toast('Harga saran diisi. Periksa lalu tekan Simpan.');
   },
   tkAdd: el => { const p = S.mEdit.produk[+el.dataset.pi]; (p.titik = p.titik || []).push({ nama: 'Titik baru', p: 0, l: 0, isi: 0, harga: 0 }); S.mDirty = true; rerenderMain(); },
