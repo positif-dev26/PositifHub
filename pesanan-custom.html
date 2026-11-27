@@ -408,7 +408,7 @@ h3.tog{cursor:pointer;margin-bottom:0}h3.tog+*{margin-top:10px}
 @media (max-width:1000px){.bgrid{grid-template-columns:minmax(0,1fr)}.bpanel{position:static;max-height:none}.bt .hm{display:none}}
 /* ===== Harga: rincian modal ===== */
 .hgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:12px}
-.hgrid.own{grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);align-items:start}
+.hgrid.own{grid-template-columns:minmax(0,1fr)}
 @media (max-width:1100px){.hgrid.own{grid-template-columns:minmax(0,1fr)}}
 .hpt td:first-child input{width:130px;text-align:left}.hpt td,.hpt th{padding:4px 6px}.hpt input{width:84px;text-align:right;padding:5px 8px;height:32px}.hpt .r{text-align:right}
 .pgrid .tgr th{padding-top:2px}.pgrid .tgr input{height:30px;padding:4px 8px;font-size:13px;color:var(--acc)}
@@ -444,6 +444,19 @@ h3.tog{cursor:pointer;margin-bottom:0}h3.tog+*{margin-top:10px}
 .dcol.st{min-height:0;margin-bottom:12px}.dcol.st .dci{position:static;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 @media (max-width:900px){.dcol{min-height:0}.dci{position:static}.dcol.st .dci{grid-template-columns:minmax(0,1fr)}}
 body:has(.modal) #toasts{top:24px;transform:translateX(-50%)}
+/* Harga: daftar produk tetap, garis lime tipis */
+.hview .plist{position:sticky;top:calc(var(--hh) + 12px);align-self:start;max-height:calc(100vh - var(--hh) - 24px);overflow:auto}
+.hview .plist .btn{border:1px solid rgba(212,255,63,.35)}
+.hview .plist .btn.on{background:rgba(212,255,63,.12);border-color:var(--acc);color:var(--acc)}
+.hview .plist select{border:1px dashed rgba(212,255,63,.35)}
+.hview .card{border-color:rgba(212,255,63,.3)}
+.pcard{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.hjk{display:inline-flex;align-items:center;gap:8px;font:500 14px Inter,system-ui,sans-serif;letter-spacing:0}.hjk select{width:auto;min-width:240px;height:38px}
+.hppg{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px}
+.hbox{border:1px solid rgba(212,255,63,.3);border-radius:14px;padding:10px 12px;min-width:0}
+.hpt input.des{width:90px;text-align:right}
+@media (max-width:1000px){.hppg{grid-template-columns:minmax(0,1fr)}.hjk select{min-width:0;width:100%}.hjk{flex-wrap:wrap}}
+input.uang{text-align:right;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -646,6 +659,20 @@ const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v == nu
              del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
 const clone = o => JSON.parse(JSON.stringify(o));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* angka dengan titik ribuan (input .uang) dan desimal koma (input .des) */
+const fmtU = v => { const d = String(v == null ? '' : v).replace(/\D/g, ''); return d ? Number(d).toLocaleString('id-ID') : ''; };
+const isNumEl = el => el.type === 'number' || (el.classList && (el.classList.contains('uang') || el.classList.contains('des')));
+const numEl = el => { const v = String(el.value || ''); if (el.classList.contains('uang')) return Number(v.replace(/\D/g, '')) || 0; if (el.classList.contains('des')) return parseFloat(v.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')) || 0; return num(v); };
+function fmtUangEl(el) { if (el.dataset.uf === el.value) return; const f = fmtU(el.value); el.value = f; el.dataset.uf = f; }
+function fmtDesEl(el) { const v = String(el.value || ''); if (v && /\./.test(v) && !/,/.test(v)) el.value = v.replace('.', ','); }
+document.addEventListener('input', e => {
+  const el = e.target; if (!el.classList || !el.classList.contains('uang')) return;
+  const before = el.value, pos = el.selectionStart || 0, digitsBefore = before.slice(0, pos).replace(/\D/g, '').length;
+  const f = fmtU(before); el.value = f; el.dataset.uf = f;
+  let k = 0, np = 0; while (np < f.length && k < digitsBefore) { if (/\d/.test(f[np])) k++; np++; }
+  try { el.setSelectionRange(np, np); } catch (x) { }
+}, true);
+new MutationObserver(() => { document.querySelectorAll('input.uang').forEach(fmtUangEl); document.querySelectorAll('input.des').forEach(fmtDesEl); }).observe(document.documentElement, { childList: true, subtree: true });
 const num = v => { const n = Number(String(v == null ? '' : v).replace(/[^\d.-]/g, '')); return isFinite(n) ? n : 0; };
 const rp = n => (n < 0 ? '-Rp' : 'Rp') + Math.abs(Math.round(n || 0)).toLocaleString('id-ID');
 const uid = p => (p || 'x') + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -1361,7 +1388,7 @@ function itemView(o, it, i) {
     else first = `<td><input data-b="items.${i}.rows.${j}.ukuran" list="dl-sz-${i}" value="${esc(r.ukuran)}" placeholder="Ukuran"></td>`;
     return `<tr>${first}
       <td><input type="number" min="0" data-b="items.${i}.rows.${j}.qty" value="${r.qty || ''}" placeholder="0"></td>
-      <td><div class="row" style="flex-wrap:nowrap;gap:4px"><input type="number" min="0" data-b="items.${i}.rows.${j}.harga" data-h="${i}-${j}" value="${r.harga || ''}" placeholder="0">${r.manual && tipe !== 'bebas' ? `<button class="btn icon sm" data-act="autoPrice" data-i="${i}" data-j="${j}" title="Kembali ke harga otomatis">${ic('undo')}</button>` : ''}</div><div class="muted small" data-info="${i}-${j}"></div></td>
+      <td><div class="row" style="flex-wrap:nowrap;gap:4px"><input type="text" inputmode="numeric" class="uang" data-b="items.${i}.rows.${j}.harga" data-h="${i}-${j}" value="${r.harga || ''}" placeholder="0">${r.manual && tipe !== 'bebas' ? `<button class="btn icon sm" data-act="autoPrice" data-i="${i}" data-j="${j}" title="Kembali ke harga otomatis">${ic('undo')}</button>` : ''}</div><div class="muted small" data-info="${i}-${j}"></div></td>
       <td class="right num" data-sub="${i}-${j}"></td>
       <td><button class="btn icon sm ghost" data-act="delRow" data-i="${i}" data-j="${j}">${ic('x')}</button></td></tr>`;
   }).join('');
@@ -1404,10 +1431,10 @@ function payView(o) {
   return `<div class="card" style="margin-top:12px"><h3>Pembayaran<span class="spacer"></span><button class="btn sm" data-act="addPay">${ic('plus')} Catat pembayaran</button></h3>
     <div class="grid g2">
       <div class="scroll">${o.pembayaran.length ? `<table class="t" style="min-width:520px"><thead><tr><th style="width:150px">Tanggal</th><th style="width:130px">Nominal</th><th style="width:120px">Metode</th><th>Ket</th><th></th></tr></thead><tbody>
-        ${o.pembayaran.map((p, k) => `<tr><td><input type="date" data-b="pembayaran.${k}.tgl" value="${esc(p.tgl)}"></td><td><input type="number" data-b="pembayaran.${k}.nominal" value="${p.nominal || ''}"></td>
+        ${o.pembayaran.map((p, k) => `<tr><td><input type="date" data-b="pembayaran.${k}.tgl" value="${esc(p.tgl)}"></td><td><input type="text" inputmode="numeric" class="uang" data-b="pembayaran.${k}.nominal" value="${p.nominal || ''}"></td>
         <td><select data-b="pembayaran.${k}.metode">${selectOpt(S.master.opsi.metodeBayar, p.metode)}</select></td><td><input data-b="pembayaran.${k}.ket" value="${esc(p.ket)}"></td>
         <td><button class="btn icon sm ghost" data-act="delPay" data-k="${k}">${ic('x')}</button></td></tr>`).join('')}</tbody></table>` : '<div class="muted small">Belum ada pembayaran (BON).</div>'}
-        <label class="f" style="margin-top:10px;max-width:220px"><span>Diskon (Rp)</span><input type="number" data-b="diskon" value="${o.diskon || ''}"></label>
+        <label class="f" style="margin-top:10px;max-width:220px"><span>Diskon (Rp)</span><input type="text" inputmode="numeric" class="uang" data-b="diskon" value="${o.diskon || ''}"></label>
       </div>
       <div id="orderTotals"></div>
     </div>
@@ -1420,7 +1447,7 @@ function patchOrder() {
     recalcItem(o, it);
     it.rows.forEach((r, j) => {
       const inp = document.querySelector(`[data-h="${i}-${j}"]`);
-      if (inp && document.activeElement !== inp) inp.value = r.harga || '';
+      if (inp && document.activeElement !== inp) { inp.value = fmtU(r.harga || ''); inp.dataset.uf = inp.value; }
       const sub = document.querySelector(`[data-sub="${i}-${j}"]`); if (sub) sub.textContent = rp(num(r.qty) * num(r.harga));
       const inf = document.querySelector(`[data-info="${i}-${j}"]`);
       if (inf && (prodById(it.produkId) || {}).tipe === 'bebas') inf.textContent = '';
@@ -1665,10 +1692,11 @@ async function saveHpp() {
     S.hppDirty = false; rerenderMain(); toast('Rincian modal disimpan');
   } catch (e) { toast(e.message, true); } finally { loading(false); }
 }
+function kainPerKg(bid, M) { const b = ((M || S.mEdit || S.master).bahan || []).find(x => x.id === bid); const c = b && supCost(b); return c && c.perKg ? c.perKg : 0; }
 function kainPerM(bid, M) { const b = ((M || S.mEdit || S.master).bahan || []).find(x => x.id === bid); const c = b && supCost(b); return c && c.perM ? c.perM : 0; }
 function modalBaris(p, key, bn, M) {
-  const h = HP(p.id), m = num(h.meter[bn]);
-  return num(h.dasar[bn]) + m * (kainPerM(h.kain[key], M) + num(h.cetakM)) + (h.komp || []).reduce((s, k) => s + num(k.nilai), 0);
+  const h = HP(p.id), n = num((h.kpk || {})[bn]), kg = kainPerKg(h.kain[key], M);
+  return (n && kg ? kg / n : 0) + (h.komp || []).reduce((s, k) => s + num(k.nilai), 0);
 }
 function tgtOf(p, i) { const t = HP(p.id).target; return num(t[i] != null && t[i] !== '' ? t[i] : t[0]); }
 function labaChip(harga, modal, tgt) {
@@ -1680,20 +1708,24 @@ function labaChip(harga, modal, tgt) {
 const saranHarga = (modal, tgt) => Math.ceil(modal * (1 + num(tgt) / 100) / 1000) * 1000;
 function hppCard(p, key, M) {
   const h = HP(p.id), baris = barisOf(p, M), H = 'produk.' + p.id;
+  h.kpk = h.kpk || {};
   const kList = (M.bahan || []).slice().sort((a, b) => ((b.pakai || {})[p.id] === key) - ((a.pakai || {})[p.id] === key) || a.nama.localeCompare(b.nama));
-  const kpm = kainPerM(h.kain[key], M), kompT = (h.komp || []).reduce((s, k) => s + num(k.nilai), 0);
-  return `<div class="card hpp"><h3>Modal per ${esc(p.satuan || 'pcs')} <span class="chip">Owner</span><span class="spacer"></span>${S.hppDirty ? '<span class="chip amber">belum disimpan</span>' : ''}<button class="btn sm pri" data-act="hpSave">${ic('save')} Simpan modal</button></h3>
-    <div class="grid g2">
-      <label class="f"><span>Kain patokan · ${esc(p.bahanSumber === 'jersey' ? 'Kelas ' + kelasNama(key, M) : key)}</span><select data-hp="${H}.kain.${esc(key)}" data-re="1"><option value="">— tanpa kain —</option>${kList.map(b => `<option value="${b.id}" ${h.kain[key] === b.id ? 'selected' : ''}>${esc(b.nama)}${kainPerM(b.id, M) ? ' · ' + rp(kainPerM(b.id, M)) + '/m' : ''}</option>`).join('')}</select></label>
-      <label class="f"><span>Cetak / sublim per meter</span><input type="number" data-hp="${H}.cetakM" data-re="1" value="${num(h.cetakM) || ''}" placeholder="0"></label>
+  const kg = kainPerKg(h.kain[key], M), ong = (h.komp || []).reduce((s, k) => s + num(k.nilai), 0);
+  const lab = p.bahanSumber === 'jersey' ? 'Kelas ' + kelasNama(key, M) : key;
+  return `<div class="card hpp"><h3>Modal per pcs <span class="chip">Owner</span><span class="spacer"></span>
+      <span class="hjk"><span class="muted small">Jenis kain · ${esc(lab)}</span><select data-hp="${H}.kain.${esc(key)}" data-re="1"><option value="">— pilih kain —</option>${kList.map(b => { const v = kainPerKg(b.id, M); return `<option value="${b.id}" ${h.kain[key] === b.id ? 'selected' : ''}>${esc(b.nama)}${v ? ' · ' + rp(Math.round(v)) + '/kg' : ''}</option>`; }).join('')}</select></span>
+      ${S.hppDirty ? '<span class="chip amber">belum disimpan</span>' : ''}<button class="btn sm pri" data-act="hpSave">${ic('save')} Simpan modal</button></h3>
+    ${h.kain[key] && !kg ? '<div class="warn small" style="margin-bottom:8px">Harga kain ini belum per kg. Isi harga per kg di menu Bahan supaya HPP kain terhitung.</div>' : ''}
+    <div class="hppg">
+      <div class="hbox"><table class="t hpt"><thead><tr><th>Baris</th><th class="r">Banyak kaos / kg</th><th class="r">HPP kain</th><th class="r">Ongkos lain</th><th class="r">Modal</th></tr></thead><tbody>
+        ${baris.map(b => { const n = num(h.kpk[b.nama]), hk = n && kg ? kg / n : 0; return `<tr><td>${esc(b.nama)}</td><td class="r"><input type="text" inputmode="decimal" class="des" data-hp="${H}.kpk.${esc(b.nama)}" data-re="1" value="${n ? String(n).replace('.', ',') : ''}" placeholder="0"></td><td class="r">${hk ? rp(Math.round(hk)).replace('Rp', '') : '<span class="muted">-</span>'}</td><td class="r muted">${rp(ong).replace('Rp', '')}</td><td class="r"><b>${rp(Math.round(modalBaris(p, key, b.nama, M)))}</b></td></tr>`; }).join('')}
+      </tbody></table></div>
+      <div class="hbox"><div class="muted small" style="margin-bottom:6px">Ongkos lain per pcs</div>
+        ${(h.komp || []).map((k, x) => `<div class="nrow"><input data-hp="${H}.komp.${x}.nama" value="${esc(k.nama)}" placeholder="Nama ongkos"><input type="text" inputmode="numeric" class="uang" data-hp="${H}.komp.${x}.nilai" data-re="1" value="${num(k.nilai) || ''}" style="flex:0 0 110px;text-align:right" placeholder="0"><button class="btn icon sm ghost" data-act="hpKompDel" data-pid="${p.id}" data-x="${x}">${ic('x')}</button></div>`).join('')}
+        <div class="row" style="margin-top:8px;justify-content:space-between"><button class="btn sm" data-act="hpKompAdd" data-pid="${p.id}">${ic('plus')} Ongkos</button><span class="muted small">Total <b style="color:var(--text)">${rp(ong).replace('Rp', '')}</b> / pcs</span></div>
+      </div>
     </div>
-    <div class="muted small" style="margin:10px 0 4px">Biaya tetap per ${esc(p.satuan || 'pcs')}</div>
-    ${(h.komp || []).map((k, x) => `<div class="nrow"><input data-hp="${H}.komp.${x}.nama" value="${esc(k.nama)}"><input type="number" data-hp="${H}.komp.${x}.nilai" data-re="1" value="${num(k.nilai) || ''}" style="flex:0 0 110px" placeholder="0"><button class="btn icon sm ghost" data-act="hpKompDel" data-pid="${p.id}" data-x="${x}">${ic('x')}</button></div>`).join('')}
-    <button class="btn sm" data-act="hpKompAdd" data-pid="${p.id}" style="margin-top:6px">${ic('plus')} Biaya</button>
-    <div class="scroll" style="margin-top:12px"><table class="t hpt"><thead><tr><th>Baris</th><th class="r" title="Kebutuhan kain">Kain (m)</th><th class="r" title="Misal harga kaos polos">Biaya dasar</th><th class="r">Modal</th></tr></thead><tbody>
-      ${baris.map(b => `<tr><td>${esc(b.nama)}</td><td class="r"><input type="number" step="0.05" data-hp="${H}.meter.${esc(b.nama)}" data-re="1" value="${num(h.meter[b.nama]) || ''}" placeholder="0"></td><td class="r"><input type="number" data-hp="${H}.dasar.${esc(b.nama)}" data-re="1" value="${num(h.dasar[b.nama]) || ''}" placeholder="0"></td><td class="r"><b>${rp(Math.round(modalBaris(p, key, b.nama, M)))}</b></td></tr>`).join('')}
-    </tbody></table></div>
-    <div class="muted small" style="margin-top:6px">Modal = biaya dasar + kain (m) × (${rp(Math.round(kpm))} kain + ${rp(num(h.cetakM))} cetak) + ${rp(kompT)} biaya tetap. Biaya dasar dipakai misalnya untuk harga kaos polos per ukuran.</div>
+    <div class="muted small" style="margin-top:8px">HPP kain = harga kain per kg${kg ? ' (' + rp(Math.round(kg)) + ', dari menu Bahan)' : ''} ÷ banyak kaos per kg. Modal = HPP kain + ongkos lain.</div>
   </div>`;
 }
 /* ---------- titik sablon DTF ---------- */
@@ -1705,15 +1737,15 @@ function titikCard(p, pi, own) {
   if (!(p.titik || []).length) return `<div class="card tkoff" style="margin-top:12px"><h3>Titik sablon DTF <span class="muted small">belum dipakai di produk ini</span><span class="spacer"></span><button class="btn sm" data-act="tkContoh" data-pi="${pi}">${ic('plus')} Aktifkan</button></h3></div>`;
   return `<div class="card" style="margin-top:12px"><h3>Titik sablon DTF<span class="spacer"></span>${!(p.titik || []).length ? `<button class="btn sm ghost" data-act="tkContoh" data-pi="${pi}">Isi contoh A3, A4, A5, logo</button>` : ''}<button class="btn sm" data-act="tkAdd" data-pi="${pi}">${ic('plus')} Titik</button></h3>
     ${own ? `<div class="grid g3" style="margin-bottom:10px">
-      <label class="f"><span>Harga lembar DTF ${DTF_W}×${DTF_H} cm</span><input type="number" data-hp="dtf.lembar" data-re="1" value="${num(d.lembar) || ''}"></label>
-      <label class="f"><span>Ongkos press per titik</span><input type="number" data-hp="dtf.press" data-re="1" value="${num(d.press) || ''}"></label>
+      <label class="f"><span>Harga lembar DTF ${DTF_W}×${DTF_H} cm</span><input type="text" inputmode="numeric" class="uang" data-hp="dtf.lembar" data-re="1" value="${num(d.lembar) || ''}"></label>
+      <label class="f"><span>Ongkos press per titik</span><input type="text" inputmode="numeric" class="uang" data-hp="dtf.press" data-re="1" value="${num(d.press) || ''}"></label>
       <label class="f"><span>Target laba titik (%)</span><input type="number" data-hp="dtf.target" data-re="1" value="${num(d.target) || ''}"></label></div>` : ''}
     ${(p.titik || []).length ? `<div class="scroll"><table class="t hpt"><thead><tr><th>Nama</th><th class="r">Ukuran (cm)</th><th class="r">Isi/lembar</th>${own ? '<th class="r">Modal</th>' : ''}<th class="r">Harga jual</th>${own ? '<th></th>' : ''}<th></th></tr></thead><tbody>
       ${p.titik.map((t, k) => { const mo = own ? modalTitik(t) : 0; return `<tr><td><input data-mb="${B}.titik.${k}.nama" value="${esc(t.nama)}"></td>
         <td class="r"><span class="row" style="gap:3px;flex-wrap:nowrap;justify-content:flex-end"><input type="number" data-mb="${B}.titik.${k}.p" data-re="1" value="${num(t.p) || ''}" style="width:58px">×<input type="number" data-mb="${B}.titik.${k}.l" data-re="1" value="${num(t.l) || ''}" style="width:58px"></span></td>
         <td class="r"><input type="number" data-mb="${B}.titik.${k}.isi" data-re="1" value="${num(t.isi) || ''}" placeholder="${isiLembar(Object.assign({}, t, { isi: 0 })) || ''}" style="width:64px" title="Kosongkan untuk hitung otomatis"></td>
         ${own ? `<td class="r">${mo ? rp(Math.round(mo)) : '-'}</td>` : ''}
-        <td class="r"><input type="number" data-mb="${B}.titik.${k}.harga" data-re="1" value="${num(t.harga) || ''}" style="width:96px"></td>
+        <td class="r"><input type="text" inputmode="numeric" class="uang" data-mb="${B}.titik.${k}.harga" data-re="1" value="${num(t.harga) || ''}" style="width:96px"></td>
         ${own ? `<td>${labaChip(t.harga, mo, num(d.target))}</td>` : ''}
         <td><button class="btn icon sm ghost" data-act="tkDel" data-pi="${pi}" data-k="${k}">${ic('x')}</button></td></tr>`; }).join('')}
     </tbody></table></div>${own ? `<div class="row" style="margin-top:8px;justify-content:space-between"><span class="muted small">Modal titik = harga lembar ÷ isi per lembar + press.</span><button class="btn sm" data-act="tkSaran" data-pi="${pi}">Isi harga saran</button></div>` : ''}` : '<div class="muted small">Belum ada titik sablon. Titik sablon dipilih per item saat membuat order, dan harganya ditambahkan ke harga per pcs.</div>'}
@@ -1831,7 +1863,7 @@ function dpBlock(o) {
   const r = dpRow(o) || {}, mb = S.master.opsi.metodeBayar || ['Transfer', 'Tunai', 'QRIS'];
   const tgl = o.tglDP || o.tglOrder, base = tgl || todayISO();
   return `<div class="grid g2" style="margin-top:4px">
-    <div><label class="f"><span>DP masuk (Rp)</span><input type="number" inputmode="numeric" data-dp="nominal" value="${num(r.nominal) || ''}" placeholder="Belum DP"></label>
+    <div><label class="f"><span>DP masuk (Rp)</span><input type="text" inputmode="numeric" class="uang" data-dp="nominal" value="${num(r.nominal) || ''}" placeholder="Belum DP"></label>
       <div class="chips">${mb.map(m => `<button class="btn sm ${(r.metode || mb[0]) === m ? 'on' : ''}" data-act="dpMetode" data-v="${esc(m)}">${esc(m)}</button>`).join('')}</div></div>
     <div><div class="f"><span>Tanggal DP = tanggal order</span>${dateBtn('data-dp="tgl"', tgl)}</div>
       <div class="chips"><button class="btn sm ${tgl === todayISO() ? 'on' : ''}" data-act="dpTgl" data-v="0">Hari ini</button><button class="btn sm ${tgl === isoAdd(todayISO(), -1) ? 'on' : ''}" data-act="dpTgl" data-v="-1">Kemarin</button></div></div>
@@ -2116,7 +2148,7 @@ function customerView() {
   ${c.jenis === 'langganan' ? `<div class="card" style="margin-top:12px"><h3>Daftar harga khusus<span class="spacer"></span><button class="btn sm" data-act="hkAdd">${ic('plus')} Desain</button></h3>
     <label class="f" style="max-width:420px;margin-bottom:10px"><span>Kolom ukuran (pisahkan koma)</span><input data-cb="ukuranKhususTxt" value="${esc(uk.join(', '))}"></label>
     <div class="scroll"><table class="t pgrid"><thead><tr><th>Desain / produk</th>${uk.map(u => `<th class="right">${esc(u)}</th>`).join('')}<th></th></tr></thead><tbody>
-    ${(c.hargaKhusus || []).map((h, k) => `<tr><td><input data-cb="hargaKhusus.${k}.nama" value="${esc(h.nama)}" style="min-width:220px"></td>${uk.map(u => `<td><input type="number" data-cb="hargaKhusus.${k}.harga.${u}" value="${num((h.harga || {})[u]) || ''}"></td>`).join('')}<td><button class="btn icon sm ghost" data-act="hkDel" data-k="${k}">${ic('x')}</button></td></tr>`).join('')}
+    ${(c.hargaKhusus || []).map((h, k) => `<tr><td><input data-cb="hargaKhusus.${k}.nama" value="${esc(h.nama)}" style="min-width:220px"></td>${uk.map(u => `<td><input type="text" inputmode="numeric" class="uang" data-cb="hargaKhusus.${k}.harga.${u}" value="${num((h.harga || {})[u]) || ''}"></td>`).join('')}<td><button class="btn icon sm ghost" data-act="hkDel" data-k="${k}">${ic('x')}</button></td></tr>`).join('')}
     </tbody></table></div><div class="muted small" style="margin-top:6px">Kosongkan harga kalau ukuran itu tidak tersedia. Nama di sini muncul sebagai pilihan produk (★) saat membuat pesanan.</div></div>` : ''}
   ${c.id ? `<div class="card" style="margin-top:12px"><h3>Nota</h3><div class="list">${os.map(o => orderCard(o, true)).join('') || '<div class="muted small">Belum ada nota.</div>'}</div></div>` : ''}`;
 }
@@ -2133,7 +2165,7 @@ function masterView() {
   const M = S.mEdit || (S.mEdit = clone(S.master));
   const v = S.view;
   const head = { harga: ['Harga produk', 'Produk, tabel harga jual, tingkat jumlah, dan biaya tambahan.'], ukuran: ['Ukuran', 'Kelompok ukuran untuk tabel harga dan daftar ukuran siap pakai.'], model: ['Pilihan model', 'Pilihan yang muncul di form pesanan.'] }[v];
-  const body = v === 'harga' ? masterProduk(M) : v === 'ukuran' ? masterUkuran(M) : masterOpsi(M);
+  const body = v === 'harga' ? '<div class="hview">' + masterProduk(M) + '</div>' : v === 'ukuran' ? masterUkuran(M) : masterOpsi(M);
   return pfh(head[0], head[1] + (S.mDirty ? ' <span class="chip amber">belum disimpan</span>' : ''), (v === 'harga' ? ibc('plOpen', 'sell', 'Pricelist') : '') + saveBtns()) + body;
 }
 function saveBtns() { return ibc('mReset', 'undo', 'Batal') + ibc('mSave', 'save', 'Simpan', '', 'pri'); }
@@ -2156,8 +2188,8 @@ function bahanView() {
       <td><button class="bnm" data-act="bPick" data-id="${b.id}">${esc(b.nama || '(tanpa nama)')}</button></td>
       <td class="hm muted">${esc(b.gramasi || '')}</td>
       <td class="hm">${sp ? esc(sp.toko || '-') : ''}</td>
-      <td class="r">${sp ? `<div class="bin"><input type="number" data-mb="${B}.supplier.${k}.harga" data-re="1" value="${num(sp.harga) || ''}"><span class="muted">/${esc(sp.satuan || 'kg')}</span></div>` : `<button class="btn sm ghost" data-act="bSupAdd" data-i="${i}">${ic('plus')} Supplier</button>`}</td>
-      <td class="hm"><input class="bmk" type="number" step="0.01" data-mb="${B}.panjangKg" data-re="1" value="${b.panjangKg || ''}" ${sp && sp.satuan === 'meter' ? 'disabled title="Harga sudah per meter"' : ''}></td>
+      <td class="r">${sp ? `<div class="bin"><input type="text" inputmode="numeric" class="uang" data-mb="${B}.supplier.${k}.harga" data-re="1" value="${num(sp.harga) || ''}"><span class="muted">/${esc(sp.satuan || 'kg')}</span></div>` : `<button class="btn sm ghost" data-act="bSupAdd" data-i="${i}">${ic('plus')} Supplier</button>`}</td>
+      <td class="hm"><input class="bmk des" type="text" inputmode="decimal" data-mb="${B}.panjangKg" data-re="1" value="${b.panjangKg || ''}" ${sp && sp.satuan === 'meter' ? 'disabled title="Harga sudah per meter"' : ''}></td>
       <td class="r bpm">${c && c.perM ? rp(c.perM).replace('Rp', '') : '<span class="muted">-</span>'}</td>
       <td class="hm">${kel ? esc(kelasNama(kel, M)) : ''}</td>
       <td class="hm">${sp ? `<select class="bst ${sp.stok || 'ada'}" data-mb="${B}.supplier.${k}.stok" data-re="1">${opts(STOK_TOKO, sp.stok || 'ada')}</select>` : ''}</td></tr>`;
@@ -2186,7 +2218,7 @@ function bahanEditor(M, b, uses, st) {
       <label class="f"><span>Nama bahan</span><input data-mb="${B}.nama" data-re="1" value="${esc(b.nama)}" list="dl-stok"></label>
       <label class="f"><span>Kategori</span><input data-mb="${B}.kategori" data-re="1" value="${esc(b.kategori)}" list="dl-kat"></label>
       <label class="f"><span>Gramasi (gsm)</span><input data-mb="${B}.gramasi" value="${esc(b.gramasi)}"></label>
-      <label class="f"><span>Panjang per kg (m)</span><input type="number" step="0.01" data-mb="${B}.panjangKg" data-re="1" value="${b.panjangKg || ''}"></label>
+      <label class="f"><span>Panjang per kg (m)</span><input type="text" inputmode="decimal" class="des" data-mb="${B}.panjangKg" data-re="1" value="${b.panjangKg || ''}"></label>
     </div>
     <datalist id="dl-kat">${kats.map(k => `<option value="${esc(k)}">`).join('')}</datalist>
     <datalist id="dl-stok">${(S.stokList || []).map(x => `<option value="${esc(x.nama)}">`).join('')}</datalist>
@@ -2197,10 +2229,10 @@ function bahanEditor(M, b, uses, st) {
     ${(b.supplier || []).map((sp, k) => `<div class="sup ${(b.sup || 0) === k ? 'on' : ''}">
       <input type="radio" name="sup${i}" data-act-change="bSup" data-i="${i}" data-k="${k}" ${(b.sup || 0) === k ? 'checked' : ''}>
       <input data-mb="${B}.supplier.${k}.toko" value="${esc(sp.toko)}" placeholder="Nama toko">
-      <input type="number" data-mb="${B}.supplier.${k}.harga" data-re="1" value="${num(sp.harga) || ''}">
+      <input type="text" inputmode="numeric" class="uang" data-mb="${B}.supplier.${k}.harga" data-re="1" value="${num(sp.harga) || ''}">
       <select data-mb="${B}.supplier.${k}.satuan" data-re="1">${opts([['kg', 'kg'], ['meter', 'meter'], ['roll', 'roll']], sp.satuan || 'kg')}</select>
       <input type="number" data-mb="${B}.supplier.${k}.isi" data-re="1" value="${sp.isi || ''}" ${sp.satuan === 'roll' ? '' : 'disabled'}>
-      <input type="number" data-mb="${B}.supplier.${k}.ongkir" data-re="1" value="${num(sp.ongkir) || ''}" placeholder="0">
+      <input type="text" inputmode="numeric" class="uang" data-mb="${B}.supplier.${k}.ongkir" data-re="1" value="${num(sp.ongkir) || ''}" placeholder="0">
       <select data-mb="${B}.supplier.${k}.stok" data-re="1">${opts(STOK_TOKO, sp.stok || 'ada')}</select>
       <button class="btn icon sm ghost" data-act="bSupDel" data-i="${i}" data-k="${k}">${ic('x')}</button></div>`).join('') || '<div class="muted small" style="padding:8px 0">Belum ada supplier.</div>'}
     <div class="row" style="margin-top:10px;gap:18px">
@@ -2226,15 +2258,15 @@ function masterProduk(M) {
     <select data-act-change="mAddProd" style="margin-top:6px"><option value="">+ Tambah produk…</option><option value="tabel">Tabel harga (kaos, jersey…)</option><option value="setelan">Setelan</option><option value="luas">Ukuran bebas (bendera…)</option><option value="bebas">Bebas (ongkir, stiker…)</option></select></div>`;
   if (!p) return `<div class="side">${left}<div></div></div>`;
   const B = `produk.${pi}`;
-  let html = `<div class="card"><div class="grid g4">
-    <label class="f"><span>Nama produk</span><input data-mb="${B}.nama" value="${esc(p.nama)}"></label>
-    <label class="f"><span>Satuan</span><input data-mb="${B}.satuan" value="${esc(p.satuan)}"></label>
-    <label class="f"><span>Potongan agen (%)</span><input type="number" data-mb="${B}.agenPct" value="${num(p.agenPct)}"></label>
-    <label class="f"><span>Tipe</span><input value="${esc(p.tipe)}" disabled></label></div>
-    <label class="f" style="margin-top:10px"><span>Catatan (muncul saat pilih produk)</span><input data-mb="${B}.catatan" value="${esc(p.catatan)}"></label></div>`;
+  const ptab = !!(S.ui.ptab || {})[p.id];
+  let html = `<div class="card pcard">
+    <label class="f" style="flex:2 1 200px"><span>Nama produk</span><input data-mb="${B}.nama" value="${esc(p.nama)}"></label>
+    <label class="f" style="flex:0 1 150px"><span>Potongan agen (%)</span><input type="number" data-mb="${B}.agenPct" value="${num(p.agenPct)}"></label>
+    <label class="f" style="flex:3 1 260px"><span>Catatan (muncul saat pilih produk)</span><input data-mb="${B}.catatan" value="${esc(p.catatan)}"></label>
+    ${p.tipe === 'tabel' ? `<button class="btn sm ${ptab ? 'on' : ''}" data-act="ptabTog" data-pid="${p.id}">${ic('gear')} Pengaturan tabel ${ptab ? '▾' : '▸'}</button>` : ''}</div>`;
   if (p.tipe === 'tabel') {
     const baris = barisOf(p, M), keys = p.bahan || [];
-    html += `<div class="card" style="margin-top:12px"><h3>Pengaturan tabel</h3><div class="grid g2">
+    if (ptab) html += `<div class="card" style="margin-top:12px"><h3>Pengaturan tabel</h3><div class="grid g2">
       <label class="f"><span>Tingkat jumlah: qty minimal tiap kolom, pisahkan koma</span><input data-mb-list="${B}.tingkat" data-numlist="1" value="${esc((p.tingkat || [1]).join(', '))}"></label>
       ${p.bahanSumber === 'jersey' ? `<div class="info">Harga jersey per <b>kelas bahan</b>. Bahan masuk kelas mana diatur di menu Bahan.</div>` : `<label class="f"><span>Kelompok harga bahan (kolom tabel, pisahkan koma)</span><input data-mb-list="${B}.bahan" value="${esc(keys.join(', '))}"></label>`}
       <label class="row small" style="gap:6px"><input type="checkbox" data-act-change="mGrup" data-pi="${pi}" ${p.barisDariGrup ? 'checked' : ''}> Baris memakai kelompok ukuran umum (tab Ukuran)</label></div>
@@ -2250,7 +2282,7 @@ function masterProduk(M) {
         ${keys.length > 1 ? `<div class="seg" style="margin-bottom:10px">${keys.map(k => `<button class="btn ${k === key ? 'on' : ''}" data-act="hkTab" data-pid="${p.id}" data-k="${esc(k)}">${esc(lab(k))}</button>`).join('')}</div>` : ''}
         <div class="scroll"><table class="t pgrid"><thead><tr><th>Baris</th>${tg.map((t, i) => `<th class="right">${esc(tierLabel(tg, i))}</th>`).join('')}</tr>
         ${own ? `<tr class="tgr"><th class="muted small" style="font-weight:500">Target laba %</th>${tg.map((t, i) => `<th><input type="number" data-hp="produk.${p.id}.target.${i}" data-re="1" value="${HP(p.id).target[i] != null ? HP(p.id).target[i] : ''}" placeholder="${i ? (tgtOf(p, 0) || '') : '0'}"></th>`).join('')}</tr>` : ''}</thead><tbody>
-        ${baris.map(b => { const mo = own ? modalBaris(p, key, b.nama, M) : 0; return `<tr><td>${esc(b.nama)}${(b.ukuran || []).length ? '<div class="muted small">' + esc(b.ukuran.join(', ')) + '</div>' : ''}</td>${tg.map((t, i) => { const v = num((((p.harga || {})[key] || {})[b.nama] || [])[i]); return `<td><input type="number" data-mprice="${pi}" data-key="${esc(key)}" data-baris="${esc(b.nama)}" data-ti="${i}" value="${v || ''}">${own ? labaChip(v, mo, tgtOf(p, i)) : ''}</td>`; }).join('')}</tr>`; }).join('')}
+        ${baris.map(b => { const mo = own ? modalBaris(p, key, b.nama, M) : 0; return `<tr><td>${esc(b.nama)}${(b.ukuran || []).length ? '<div class="muted small">' + esc(b.ukuran.join(', ')) + '</div>' : ''}</td>${tg.map((t, i) => { const v = num((((p.harga || {})[key] || {})[b.nama] || [])[i]); return `<td><input type="text" inputmode="numeric" class="uang" data-mprice="${pi}" data-key="${esc(key)}" data-baris="${esc(b.nama)}" data-ti="${i}" value="${v || ''}">${own ? labaChip(v, mo, tgtOf(p, i)) : ''}</td>`; }).join('')}</tr>`; }).join('')}
         </tbody></table></div>
         ${own ? `<div class="row" style="margin-top:8px;justify-content:space-between;gap:8px"><span class="muted small">Persen = laba dibanding modal. Hijau sudah capai target, kuning kurang dari 10 poin, merah lebih rendah.</span><button class="btn sm" data-act="hpSaran" data-pi="${pi}" data-k="${esc(key)}">Isi harga saran</button></div>` : ''}
       </div></div>`;
@@ -2262,18 +2294,18 @@ function masterProduk(M) {
     html += `<div class="card" style="margin-top:12px"><h3>Kelas bahan celana<span class="spacer"></span><button class="btn sm" data-act="mAddCel" data-pi="${pi}">${ic('plus')} Kelas</button></h3>
       ${(p.celana || []).map((k, x) => `<div class="row" style="margin-bottom:6px;flex-wrap:nowrap"><input data-mb="${B}.celana.${x}.nama" value="${esc(k.nama)}" style="max-width:200px"><span class="muted small" style="flex:1">${esc(bahanFor(p.id + ':celana', M).filter(b => b.pakai[p.id + ':celana'] === k.id).map(b => b.nama).join(', ') || 'belum ada bahan')}</span><button class="btn icon sm ghost" data-act="mDelCel" data-pi="${pi}" data-k="${x}">${ic('x')}</button></div>`).join('')}
       <div class="scroll" style="margin-top:10px"><table class="t pgrid"><thead><tr><th>Ukuran (dari ${esc(top ? top.nama : '?')})</th>${(p.celana || []).map(k => `<th class="right">${esc(k.nama)}</th>`).join('')}</tr></thead><tbody>
-      ${barisOf(top, M).map(b => `<tr><td>${esc(b.nama)}</td>${(p.celana || []).map(k => `<td><input type="number" data-mcel="${pi}" data-kid="${esc(k.id)}" data-baris="${esc(b.nama)}" value="${num(((p.hargaCelana || {})[k.id] || {})[b.nama]) || ''}"></td>`).join('')}</tr>`).join('')}
+      ${barisOf(top, M).map(b => `<tr><td>${esc(b.nama)}</td>${(p.celana || []).map(k => `<td><input type="text" inputmode="numeric" class="uang" data-mcel="${pi}" data-kid="${esc(k.id)}" data-baris="${esc(b.nama)}" value="${num(((p.hargaCelana || {})[k.id] || {})[b.nama]) || ''}"></td>`).join('')}</tr>`).join('')}
       </tbody></table></div><div class="muted small" style="margin-top:6px">Harga 1 stel = harga atasan (ikut tingkat jumlah) + harga celana di tabel ini.</div></div>`;
   } else if (p.tipe === 'luas') {
     html += `<div class="card" style="margin-top:12px"><h3>Tarif ukuran bebas<span class="spacer"></span><button class="btn sm" data-act="mAddAturan" data-pi="${pi}">${ic('plus')} Aturan</button></h3>
       <label class="f" style="max-width:420px;margin-bottom:10px"><span>Kelompok harga bahan (pisahkan koma)</span><input data-mb-list="${B}.bahan" data-re="1" value="${esc((p.bahan || []).join(', '))}"></label>
       <div class="scroll"><table class="t pgrid"><thead><tr><th>Mulai luas</th>${(p.bahan || []).map(b => `<th class="right">Tarif ${esc(b)}</th>`).join('')}<th class="right">Jahit</th><th class="right">Profit</th><th></th></tr></thead><tbody>
-      ${(p.aturan || []).map((a, k) => `<tr><td><input type="number" data-mb="${B}.aturan.${k}.luasMin" value="${num(a.luasMin)}"></td>${(p.bahan || []).map(b => `<td><input type="number" data-mb="${B}.aturan.${k}.tarif.${b}" value="${num((a.tarif || {})[b]) || ''}"></td>`).join('')}<td><input type="number" data-mb="${B}.aturan.${k}.jahit" value="${num(a.jahit)}"></td><td><input type="number" data-mb="${B}.aturan.${k}.profit" value="${num(a.profit)}"></td><td><button class="btn icon sm ghost" data-act="mDelAturan" data-pi="${pi}" data-k="${k}">${ic('x')}</button></td></tr>`).join('')}
+      ${(p.aturan || []).map((a, k) => `<tr><td><input type="number" data-mb="${B}.aturan.${k}.luasMin" value="${num(a.luasMin)}"></td>${(p.bahan || []).map(b => `<td><input type="text" inputmode="numeric" class="uang" data-mb="${B}.aturan.${k}.tarif.${b}" value="${num((a.tarif || {})[b]) || ''}"></td>`).join('')}<td><input type="text" inputmode="numeric" class="uang" data-mb="${B}.aturan.${k}.jahit" value="${num(a.jahit)}"></td><td><input type="text" inputmode="numeric" class="uang" data-mb="${B}.aturan.${k}.profit" value="${num(a.profit)}"></td><td><button class="btn icon sm ghost" data-act="mDelAturan" data-pi="${pi}" data-k="${k}">${ic('x')}</button></td></tr>`).join('')}
       </tbody></table></div><div class="muted small" style="margin-top:6px">Luas = panjang x lebar (cm) / 100. Harga = luas x tarif + jahit + profit. Aturan dengan "mulai luas" terbesar yang terpenuhi yang dipakai.</div></div>`;
   }
   if (p.tipe !== 'bebas' || true) {
     html += `<div class="card" style="margin-top:12px"><h3>Biaya tambahan (per ${esc(p.satuan)})<span class="spacer"></span><button class="btn sm" data-act="mAddTamb" data-pi="${pi}">${ic('plus')} Tambahan</button></h3>
-      ${(p.tambahan || []).map((a, k) => `<div class="row" style="margin-bottom:6px;flex-wrap:nowrap"><input data-mb="${B}.tambahan.${k}.nama" value="${esc(a.nama)}"><input type="number" data-mb="${B}.tambahan.${k}.harga" value="${num(a.harga)}" style="max-width:140px"><button class="btn icon sm ghost" data-act="mDelTamb" data-pi="${pi}" data-k="${k}">${ic('x')}</button></div>`).join('') || '<div class="muted small">Tidak ada.</div>'}
+      ${(p.tambahan || []).map((a, k) => `<div class="row" style="margin-bottom:6px;flex-wrap:nowrap"><input data-mb="${B}.tambahan.${k}.nama" value="${esc(a.nama)}"><input type="text" inputmode="numeric" class="uang" data-mb="${B}.tambahan.${k}.harga" value="${num(a.harga)}" style="max-width:140px"><button class="btn icon sm ghost" data-act="mDelTamb" data-pi="${pi}" data-k="${k}">${ic('x')}</button></div>`).join('') || '<div class="muted small">Tidak ada.</div>'}
       <div class="row" style="margin-top:14px"><button class="btn sm danger" data-act="mDelProd" data-pi="${pi}">${ic('trash')} Hapus produk ini</button></div></div>`;
   }
   return `<div class="side">${left}<div>${html}</div></div>`;
@@ -2336,11 +2368,11 @@ document.addEventListener('input', e => {
   const el = e.target;
   if (el.dataset.ui) { S.ui[el.dataset.ui] = el.value; const pos = el.selectionStart; rerenderMain(); const n = document.querySelector(`[data-ui="${el.dataset.ui}"]`); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } return; }
   if (el.dataset.b && S.edit && el.tagName !== 'SELECT') { onOrderInput(el); return; }
-  if (el.dataset.cb && S.editCustomer) { setCustPath(el.dataset.cb, el.type === 'number' ? (el.value === '' ? 0 : num(el.value)) : el.value); return; }
-  if (el.dataset.dp && S.edit) { dpSet(el.dataset.dp, el.value); markDirty(); if (el.type !== 'number') rerenderMain(); else patchOrder(); return; }
+  if (el.dataset.cb && S.editCustomer) { setCustPath(el.dataset.cb, isNumEl(el) ? (el.value === '' ? 0 : numEl(el)) : el.value); return; }
+  if (el.dataset.dp && S.edit) { dpSet(el.dataset.dp, el.dataset.dp === 'nominal' ? numEl(el) : el.value); markDirty(); if (el.dataset.dp !== 'nominal') rerenderMain(); else patchOrder(); return; }
   if (el.dataset.dl && S.edit) { S.edit.deadline = el.value; S.edit.deadlineManual = true; markDirty(); rerenderMain(); return; }
   if (el.dataset.pl) { plCfg()[el.dataset.pl] = el.value; const b = document.getElementById('plPrev'); if (b) b.innerHTML = plPage(); return; }
-  if (el.dataset.hp && el.tagName !== 'SELECT') { setPath(S.hpp, el.dataset.hp, el.type === 'number' ? (el.value === '' ? '' : num(el.value)) : el.value); S.hppDirty = true; return; }
+  if (el.dataset.hp && el.tagName !== 'SELECT') { setPath(S.hpp, el.dataset.hp, isNumEl(el) ? (el.value === '' ? '' : numEl(el)) : el.value); S.hppDirty = true; return; }
   if (S.mEdit && (el.dataset.mb || el.dataset.mbList || el.dataset.mprice || el.dataset.mcel || el.dataset.mopsi) && el.tagName !== 'SELECT') { if (!el.dataset.rename) onMasterInput(el, false); return; }
 });
 document.addEventListener('change', e => {
@@ -2348,17 +2380,17 @@ document.addEventListener('change', e => {
   if (el.dataset.ui) { S.ui[el.dataset.ui] = el.value; rerenderMain(); return; }
   if (el.dataset.actChange) { ACT_CHANGE[el.dataset.actChange] && ACT_CHANGE[el.dataset.actChange](el, e); return; }
   if (el.dataset.b && S.edit) { onOrderInput(el, true); return; }
-  if (el.dataset.cb && S.editCustomer) { const re = setCustPath(el.dataset.cb, el.type === 'number' ? (el.value === '' ? 0 : num(el.value)) : el.value); if (re || el.dataset.re) rerenderMain(); return; }
-  if (el.dataset.dp && S.edit) { dpSet(el.dataset.dp, el.value); markDirty(); rerenderMain(); return; }
+  if (el.dataset.cb && S.editCustomer) { const re = setCustPath(el.dataset.cb, isNumEl(el) ? (el.value === '' ? 0 : numEl(el)) : el.value); if (re || el.dataset.re) rerenderMain(); return; }
+  if (el.dataset.dp && S.edit) { dpSet(el.dataset.dp, el.dataset.dp === 'nominal' ? numEl(el) : el.value); markDirty(); rerenderMain(); return; }
   if (el.dataset.dl && S.edit) { S.edit.deadline = el.value; S.edit.deadlineManual = true; markDirty(); rerenderMain(); return; }
-  if (el.dataset.hp) { setPath(S.hpp, el.dataset.hp, el.type === 'number' ? (el.value === '' ? '' : num(el.value)) : el.value); S.hppDirty = true; if (el.dataset.re) rerenderMain(); return; }
+  if (el.dataset.hp) { setPath(S.hpp, el.dataset.hp, isNumEl(el) ? (el.value === '' ? '' : numEl(el)) : el.value); S.hppDirty = true; if (el.dataset.re) rerenderMain(); return; }
   if (S.mEdit && (el.dataset.mb || el.dataset.mbList || el.dataset.mprice || el.dataset.mcel || el.dataset.mopsi)) { onMasterInput(el, true); if (el.dataset.mprice && S.view === 'harga' && isOwnerHpp()) rerenderMain(); return; }
 });
 
 function onOrderInput(el, committed) {
   const o = S.edit, path = el.dataset.b;
   let v = el.value;
-  if (el.type === 'number') v = el.value === '' ? 0 : num(el.value);
+  if (isNumEl(el)) v = el.value === '' ? 0 : numEl(el);
   setPath(o, path, v);
   if (path === 'status') o.tahap = '';
   markDirty();
@@ -2471,10 +2503,10 @@ function onMasterInput(el, committed) {
     const p = M.produk[+el.dataset.mprice]; p.harga = p.harga || {};
     const k = el.dataset.key, b = el.dataset.baris, i = +el.dataset.ti;
     p.harga[k] = p.harga[k] || {}; p.harga[k][b] = p.harga[k][b] || [];
-    p.harga[k][b][i] = el.value === '' ? 0 : num(el.value);
+    p.harga[k][b][i] = el.value === '' ? 0 : numEl(el);
   } else if (el.dataset.mcel != null) {
     const p = M.produk[+el.dataset.mcel]; p.hargaCelana = p.hargaCelana || {};
-    (p.hargaCelana[el.dataset.kid] = p.hargaCelana[el.dataset.kid] || {})[el.dataset.baris] = el.value === '' ? 0 : num(el.value);
+    (p.hargaCelana[el.dataset.kid] = p.hargaCelana[el.dataset.kid] || {})[el.dataset.baris] = el.value === '' ? 0 : numEl(el);
   } else if (el.dataset.mopsi) {
     M.opsi[el.dataset.mopsi] = el.value.split('\n').map(s => s.trim()).filter(Boolean);
   } else if (el.dataset.mbList) {
@@ -2490,7 +2522,7 @@ function onMasterInput(el, committed) {
     if (committed) { S.mDirty = true; rerenderMain(); return; }
   } else if (el.dataset.mb) {
     const old = getPath(M, el.dataset.mb);
-    const v = el.type === 'checkbox' ? el.checked : el.type === 'number' ? (el.value === '' ? 0 : num(el.value)) : el.value;
+    const v = el.type === 'checkbox' ? el.checked : isNumEl(el) ? (el.value === '' ? 0 : numEl(el)) : el.value;
     setPath(M, el.dataset.mb, v);
     if (committed && el.dataset.rename && old !== v) renameBaris(el, old, v);
     if (committed && el.dataset.re) { S.mDirty = true; rerenderMain(); return; }
@@ -2565,6 +2597,7 @@ const ACT = {
   hpSave: () => saveHpp(),
   hpKompAdd: el => { HP(el.dataset.pid).komp.push({ nama: '', nilai: 0 }); S.hppDirty = true; rerenderMain(); },
   hpKompDel: el => { HP(el.dataset.pid).komp.splice(+el.dataset.x, 1); S.hppDirty = true; rerenderMain(); },
+  ptabTog: el => { S.ui.ptab = S.ui.ptab || {}; S.ui.ptab[el.dataset.pid] = !S.ui.ptab[el.dataset.pid]; rerenderMain(); },
   hkTab: el => { S.ui.hk = S.ui.hk || {}; S.ui.hk[el.dataset.pid] = el.dataset.k; rerenderMain(); },
   hpSaran: async el => {
     const M = S.mEdit, p = M.produk[+el.dataset.pi], key = el.dataset.k;
@@ -2756,12 +2789,12 @@ const ACT = {
     const tot = os.reduce((s, o) => s + orderTotals(o).sisa, 0);
     if (!os.length) { toast('Tidak ada tagihan.'); return; }
     modal(`<h3>Bayar tagihan ${esc(c.nama)}</h3><div class="muted small" style="margin-bottom:10px">Total sisa ${rp(tot)} dari ${os.length} nota. Pembayaran otomatis melunasi nota terlama lebih dulu.</div>
-      <div class="grid g2"><label class="f"><span>Nominal</span><input type="number" id="btNom" value="${tot}" autofocus></label><label class="f"><span>Tanggal</span><input type="date" id="btTgl" value="${todayISO()}"></label>
+      <div class="grid g2"><label class="f"><span>Nominal</span><input type="text" inputmode="numeric" class="uang" id="btNom" value="${tot}" autofocus></label><label class="f"><span>Tanggal</span><input type="date" id="btTgl" value="${todayISO()}"></label>
       <label class="f"><span>Metode</span><select id="btMet">${opts(S.master.opsi.metodeBayar, 'Transfer')}</select></label><label class="f"><span>Keterangan</span><input id="btKet" placeholder="mis. tf BCA"></label></div>
       <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="doBayar">Simpan pembayaran</button></div>`);
   },
   doBayar: async () => {
-    const c = S.editCustomer; let sisa = num(document.getElementById('btNom').value);
+    const c = S.editCustomer; let sisa = numEl(document.getElementById('btNom'));
     const tgl = document.getElementById('btTgl').value || todayISO(), met = document.getElementById('btMet').value, ket = document.getElementById('btKet').value.trim();
     if (sisa <= 0) { toast('Nominal belum diisi.', true); return; }
     const os = ordersOf(c).filter(o => orderTotals(o).sisa > 0).sort((a, b) => (a.tglOrder || '').localeCompare(b.tglOrder || '') || (a.no || '').localeCompare(b.no || ''));
@@ -2794,7 +2827,7 @@ const ACT = {
   bGrp: el => { S.ui.bgt = S.ui.bgt || {}; S.ui.bgt[el.dataset.k] = !S.ui.bgt[el.dataset.k]; rerenderMain(); },
   bKelas: () => {
     const M = S.mEdit;
-    modal(`<h3>Batas kelas jersey</h3>${M.kelasJersey.map((k, i) => `<label class="f" style="margin-bottom:8px"><span>${esc(k.nama)}: harga kain per meter sampai</span><input type="number" data-mb="kelasJersey.${i}.maks" value="${num(k.maks) || ''}"></label>`).join('')}
+    modal(`<h3>Batas kelas jersey</h3>${M.kelasJersey.map((k, i) => `<label class="f" style="margin-bottom:8px"><span>${esc(k.nama)}: harga kain per meter sampai</span><input type="text" inputmode="numeric" class="uang" data-mb="kelasJersey.${i}.maks" value="${num(k.maks) || ''}"></label>`).join('')}
       <div class="muted small">Dipakai untuk saran kelas. Bahan embos dan jacquard otomatis Premium. Tekan Simpan di halaman Bahan setelah mengubah.</div>
       <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn pri" data-act="bKelasOk">Selesai</button></div>`);
   },
