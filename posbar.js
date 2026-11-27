@@ -56,7 +56,7 @@
       ['produk', 'box', 'Produk', 'produk.html', any(['produk_edit', 'harga_edit', 'stok_ubah', 'kasir'])],
       ['bahan', 'layers', 'Stok bahan baku', 'stok-bahan-baku-v9.html', !!me()],
       ['produksi', 'factory', 'Produksi', 'produksi.html', any(['prod_lihat', 'prod_buat']), [['Produksi Jersey', 'produksi.html#produksi', 'Jersey'], ['Produksi Kaos', 'produksi.html#produksiK', 'Kaos']]],
-      ['pesanan', 'clipboard', 'Kaos Custom', 'pesanan-custom.html', !!me() && (me().role === 'owner' || me().role === 'admin' || me().role === 'supervisor')],
+      ['pesanan', 'clipboard', 'Kaos Custom', 'pesanan-custom.html', !!me() && (me().role === 'owner' || me().role === 'admin' || me().role === 'supervisor' || any(['pesanan', 'prod_buat', 'prod_cutting', 'prod_jahit', 'prod_finishing']))],
       ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', any(['rekap_kedawung', 'rekap_wonodadi'])],
       ['kinerja', 'users', 'Kinerja', 'kinerja.html', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji']), [['Kinerja Rejosari', 'kinerja.html?ws=g2', 'Rejosari', 'g2'], ['Kinerja Kedawung', 'kinerja.html?ws=g1', 'Kedawung', 'g1']]]
     ];
