@@ -429,6 +429,21 @@ h3.tog{cursor:pointer;margin-bottom:0}h3.tog+*{margin-top:10px}
 .ibc.dirty{position:relative}
 .ibc.dirty::after{content:"diedit";position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);font:600 10px/1 Inter,system-ui,sans-serif;color:var(--warn);white-space:nowrap;pointer-events:none}
 .pfh.stk .ibrow{padding-bottom:6px}
+/* DP, tanggal, kotak desain terpisah */
+.tiles.k7{grid-template-columns:repeat(7,minmax(0,1fr))}
+@media (max-width:1000px){.tiles.k7{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:480px){.tiles.k7{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.chips .btn.on{background:var(--acc);color:var(--acc-t);border-color:var(--acc)}
+.dbtn{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0b0b0b;border:1px solid var(--line);border-radius:12px;padding:0 12px;height:42px;cursor:pointer;font-weight:600;min-width:0}
+.dbtn:hover{border-color:var(--acc)}.dbtn .ms{color:var(--acc)}
+.dbtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;padding:0;border:0}
+.dlrow{display:flex;gap:4px;align-items:center;flex-wrap:wrap}.dlrow .dbtn{flex:1 1 170px}.dlrow .btn.on{background:var(--acc);color:var(--acc-t);border-color:var(--acc)}
+.dcol{position:relative;min-height:240px}
+.dci{position:absolute;inset:0;display:flex;flex-direction:column;gap:12px}
+.dci .dsc{flex:1 1 0;min-height:0;overflow:auto}
+.dcol.st{min-height:0;margin-bottom:12px}.dcol.st .dci{position:static;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:900px){.dcol{min-height:0}.dci{position:static}.dcol.st .dci{grid-template-columns:minmax(0,1fr)}}
+body:has(.modal) #toasts{top:24px;transform:translateX(-50%)}
 </style>
 </head>
 <body>
@@ -1214,8 +1229,9 @@ function listView() {
   let os = S.orders.slice();
   const aktif = os.filter(o => o.status !== 'Selesai');
   const TL = {
-    late: ['Terlambat', o => orderFlags(o).late, 'var(--bad)'], today: ['Deadline hari ini', o => orderFlags(o).d === 0, 'var(--warn)'], besok: ['Besok', o => orderFlags(o).d === 1, ''],
-    desain: ['Perlu desain', o => tahapKey(o) === 'desain', 'var(--blue)'], prod: ['Produksi', o => ['desain', 'kirim', 'selesai'].indexOf(tahapKey(o)) < 0, ''], kirim: ['Siap kirim', o => tahapKey(o) === 'kirim', 'var(--acc)']
+    belum: ['Belum DP', o => belumDP(o), 'var(--warn)'],
+    late: ['Terlambat', o => !belumDP(o) && orderFlags(o).late, 'var(--bad)'], today: ['Deadline hari ini', o => !belumDP(o) && orderFlags(o).d === 0, 'var(--warn)'], besok: ['Besok', o => !belumDP(o) && orderFlags(o).d === 1, ''],
+    desain: ['Perlu desain', o => tahapKey(o) === 'desain', 'var(--blue)'], prod: ['Produksi', o => !belumDP(o) && ['desain', 'kirim', 'selesai'].indexOf(tahapKey(o)) < 0, ''], kirim: ['Siap kirim', o => tahapKey(o) === 'kirim', 'var(--acc)']
   };
   if (S.ui.tile && TL[S.ui.tile]) os = aktif.filter(TL[S.ui.tile][1]); else if (S.ui.status === 'aktif') os = aktif; else if (S.ui.status !== 'semua') os = os.filter(o => o.status === S.ui.status);
   if (q) os = os.filter(o => [o.no, o.pelanggan && o.pelanggan.nama, o.jenisOrder, o.bahan, o.catatan, ...(o.items || []).map(it => itemFullLabel(it))].join(' ').toLowerCase().indexOf(q) > -1);
@@ -1228,7 +1244,7 @@ function listView() {
   };
   os.sort(sorters[S.ui.sort] || sorters.deadline);
   return `${pfh('Kaos Custom', 'Order kaos & jersey custom, dari desain sampai dikirim.', (role === 'pemilik' || role === 'admin' ? ibc('plOpen', 'sell', 'Pricelist') : '') + (role === 'pemilik' ? ibc('newOrder', 'plus', 'Baru', '', 'pri') : ''))}
-  <div class="tiles k6">${Object.keys(TL).map(k => `<button class="tile tb ${S.ui.tile === k ? 'on' : ''}" data-act="ftile" data-t="${k}"><span>${TL[k][0]}</span><b ${TL[k][2] ? `style="color:${TL[k][2]}"` : ''}>${aktif.filter(TL[k][1]).length}</b></button>`).join('')}</div>
+  <div class="tiles k6 k7">${Object.keys(TL).map(k => `<button class="tile tb ${S.ui.tile === k ? 'on' : ''}" data-act="ftile" data-t="${k}"><span>${TL[k][0]}</span><b ${TL[k][2] ? `style="color:${TL[k][2]}"` : ''}>${aktif.filter(TL[k][1]).length}</b></button>`).join('')}</div>
   <div class="toolbar">
     <div class="search">${ic('search')}<input data-ui="q" value="${esc(S.ui.q)}" placeholder="Cari nama, nomor nota, desain, bahan…"></div>
     <select data-ui="sort" style="width:auto">${[['deadline', 'Deadline terdekat'], ['baru', 'Terbaru'], ['lama', 'Terlama'], ['nama', 'Nama A-Z']].concat(money ? [['sisa', 'Sisa bayar terbesar']] : []).map(([v, t]) => `<option value="${v}" ${S.ui.sort === v ? 'selected' : ''}>${t}</option>`).join('')}</select>
@@ -1243,7 +1259,7 @@ function orderCard(o, money) {
   const pay = money ? (t.total <= 0 ? '' : t.sisa <= 0 ? '<span class="chip lime">Lunas</span>' : t.dibayar <= 0 ? '<span class="chip red">BON</span>' : '<span class="chip amber">DP ' + Math.round(t.dibayar / t.total * 100) + '%</span>') : '';
   return `<div class="oc" data-act="openOrder" data-id="${o.id}">
     <div class="thumb" ${g ? `style="background-image:url('${thumbSrc(g)}')"` : ''}>${g ? '' : ic('shirt')}</div>
-    <div><div class="t1">${esc((o.pelanggan || {}).nama || '(tanpa nama)')} <span class="muted small">${esc(o.no || 'draf')}</span> <span class="chip tah">${esc(tahapNama(o))}</span> ${dl} ${pay}</div>
+    <div><div class="t1">${esc((o.pelanggan || {}).nama || '(tanpa nama)')} <span class="muted small">${esc(o.no || 'draf')}</span> ${belumDP(o) ? '<span class="chip amber">Belum DP</span>' : `<span class="chip tah">${esc(tahapNama(o))}</span>`} ${belumDP(o) ? '' : dl} ${pay}</div>
     <div class="t2">${esc(sum || o.jenisOrder || '')}</div></div>
     ${money ? `<div class="money"><b class="num">${rp(t.total)}</b><div class="muted">${t.sisa > 0 ? 'sisa ' + rp(t.sisa) : ''}</div></div>` : `<div class="money"><b>${t.qty}</b> <span class="muted">pcs</span></div>`}
   </div>`;
@@ -1252,7 +1268,7 @@ function orderCard(o, money) {
 /* ---------- editor pesanan (Pemilik) ---------- */
 function blankOrder(c) {
   return {
-    id: '', no: '', tglOrder: todayISO(), tglDP: todayISO(), deadline: '', status: 'Baru',
+    id: '', no: '', tglOrder: todayISO(), tglDP: todayISO(), deadline: isoAdd(todayISO(), 14), status: 'Baru',
     pelanggan: c ? { custId: c.id, nama: c.nama, telp: c.telp || '', jenis: c.jenis || 'umum' } : { custId: '', nama: '', telp: '', jenis: 'umum' },
     jenisOrder: '', bahan: '', model: { krah: '', tutupKrah: '', ujungLengan: '' }, catatan: '', gambar: [], items: [newItem(c && c.jenis === 'langganan' && (c.hargaKhusus || [])[0] ? 'lg:' + c.hargaKhusus[0].nama : 'jersey')],
     namaPunggung: [], pembayaran: [], diskon: 0
@@ -1277,11 +1293,8 @@ function editorView() {
         <div class="grid g2">
           <label class="f"><span>Nama customer</span><input data-b="pelanggan.nama" list="dl-cust" value="${esc(o.pelanggan.nama)}" placeholder="Ketik atau pilih" autocomplete="off"></label>
           <label class="f"><span>No. telepon / WA</span><input data-b="pelanggan.telp" value="${esc(o.pelanggan.telp)}" inputmode="tel"></label>
-          <label class="f"><span>Tanggal order</span><input type="date" data-b="tglOrder" value="${esc(o.tglOrder)}"></label>
-          <label class="f"><span>Tanggal DP</span><input type="date" data-b="tglDP" value="${esc(o.tglDP)}"></label>
-          <label class="f"><span>Deadline</span><input type="date" data-b="deadline" value="${esc(o.deadline)}"></label>
-          <label class="f"><span>Jenis order</span><select data-b="jenisOrder">${selectOpt(M.opsi.jenisOrder, o.jenisOrder, '— pilih —')}</select></label>
         </div>
+        ${dpBlock(o)}
         <datalist id="dl-cust">${S.customers.map(x => `<option value="${esc(x.nama)}">${esc(x.jenis)}</option>`).join('')}</datalist>
         ${c ? `<div class="muted small" style="margin-top:8px">Pelanggan tersimpan: <b>${esc(c.nama)}</b> · ${esc(c.jenis)}${c.jenis === 'langganan' ? ' · ' + (c.hargaKhusus || []).length + ' harga khusus' : ''}</div>` : ''}
       </div>
@@ -1498,6 +1511,7 @@ function prodCard(o) {
     <div class="khd"><b>Proses</b><span class="muted small">${esc(ALUR[alurOf(o)].nama)}${(o.tahapOpsi || []).map(k => ' + ' + TAHAP[k]).join('')}</span>
       <div class="ksteps">${steps}</div>
       <div class="ksz">${sz.map(([u, q]) => `<span class="kszc"><b>${esc(u)}</b> ${q}</span>`).join('')}<b class="ktot">${tot} pcs</b></div>
+      ${belumDP(o) ? '<span class="chip amber" title="Produksi dimulai setelah DP masuk">Belum DP · isi DP dulu</span>' : ''}
       <div class="kic">${S.user.role === 'pemilik' ? `<select class="kstat" data-b="status" title="Status">${opts(STATUS, o.status)}</select>` : ''}${log.length ? `<button class="btn icon sm ghost" data-act="tLog" title="Riwayat tahap">${ic('history')}</button>` : ''}${can ? `<button class="btn icon sm ghost" data-act="tAlur" title="Alur produksi">${ic('gear')}</button>` : ''}</div>
     </div>
     ${rej.length ? `<div class="krej">${rej.map(l => `<span class="chip red">Reject ${num(l.rej)} pcs · ${esc(TAHAP[l.dari] || l.dari)}${l.ket ? ' · ' + esc(l.ket) : ''}</span>`).join(' ')}</div>` : ''}
@@ -1572,17 +1586,19 @@ function fileUrl(f) { return f.url || ('https://drive.google.com/uc?export=downl
 function fmtSize(b) { b = num(b); return !b ? '' : b > 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'; }
 function desainCard(o, edit) {
   const gs = o.gambar || [], fs = o.fileDesain || [], cf = canFile();
-  return `<div class="card dsg ${edit ? '' : 'st'}"><div class="dsgi"><h3>Desain <span class="muted small">${gs.length} gambar · ${fs.length} file</span></h3>
-    <div class="dthumbs">${gs.map((g, i) => `<div class="dth"><img src="${thumbSrc(g)}" data-act="zoom" data-i="${i}" alt="" title="${esc(g.ket || 'Perbesar')}">${edit ? `<button class="btn icon sm x" data-act="delImg" data-i="${i}" title="Hapus">${ic('x')}</button>` : ''}</div>`).join('')}
-      ${edit ? `<label class="dth add" title="Tambah gambar">${ic('plus')}<input type="file" accept="image/*" multiple hidden data-act-change="addImg"></label>` : ''}</div>
-    <div class="dfiles">${fs.map((f, i) => `<span class="dfile"><a href="${esc(fileUrl(f))}" target="_blank" rel="noopener" title="Unduh">${ic(f.url ? 'link' : 'description')} ${esc(f.name)}${f.size ? ` <span class="muted">${fmtSize(f.size)}</span>` : ''}</a>${cf ? `<button class="btn icon sm ghost" data-act="fDel" data-i="${i}" title="Hapus">${ic('x')}</button>` : ''}</span>`).join('')}
-      ${cf ? `<button class="btn sm" data-act="fUpload">${ic('upload')} File desain</button><button class="btn sm ghost" data-act="fLink">${ic('link')} Tempel link</button><input type="file" id="fdIn" multiple hidden data-act-change="fdIn">` : ''}
-      ${!fs.length && !cf ? '<span class="muted small">Belum ada file desain.</span>' : ''}</div>
+  return `<div class="dcol ${edit ? '' : 'st'}"><div class="dci">
+    <div class="card dsc"><h3>Gambar desain <span class="muted small">${gs.length}</span></h3>
+      <div class="dthumbs">${gs.map((g, i) => `<div class="dth"><img src="${thumbSrc(g)}" data-act="zoom" data-i="${i}" alt="" title="${esc(g.ket || 'Perbesar')}">${edit ? `<button class="btn icon sm x" data-act="delImg" data-i="${i}" title="Hapus">${ic('x')}</button>` : ''}</div>`).join('')}
+        ${edit ? `<label class="dth add" title="Tambah gambar">${ic('plus')}<input type="file" accept="image/*" multiple hidden data-act-change="addImg"></label>` : ''}${!gs.length && !edit ? '<span class="muted small">Belum ada gambar.</span>' : ''}</div></div>
+    <div class="card dsc"><h3>File desain <span class="muted small">${fs.length}</span></h3>
+      <div class="dfiles">${fs.map((f, i) => `<span class="dfile"><a href="${esc(fileUrl(f))}" target="_blank" rel="noopener" title="Unduh">${ic(f.url ? 'link' : 'description')} ${esc(f.name)}${f.size ? ` <span class="muted">${fmtSize(f.size)}</span>` : ''}</a>${cf ? `<button class="btn icon sm ghost" data-act="fDel" data-i="${i}" title="Hapus">${ic('x')}</button>` : ''}</span>`).join('')}
+        ${cf ? `<button class="btn sm" data-act="fUpload">${ic('upload')} Unggah file</button><button class="btn sm ghost" data-act="fLink">${ic('link')} Tempel link</button><input type="file" id="fdIn" multiple hidden data-act-change="fdIn">` : ''}
+        ${!fs.length && !cf ? '<span class="muted small">Belum ada file desain.</span>' : ''}</div></div>
   </div></div>`;
 }
 function dmSummary(o) {
   const it = o.items.map(x => [itemLabel(x), x.desain].filter(Boolean).join(' · ')).join(' | ');
-  return [it, o.model.krah, o.bahan].filter(Boolean).join(' · ') || 'Belum diisi';
+  return [it, o.model.krah].filter(Boolean).join(' · ') || 'Belum diisi';
 }
 function detailModelCard(o) {
   const M = S.master, op = dmOpen(o);
@@ -1593,7 +1609,6 @@ function detailModelCard(o) {
         ${tipe === 'lg' ? `<label class="f"><span>Bahan / keterangan</span><input data-b="items.${i}.bahan" value="${esc(it.bahan)}"></label><label class="f"><span>Warna</span><input data-b="items.${i}.warna" value="${esc(it.warna)}"></label>` : bahanSelect(o, it, i)}
       </div>${p && p.catatan ? `<div class="muted small" style="margin-top:4px">${esc(p.catatan)}</div>` : ''}</div>`; }).join('')}
       <div class="grid g2" style="margin-top:10px">
-        <label class="f"><span>Bahan (tertulis di PO)</span><input data-b="bahan" value="${esc(o.bahan)}" placeholder="mis. Brazil + Parasit"></label>
         <label class="f"><span>Model krah</span><select data-b="model.krah">${selectOpt(M.opsi.krah, o.model.krah, '—')}</select></label>
         <label class="f"><span>Tutup krah</span><select data-b="model.tutupKrah">${selectOpt(M.opsi.tutupKrah, o.model.tutupKrah, '—')}</select></label>
         <label class="f"><span>Ujung lengan</span><select data-b="model.ujungLengan">${selectOpt(M.opsi.ujungLengan, o.model.ujungLengan, '—')}</select></label>
@@ -1795,14 +1810,46 @@ async function plPng() {
   } catch (e) { toast('Gagal membuat gambar: ' + e.message, true); }
   finally { box.remove(); loading(false); }
 }
+/* ---------- DP, tanggal tanpa mengetik, deadline otomatis ---------- */
+const HARI3 = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+function isoAdd(iso, n) { const d = iso ? new Date(iso + 'T00:00:00') : new Date(); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function fmtHari(iso) { if (!iso) return 'Pilih tanggal'; const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return iso; return HARI3[d.getDay()] + ', ' + d.getDate() + ' ' + BLN3[d.getMonth()] + ' ' + d.getFullYear(); }
+function dateBtn(attr, val) { return `<label class="dbtn"><span>${esc(fmtHari(val))}</span>${ic('calendar_month')}<input type="date" ${attr} value="${esc(val || '')}" onclick="try{this.showPicker()}catch(e){}"></label>`; }
+function dpRow(o) { const ps = o.pembayaran || []; return ps.find(p => /^dp\b/i.test(String(p.ket || ''))) || ps[0] || null; }
+function dibayar(o) { return (o.pembayaran || []).reduce((s, p) => s + num(p.nominal), 0); }
+/* Belum DP = belum ada pembayaran dan masih di tahap desain. Order lama yang sudah berjalan tetap dianggap order. */
+function belumDP(o) { if (!o || S.user.role === 'staf') return false; return dibayar(o) <= 0 && !o.dpLanjut && tahapIdx(o) === 0 && o.status !== 'Selesai'; }
+function autoDeadline(o) { if (!o.deadlineManual) o.deadline = isoAdd(o.tglDP || o.tglOrder || todayISO(), 14); }
+function dpSet(k, v) {
+  const o = S.edit; o.pembayaran = o.pembayaran || [];
+  let r = dpRow(o);
+  if (k === 'tgl') { o.tglDP = v || todayISO(); o.tglOrder = o.tglDP; if (r) r.tgl = o.tglDP; autoDeadline(o); return; }
+  if (!r) { if (k === 'nominal' && !num(v)) return; r = { tgl: o.tglDP || todayISO(), nominal: 0, metode: (S.master.opsi.metodeBayar || ['Transfer'])[0], ket: 'DP 1' }; o.pembayaran.unshift(r); o.tglDP = r.tgl; o.tglOrder = r.tgl; autoDeadline(o); }
+  if (k === 'nominal') r.nominal = num(v); else r[k] = v;
+}
+function dpBlock(o) {
+  const r = dpRow(o) || {}, mb = S.master.opsi.metodeBayar || ['Transfer', 'Tunai', 'QRIS'];
+  const tgl = o.tglDP || o.tglOrder, base = tgl || todayISO();
+  return `<div class="grid g2" style="margin-top:4px">
+    <div><label class="f"><span>DP masuk (Rp)</span><input type="number" inputmode="numeric" data-dp="nominal" value="${num(r.nominal) || ''}" placeholder="Belum DP"></label>
+      <div class="chips">${mb.map(m => `<button class="btn sm ${(r.metode || mb[0]) === m ? 'on' : ''}" data-act="dpMetode" data-v="${esc(m)}">${esc(m)}</button>`).join('')}</div></div>
+    <div><div class="f"><span>Tanggal DP = tanggal order</span>${dateBtn('data-dp="tgl"', tgl)}</div>
+      <div class="chips"><button class="btn sm ${tgl === todayISO() ? 'on' : ''}" data-act="dpTgl" data-v="0">Hari ini</button><button class="btn sm ${tgl === isoAdd(todayISO(), -1) ? 'on' : ''}" data-act="dpTgl" data-v="-1">Kemarin</button></div></div>
+  </div>
+  <div class="f" style="margin-top:10px"><span>Deadline ${o.deadlineManual ? '<span class="muted">(diatur manual)</span>' : '<span class="muted">(otomatis H+14 dari DP)</span>'}</span>
+    <div class="dlrow"><button class="btn sm" data-act="dlGeser" data-v="-1">−1</button>${dateBtn('data-dl="1"', o.deadline)}<button class="btn sm" data-act="dlGeser" data-v="1">+1</button>
+      ${[7, 14, 21, 30].map(n => `<button class="btn sm ${o.deadline === isoAdd(base, n) ? 'on' : ''}" data-act="dlH" data-v="${n}">H+${n}</button>`).join('')}</div></div>
+  ${belumDP(o) ? '<div class="chip amber" style="margin-top:10px">Belum DP · belum dihitung sebagai order</div>' : ''}`;
+}
+function bahanPO(o) { return [...new Set((o.items || []).map(it => [[it.bahan, it.bahanCelana].filter(Boolean).join(' + '), it.warna].filter(Boolean).join(' · ')).filter(Boolean))].join(', '); }
 /* ---------- detail (Admin & Staf, hanya lihat) ---------- */
 function detailView() {
   const o = S.edit, role = S.user.role;
   const doc = role === 'staf' ? 'po' : (S.ui.ddoc || 'faktur');
-  return `${pfhS(esc(o.no) + ' · ' + esc((o.pelanggan || {}).nama), `<span class="chip tah">${esc(tahapNama(o))}</span>${role === 'staf' ? ' &nbsp;Tampilan staf: tanpa harga' : ''}`,
+  return `${pfhS(esc(o.no) + ' · ' + esc((o.pelanggan || {}).nama), `${belumDP(o) ? '<span class="chip amber">Belum DP</span> ' : ''}<span class="chip tah">${esc(tahapNama(o))}</span>${role === 'staf' ? ' &nbsp;Tampilan staf: tanpa harga' : ''}`,
     ibc('backList', 'back', 'Kembali') + (role === 'admin' ? [['faktur', 'file', 'Faktur'], ['po', 'clipboard', 'PO'], ['arsip', 'archive', 'Arsip']].map(([d, i, t]) => ibc('ddoc', i, t, `data-d="${d}"`, doc === d ? 'pri' : '')).join('') + ibc('print', 'print', 'Cetak', `data-d="${doc}"`) + ibc('wa', 'wa', 'WA') : ''))}
   ${prodCard(o)}
-  <div style="margin-bottom:12px">${desainCard(o, false)}</div>
+  ${desainCard(o, false)}
   <div class="docwrap">${docHTML(doc, o, role === 'staf')}</div>`;
 }
 
@@ -1876,7 +1923,7 @@ function namesTable(o) {
 function poPage(o, opt) {
   opt = opt || {};
   const c = NC(), g = aRows(o, false), m = o.model || {}, p = o.pelanggan || {};
-  const det = [['Jenis order', esc(o.jenisOrder || '-')], ['Bahan', esc(o.bahan || [...new Set(o.items.map(it => [it.bahan, it.bahanCelana].filter(Boolean).join(' + ')).filter(Boolean))].join(', ') || '-')]];
+  const det = (o.jenisOrder ? [['Jenis order', esc(o.jenisOrder)]] : []).concat([['Bahan', esc(o.bahan || bahanPO(o) || '-')]]);
   if (m.krah) det.push(['Model krah', esc(m.krah)]); if (m.tutupKrah) det.push(['Tutup krah', esc(m.tutupKrah)]); if (m.ujungLengan) det.push(['Ujung lengan', esc(m.ujungLengan)]);
   det.push(['Alur produksi', esc(ALUR[alurOf(o)].nama) + ((o.tahapOpsi || []).length ? ' + ' + esc(o.tahapOpsi.map(k => TAHAP[k]).join(', ')) : '')]);
   const imgs = docImages(o, 4);
@@ -2290,6 +2337,8 @@ document.addEventListener('input', e => {
   if (el.dataset.ui) { S.ui[el.dataset.ui] = el.value; const pos = el.selectionStart; rerenderMain(); const n = document.querySelector(`[data-ui="${el.dataset.ui}"]`); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } return; }
   if (el.dataset.b && S.edit && el.tagName !== 'SELECT') { onOrderInput(el); return; }
   if (el.dataset.cb && S.editCustomer) { setCustPath(el.dataset.cb, el.type === 'number' ? (el.value === '' ? 0 : num(el.value)) : el.value); return; }
+  if (el.dataset.dp && S.edit) { dpSet(el.dataset.dp, el.value); markDirty(); if (el.type !== 'number') rerenderMain(); else patchOrder(); return; }
+  if (el.dataset.dl && S.edit) { S.edit.deadline = el.value; S.edit.deadlineManual = true; markDirty(); rerenderMain(); return; }
   if (el.dataset.pl) { plCfg()[el.dataset.pl] = el.value; const b = document.getElementById('plPrev'); if (b) b.innerHTML = plPage(); return; }
   if (el.dataset.hp && el.tagName !== 'SELECT') { setPath(S.hpp, el.dataset.hp, el.type === 'number' ? (el.value === '' ? '' : num(el.value)) : el.value); S.hppDirty = true; return; }
   if (S.mEdit && (el.dataset.mb || el.dataset.mbList || el.dataset.mprice || el.dataset.mcel || el.dataset.mopsi) && el.tagName !== 'SELECT') { if (!el.dataset.rename) onMasterInput(el, false); return; }
@@ -2300,6 +2349,8 @@ document.addEventListener('change', e => {
   if (el.dataset.actChange) { ACT_CHANGE[el.dataset.actChange] && ACT_CHANGE[el.dataset.actChange](el, e); return; }
   if (el.dataset.b && S.edit) { onOrderInput(el, true); return; }
   if (el.dataset.cb && S.editCustomer) { const re = setCustPath(el.dataset.cb, el.type === 'number' ? (el.value === '' ? 0 : num(el.value)) : el.value); if (re || el.dataset.re) rerenderMain(); return; }
+  if (el.dataset.dp && S.edit) { dpSet(el.dataset.dp, el.value); markDirty(); rerenderMain(); return; }
+  if (el.dataset.dl && S.edit) { S.edit.deadline = el.value; S.edit.deadlineManual = true; markDirty(); rerenderMain(); return; }
   if (el.dataset.hp) { setPath(S.hpp, el.dataset.hp, el.type === 'number' ? (el.value === '' ? '' : num(el.value)) : el.value); S.hppDirty = true; if (el.dataset.re) rerenderMain(); return; }
   if (S.mEdit && (el.dataset.mb || el.dataset.mbList || el.dataset.mprice || el.dataset.mcel || el.dataset.mopsi)) { onMasterInput(el, true); if (el.dataset.mprice && S.view === 'harga' && isOwnerHpp()) rerenderMain(); return; }
 });
@@ -2479,6 +2530,11 @@ const ACT = {
   fstatus: el => { S.ui.status = el.dataset.s; S.ui.tile = ''; rerenderMain(); },
   tKlik: el => {
     const o = S.edit, st = stepsOf(o), i = tahapIdx(o), x = +el.dataset.x, nm = k => k >= st.length ? 'Selesai' : TAHAP[st[k]];
+    if (belumDP(o) && x > i) {
+      if (!isOwnerHpp()) { toast('Isi DP dulu. Produksi dimulai setelah DP masuk.', true); return; }
+      modal(`<h3>Belum ada DP</h3><div class="muted small">Order ini belum DP. Lanjut ke ${esc(nm(x))} tanpa DP? Pilihan ini tercatat di riwayat.</div>
+        <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" data-act="closeModal">Batal</button><button class="btn pri" data-act="tPaksa" data-x="${x}">Lanjut tanpa DP</button></div>`); return;
+    }
     if (x === i) { toast('Sekarang di tahap ' + nm(i) + '.'); return; }
     if (Math.abs(x - i) > 1) { toast('Pindah satu tahap saja supaya riwayatnya tercatat.', true); return; }
     const T = orderTotals(o);
@@ -2495,6 +2551,7 @@ const ACT = {
     const x = +el.dataset.x, q = document.getElementById('rjQ') ? num(document.getElementById('rjQ').value) : 0, k = document.getElementById('rjK') ? document.getElementById('rjK').value.trim() : '';
     closeModal(); moveTahap(S.edit, x, q > 0 ? q : 0, q > 0 ? window.RJA + (k ? ' · ' + k : '') : k);
   },
+  tPaksa: el => { closeModal(); const o = S.edit, st = stepsOf(o), x = +el.dataset.x, ke = st[x] || 'selesai'; saveTahap(o.id, { tahap: ke, status: statusFor(Object.assign(clone(o), { tahap: ke }), x), dpLanjut: true }, { dari: st[tahapIdx(o)], ke, maju: true, oleh: meNama(), t: new Date().toISOString(), rej: 0, ket: 'Lanjut tanpa DP' }, 'Pindah ke ' + TAHAP[ke]); },
   tLog: () => { const log = (S.edit.tahapLog || []).slice().reverse(); modal(`<h3>Riwayat tahap</h3><div class="klog">${log.map(l => `<div><span class="muted">${fmtJam(l.t)}</span> ${esc(l.oleh || '')}: ${esc(TAHAP[l.dari] || 'Selesai')} &rarr; ${esc(l.ke === 'selesai' ? 'Selesai' : TAHAP[l.ke] || l.ke)}${num(l.rej) ? ' · reject ' + num(l.rej) : ''}${l.ket ? ' · ' + esc(l.ket) : ''}</div>`).join('')}</div><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn" data-act="closeModal">Tutup</button></div>`); },
   dmTog: () => { S.ui.dm = S.ui.dm || {}; const k = S.edit.id || 'baru'; S.ui.dm[k] = !dmOpen(S.edit); rerenderMain(); },
   npTog: () => { S.ui.np = S.ui.np || {}; const k = S.edit.id || 'baru'; S.ui.np[k] = !npOpen(S.edit); rerenderMain(); },
@@ -2534,6 +2591,10 @@ const ACT = {
   plVersi: el => { plCfg().versi = el.dataset.v; rerenderMain(); },
   plPdf: () => printDoc(plPage()),
   plPng: () => plPng(),
+  dpMetode: el => { dpSet('metode', el.dataset.v); markDirty(); rerenderMain(); },
+  dpTgl: el => { dpSet('tgl', isoAdd(todayISO(), +el.dataset.v)); markDirty(); rerenderMain(); },
+  dlGeser: el => { const o = S.edit; o.deadline = isoAdd(o.deadline || isoAdd(o.tglDP || todayISO(), 14), +el.dataset.v); o.deadlineManual = true; markDirty(); rerenderMain(); },
+  dlH: el => { const o = S.edit, n = +el.dataset.v; o.deadline = isoAdd(o.tglDP || o.tglOrder || todayISO(), n); o.deadlineManual = n !== 14; markDirty(); rerenderMain(); },
   ftile: el => { S.ui.tile = S.ui.tile === el.dataset.t ? '' : el.dataset.t; if (S.ui.tile) S.ui.status = 'aktif'; rerenderMain(); },
   tMaju: () => { const o = S.edit; moveTahap(o, tahapIdx(o) + 1); },
   tMundur: async () => { const o = S.edit, st = stepsOf(o), i = tahapIdx(o); if (!(await ask('Kembalikan order ke tahap ' + TAHAP[st[i - 1]] + '?', 'Kembalikan'))) return; moveTahap(o, i - 1); },
