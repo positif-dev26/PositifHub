@@ -376,7 +376,7 @@ dialog label.cbx,.cbx{position:relative;display:inline-grid;place-items:center;w
 <nav id="rail"></nav>
 <div class="app">
 <header>
-<span class="seg"><button id="w1" onclick="setW('1')">Gudang Pusat</button><button id="w2" onclick="setW('2')">Gudang Kedawung</button></span>
+<span class="seg"><button id="w1" onclick="setW('1')">Workshop Wonodadi</button><button id="w2" onclick="setW('2')">Workshop Kedawung</button></span>
 <span class="sp"></span>
 <span class="mu" id="sync"></span>
 <span class="dd" id="who"></span>
@@ -407,7 +407,7 @@ var OC={"Diminta":"#4da3ff","Dibelanjakan":"#ffb020","Sampai gudang":"#a78bfa","
 var stOf=function(o){return o.status=="Dalam perjalanan"?"Dibelanjakan":o.status};
 function opill(o,sm){var s=typeof o=="string"?o:stOf(o);return'<span class="op'+(sm?" sm":"")+'" style="--oc:'+(OC[s]||"#8f8f8a")+'"><i></i>'+esc(s)+'</span>'}
 var RSEL={},OSEL={},MSEL={};
-var GNM={"1":"Gudang Pusat","2":"Gudang Kedawung"},GN=function(){return GNM[W]||("Gudang "+W)};
+var GNM={"1":"Workshop Wonodadi","2":"Workshop Kedawung"},GN=function(){return GNM[W]||("Gudang "+W)};
 
 // ---- ikon ----
 var MSN={dash:'dashboard',swap:'swap_horiz',box:'box',layers:'layers',cart:'shopping_cart',wrench:'build',user:'person',users:'group',chart:'bar_chart',hist:'history',out:'logout',inn:'login',chev:'expand_more',scissors:'content_cut',shirt:'checkroom',printer:'print',tag:'sell',sticker:'sticky_note_2',receipt:'receipt_long',dots:'more_horiz',x:'close',gear:'settings',barcode:'barcode'};
