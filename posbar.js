@@ -44,7 +44,7 @@
     try { var m = JSON.parse(localStorage.getItem('positif_me') || 'null'); if (m && m.u === c.u) return m; } catch (e) { }
     return { u: c.u, name: c.u, role: '', perm: [] };
   }
-  function can(k) { var m = me(); return !!m && (m.role === 'admin' || (m.perm || []).indexOf(k) >= 0); }
+  function can(k) { var m = me(); return !!m && (m.role === 'owner' || m.role === 'admin' || (m.perm || []).indexOf(k) >= 0); }
   function any(a) { for (var i = 0; i < a.length; i++) if (can(a[i])) return true; return false; }
 
   /* menu utama: [kunci, ikon, label, file, boleh dibuka?] — samakan dengan inti.js */
@@ -56,7 +56,7 @@
       ['produk', 'box', 'Produk', 'produk.html', any(['produk_edit', 'harga_edit', 'stok_ubah', 'kasir'])],
       ['bahan', 'layers', 'Stok bahan baku', 'stok-bahan-baku-v9.html', !!me()],
       ['produksi', 'factory', 'Produksi', 'produksi.html', any(['prod_lihat', 'prod_buat'])],
-      ['pesanan', 'clipboard', 'Pesanan custom', 'pesanan-custom.html', !!me() && (me().role === 'admin' || me().role === 'supervisor')],
+      ['pesanan', 'clipboard', 'Pesanan custom', 'pesanan-custom.html', !!me() && (me().role === 'owner' || me().role === 'admin' || me().role === 'supervisor')],
       ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', any(['rekap_kedawung', 'rekap_wonodadi'])],
       ['kinerja', 'users', 'Kinerja', 'kinerja.html', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji'])]
     ];
@@ -152,7 +152,7 @@
           var m = me(), RL = { admin: 'Admin', supervisor: 'Supervisor', staf: 'Staf' };
           openMenu(b, '<div class="pb-h"><b>' + esc(m.name) + '</b><span>' + (RL[m.role] || '') + ' · @' + esc(m.u) + '</span></div>' +
             '<a href="index.html?gantipin=1">' + ic('key') + 'Ganti PIN</a>' +
-            (m.role === 'admin' || can('backup') ? '<a href="pengaturan.html">' + ic('settings') + 'Pengaturan</a>' : '') +
+            (m.role === 'owner' || m.role === 'admin' || can('backup') ? '<a href="pengaturan.html">' + ic('settings') + 'Pengaturan</a>' : '') +
             '<hr><a class="dg" data-pbx="1">' + ic('logout') + 'Keluar</a>', true);
           menuEl.querySelector('[data-pbx]').onclick = logout;
         }
