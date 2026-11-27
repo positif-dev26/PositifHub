@@ -55,10 +55,10 @@
       ['penjualan', 'chart', 'Penjualan', jual, any(['riwayat', 'laporan'])],
       ['produk', 'box', 'Produk', 'produk.html', any(['produk_edit', 'harga_edit', 'stok_ubah', 'kasir'])],
       ['bahan', 'layers', 'Stok bahan baku', 'stok-bahan-baku-v9.html', !!me()],
-      ['produksi', 'factory', 'Produksi', 'produksi.html', any(['prod_lihat', 'prod_buat'])],
-      ['pesanan', 'clipboard', 'Pesanan custom', 'pesanan-custom.html', !!me() && (me().role === 'owner' || me().role === 'admin' || me().role === 'supervisor')],
+      ['produksi', 'factory', 'Produksi', 'produksi.html', any(['prod_lihat', 'prod_buat']), [['Produksi Jersey', 'produksi.html#produksi', 'Jersey'], ['Produksi Kaos', 'produksi.html#produksiK', 'Kaos']]],
+      ['pesanan', 'clipboard', 'Kaos Custom', 'pesanan-custom.html', !!me() && (me().role === 'owner' || me().role === 'admin' || me().role === 'supervisor')],
       ['rekap', 'rekap', 'Rekap order', 'rekap-order-custom.html', any(['rekap_kedawung', 'rekap_wonodadi'])],
-      ['kinerja', 'users', 'Kinerja', 'kinerja.html', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji'])]
+      ['kinerja', 'users', 'Kinerja', 'kinerja.html', any(['kinerja_input', 'kinerja_cek', 'kinerja_gaji']), [['Kinerja Rejosari', 'kinerja.html?ws=g2', 'Rejosari', 'g2'], ['Kinerja Kedawung', 'kinerja.html?ws=g1', 'Kedawung', 'g1']]]
     ];
   }
   var HUB = [['Resi Print', 'resi_print.html', 'app_resi_print'], ['Resi Video Packing', 'resi_video_packing.html', 'app_resi_video'], ['Resi Pickup Kurir', 'resi_pickup-kurir.html', 'app_resi_pickup']];
@@ -72,13 +72,14 @@
     '.pbar .pb-nv:hover{color:#f4f4f2;background:rgba(255,255,255,.07)}' +
     '.pbar .pb-nv .pb-nl{display:none}.pbar .pb-nv.on{background:#d4ff3f;color:#0a0a0a;box-shadow:0 0 24px -6px rgba(212,255,63,.7)}.pbar .pb-nv.on .pb-nl{display:inline}' +
     '.pbar .pb-hub{border:1px solid rgba(255,255,255,.12)}' +
+    '.pbar .pb-nv.pb-grp{gap:4px}.pbar .pb-grp .pb-nl{margin-right:2px}.pbar .pb-grc{font-size:10px;opacity:.75}.pb-menu a.cur{background:#d4ff3f;color:#0a0a0a}' +
     '.pb-ico{font-family:"Material Symbols Sharp";font-weight:400;font-style:normal;font-size:24px;width:1em;height:1em;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;overflow:hidden;direction:ltr;-webkit-font-smoothing:antialiased;font-feature-settings:"liga";-webkit-font-feature-settings:"liga";font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24;transition:font-variation-settings .15s;flex:none;display:block;user-select:none}' +
     '.pbar .pb-nv.on .pb-ico{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}' +
     '.pbar .pb-tools{display:flex;align-items:center;gap:8px;flex:none}' +
     '.pbar .pb-clk{margin-left:auto;font-size:13px;color:#8f8f8a;white-space:nowrap;font-variant-numeric:tabular-nums;flex:none}.pbar .pb-clk b{color:#f4f4f2;font-size:14px}' +
     '.pbar .pb-acc{flex:none;border:1px solid rgba(212,255,63,.35);background:#060606;color:#f4f4f2;font:600 14px Barlow,sans-serif;padding:6px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}.pbar .pb-acc:hover{border-color:#d4ff3f}' +
     '.pb-menu{position:fixed;z-index:200;min-width:220px;padding:6px;background:#111;color:#f4f4f2;border:1px solid rgba(212,255,63,.5);border-radius:14px;box-shadow:0 0 30px -10px rgba(212,255,63,.5),0 20px 50px rgba(0,0,0,.6);display:none;font:15px Barlow,system-ui,sans-serif}' +
-    '.pb-menu.on{display:block}.pb-menu .pb-h{padding:8px 10px 10px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:4px}.pb-menu .pb-h b{display:block;font-size:16px}.pb-menu .pb-h span{font-size:13px;color:#8f8f8a}' +
+    '.pb-menu.on{display:block;background:#111!important;color:#f4f4f2!important;border-color:rgba(212,255,63,.5)!important;box-shadow:0 0 30px -10px rgba(212,255,63,.5),0 20px 50px rgba(0,0,0,.6)}.pb-menu .pb-h{padding:8px 10px 10px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:4px}.pb-menu .pb-h b{display:block;font-size:16px}.pb-menu .pb-h span{font-size:13px;color:#8f8f8a}' +
     '.pb-menu a{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;color:#f4f4f2;text-decoration:none;font-weight:600;cursor:pointer}.pb-menu a:hover{background:rgba(212,255,63,.1)}' +
     '.pb-menu a .pb-ico{font-size:20px;color:#d4ff3f}.pb-menu a.dg,.pb-menu a.dg .pb-ico{color:#ff8a8a}' +
     '.pb-menu hr{border:0;border-top:1px solid rgba(255,255,255,.1);margin:4px 2px}' +
@@ -121,7 +122,12 @@
   }
 
   function html(active) {
+    var ws = (new URLSearchParams(location.search).get('ws') || '');
     var nav = MENU().filter(function (m) { return m[4]; }).map(function (m) {
+      if (m[5]) {
+        var on = !!active && active.indexOf(m[0]) === 0, cur = on && m[5].filter(function (x) { return x[3] && x[3] === ws; })[0];
+        return '<button class="pb-nv pb-grp' + (on ? ' on' : '') + '" data-pbm="g:' + m[0] + '" title="' + m[2] + '" aria-label="' + m[2] + '" aria-haspopup="true">' + ic(m[1]) + '<span class="pb-nl">' + m[2] + (cur ? ' · ' + cur[2] : '') + '</span><span class="pb-grc">&#9662;</span></button>';
+      }
       return '<a class="pb-nv' + (m[0] === active ? ' on' : '') + '" href="' + m[3] + '" title="' + m[2] + '" aria-label="' + m[2] + '">' + ic(m[1]) + '<span class="pb-nl">' + m[2] + '</span></a>';
     }).join('');
     if (HUB.some(function (h) { return can(h[2]); })) nav += '<button class="pb-nv pb-hub" data-pbm="hub" title="Aplikasi lain" aria-label="Aplikasi lain">' + ic('grid') + '</button>';
@@ -147,7 +153,8 @@
       bar.addEventListener('click', function (e) {
         var b = e.target.closest('[data-pbm]'); if (!b) return; e.stopPropagation();
         if (menuEl && menuEl.classList.contains('on') && menuEl.dataset.k === b.dataset.pbm) { closeMenu(); return; }
-        if (b.dataset.pbm === 'hub') openMenu(b, HUB.filter(function (h) { return can(h[2]); }).map(function (h) { return '<a href="' + h[1] + '">' + h[0] + '</a>'; }).join(''));
+        if (b.dataset.pbm.indexOf('g:') === 0) { var G = MENU().filter(function (x) { return x[0] === b.dataset.pbm.slice(2); })[0]; openMenu(b, G[5].map(function (x) { return '<a href="' + x[1] + '"' + (x[3] && x[3] === (new URLSearchParams(location.search).get('ws') || '') ? ' class="cur"' : '') + '>' + x[0] + '</a>'; }).join('')); }
+        else if (b.dataset.pbm === 'hub') openMenu(b, HUB.filter(function (h) { return can(h[2]); }).map(function (h) { return '<a href="' + h[1] + '">' + h[0] + '</a>'; }).join(''));
         else {
           var m = me(), RL = { admin: 'Admin', supervisor: 'Supervisor', staf: 'Staf' };
           openMenu(b, '<div class="pb-h"><b>' + esc(m.name) + '</b><span>' + (RL[m.role] || '') + ' · @' + esc(m.u) + '</span></div>' +

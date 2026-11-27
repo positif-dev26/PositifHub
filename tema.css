@@ -608,3 +608,6 @@ body.kd-rs{cursor:col-resize;user-select:none;-webkit-user-select:none}
 }
 /* tombol tab lain yang aktif ikut terisi */
 .ptabs button.on .ms,.ib.on .ms{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+/* menu bergrup (Produksi, Kinerja) */
+nav .grp{gap:4px}nav .grp .grc{font-size:10px;opacity:.75}nav .grp.on .nl{margin-right:2px}
+.hubmenu a .bgn.gb{position:static;display:inline-block;margin-left:12px;vertical-align:1px}
