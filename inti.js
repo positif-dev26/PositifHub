@@ -219,11 +219,12 @@ function note(m,bad){const e=$('msg');if(e){e.textContent=m;e.className=bad?'bad
 const SI={Aman:MS('check'),Menipis:MS('warning'),Habis:MS('cancel')};
 const sbadge=v=>{const s=stt(v);return `<span class="badge ${s==='Habis'?'bad':s==='Menipis'?'mid':'ok'}">${SI[s]||''}${s}</span>`};
 const STG=['cetak','bahan','cutting','jahit','finishing','selesai'],SL={cetak:'Dicetak di vendor',batal:'Dibatalkan',bahan:'Rak bahan',cutting:'Cutting',jahit:'Jahit',finishing:'Finishing',selesai:'Masuk stok'},SBY={bahan:'Petugas rak bahan',cutting:'Nama tukang cutting',jahit:'Nama penjahit',finishing:'Petugas finishing',selesai:'Petugas QC'};
-/* lini produksi: kategori produk → 'jersey' / 'kaos' (diatur di Produksi > Atur). '' = belum diatur (tampil di kedua menu) */
+/* lini produksi: kategori produk → 'jersey' / 'kaos' (bisa diubah di Produksi > Atur) */
 const isProdT=()=>typeof tab!=='undefined'&&(tab==='produksi'||tab==='produksiK');
 const LINMAP=()=>{const j=(S.jobs||[]).find(x=>x.id==='pcfg');let m=j&&j.lini;if(typeof m==='string'){try{m=JSON.parse(m)}catch(e){m=null}}return m&&typeof m==='object'?m:{}};
-const lineCat=c=>LINMAP()[c]||'';
-const lowN=l=>{if(!ready)return 0;const M=LINMAP();return allV().filter(x=>!isJ(x.v)&&x.v.stock<=S.low&&(!l||!M[x.p.cat]||M[x.p.cat]===l)).length};
+/* bawaan: kategori diawali "Jersey" → jersey, lainnya (kaos, kolor, hoodie, ...) → kaos; bisa diubah per kategori */
+const lineCat=c=>LINMAP()[c]||(/^\s*jersey/i.test(String(c||''))?'jersey':'kaos');
+const lowN=l=>{if(!ready)return 0;return allV().filter(x=>!isJ(x.v)&&x.v.stock<=S.low&&(!l||lineCat(x.p.cat)===l)).length};
 const RS=['cetak','bahan','cutting','jahit','finishing'],STL={cetak:'Cetak vendor',bahan:'Rak bahan',cutting:'Cutting',jahit:'Jahit',finishing:'Finishing',selesai:'Masuk stok'};
 function toast(m,bad){let h=$('toasts');if(!h){h=document.createElement('div');h.id='toasts';document.body.appendChild(h)}const t=document.createElement('div');t.className='toast'+(bad?' bad':'');t.innerHTML='<span>'+(bad?'!':'&#10003;')+'</span>'+esc(m);h.appendChild(t);setTimeout(()=>t.classList.add('out'),bad?4500:2800);setTimeout(()=>t.remove(),bad?5000:3300)}
 function stk(){const s=document.documentElement.style,h=document.querySelector('header'),t=document.querySelector('.ptabs'),b=document.querySelector('.sk1');s.setProperty('--hh',(h?h.offsetHeight:52)+'px');s.setProperty('--th','0px');s.setProperty('--bh',(b?b.offsetHeight:0)+'px');const k=document.querySelector('.sk2');s.setProperty('--kh',(k?k.offsetHeight:0)+'px')}
