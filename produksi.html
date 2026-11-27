@@ -80,6 +80,8 @@ td .sch{font-size:12px;padding:1px 8px}
 /* ===== Produksi v6: papan alur berjajar (komputer), popup proses ringkas, tahap Rencana ===== */
 .sbh{position:relative}.sbt{min-width:0;flex:1}.sbt small{display:block;line-height:1.3}
 .sbp{flex:none;width:34px;height:34px;padding:0;display:inline-grid;place-items:center;border-radius:10px}
+.sba{color:var(--acc);border-color:color-mix(in srgb,var(--acc) 45%,transparent)}#pbody .sbs.kb .sbp.sba{color:var(--acc)}
+.tbg{display:grid;grid-template-columns:minmax(0,1fr) 72px 72px;gap:6px;align-items:center;max-height:38vh;overflow:auto}.tbg>span{font-size:12px}.tbr{display:contents}.tbr b{font-size:14px}.tbr input{height:40px;text-align:center;font-weight:600;margin:0}#tbs{font-size:13px;margin-top:6px}
 .sbn{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;margin-right:6px;font:700 12px Barlow,sans-serif;background:var(--sc);color:#0a0a0a;vertical-align:2px}
 .vr .vs{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.vr .vs .wd{display:inline-block}
 .vr .vx{grid-column:1/-1;font-size:12px;color:var(--muted);margin-top:-4px}.vr .vx.bad{color:#ff8a80}
@@ -327,7 +329,7 @@ function flowView(){const q=pq.trim().toLowerCase(),A0=groups(),all=A0.filter(g=
   L.forEach(g=>{const n=splitN(g.name);(by[n.b]=by[n.b]||[]).push({g,s:n.s})});
   const names=Object.keys(by).sort((a,b)=>a.localeCompare(b,'id'));
   const ext=g=>{if(s==='rencana')return '<span class="vx">dipesan '+fds(ymd(g.date))+(g.due?' · butuh '+fds(g.due):'')+'</span>';if(s==='cetak'&&g.es)return '<span class="vx'+(W[g.k].lv===2?' bad':'')+'">sampai ± '+fds(g.es)+'</span>';return ''};
-  return '<section class="sb'+(psel&&L.some(g=>g.k===psel)?' cur':'')+'" data-st="'+s+'" style="'+scv(s)+'"><div class="sbh"><span class="sbi">'+MS(SI2[s])+'</span><div class="sbt"><b><span class="sbn">'+(ix+1)+'</span>'+STL[s]+'</b><small>'+L.length+' item · '+dz(tot)+(nw?' · <span style="color:#ff6b6b">'+nw+' tertahan</span>':'')+'</small>'+(s!=='rencana'&&pjName(s)?'<small class="pjn">PJ: '+esc(pjName(s))+'</small>':'')+'</div><button class="ib sbp" title="Cetak A4 '+STL[s]+'" aria-label="Cetak A4 '+STL[s]+'" onclick="printStage(\''+s+'\')">'+MS('printer')+'</button></div><div class="sbl">'
+  return '<section class="sb'+(psel&&L.some(g=>g.k===psel)?' cur':'')+'" data-st="'+s+'" style="'+scv(s)+'"><div class="sbh"><span class="sbi">'+MS(SI2[s])+'</span><div class="sbt"><b><span class="sbn">'+(ix+1)+'</span>'+STL[s]+'</b><small>'+L.length+' item · '+dz(tot)+(nw?' · <span style="color:#ff6b6b">'+nw+' tertahan</span>':'')+'</small>'+(s!=='rencana'&&pjName(s)?'<small class="pjn">PJ: '+esc(pjName(s))+'</small>':'')+'</div>'+(isAdm&&TSTG.includes(s)?'<button class="ib sbp sba" title="Tambah barang ke '+STL[s]+' (Owner & Admin)" aria-label="Tambah barang ke '+STL[s]+'" onclick="addOpen(\''+s+'\')">'+MS('add')+'</button>':'')+'<button class="ib sbp" title="Cetak A4 '+STL[s]+'" aria-label="Cetak A4 '+STL[s]+'" onclick="printStage(\''+s+'\')">'+MS('printer')+'</button></div><div class="sbl">'
   +(names.map(b=>'<div class="vg"><div class="vgn">'+esc(b)+'</div>'+by[b].sort((x,y)=>x.s.localeCompare(y.s,'id',{numeric:true})).map(x=>'<button class="vr'+(x.g.k===psel?' on':'')+'" onclick="ppOpen(\''+esc(x.g.k)+'\')" title="Klik untuk memproses"><span class="vs">'+wdot(W[x.g.k])+esc(x.s||'Standar')+(multi?'<small> · '+esc(gname(x.g.loc))+'</small>':'')+'</span><span class="vq" title="'+nf(x.g.qty)+' pcs">'+dz(x.g.qty)+'</span>'+ext(x.g)+'</button>').join('')+'</div>').join('')||'<div class="sbe">Kosong</div>')+'</div></section>'};
  const _sv={};document.querySelectorAll('#pbody .sbl').forEach(e=>{const s=e.closest('.sb');if(s)_sv[s.dataset.st]=e.scrollTop});
  $('pbody').innerHTML='<div class="sk2"><div class="pbar">'+(gl.length>1?'<select onchange="pg=this.value;flowView()"><option value="Semua"'+(pg==='Semua'?' selected':'')+'>Semua gudang</option>'+gl.map(g=>'<option value="'+esc(g.id)+'"'+(g.id===pg?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select>':'')+'<input id="pq" placeholder="Cari produk" value="'+esc(pq)+'" oninput="pfs(this.value)">'+(()=>{const hc=lkHabis('bahan'),hj=lkHabis('cutting');return '<button class="btn sec lkb lkc" onclick="printKerja(\'bahan\')" title="Cetak lembar kerja tim Cutting dari rak bahan (A4). Stok diambil terbaru dulu.">'+MS('scissors')+'<span><b>Lembar Cutting</b><small>dari rak bahan'+(hc?' <i>'+hc+' habis</i>':'')+'</small></span></button><button class="btn sec lkb lkj" onclick="printKerja(\'cutting\')" title="Cetak lembar kerja tim Jahit dari rak cutting (A4). Stok diambil terbaru dulu.">'+MS('shirt')+'<span><b>Lembar Jahit</b><small>dari rak cutting'+(hj?' <i>'+hj+' habis</i>':'')+'</small></span></button>'})()+(n2?'<span class="wb w2">&#9888; '+n2+' tertahan / lewat tanggal</span>':'')+(n1?'<span class="wb w1">'+n1+' mendekati batas</span>':'')+'</div></div>'
@@ -494,7 +496,7 @@ function edDraw(G){G=G||groups().find(x=>x.k===ED.k);if(!G)return ppClose();cons
  +(p?'<label class="ppl">Ukuran / variasi</label><div class="edc">'+p.variants.map(v=>'<button class="chp'+(String(v.id)===String(ED.vid)?' on':'')+'" onclick="ED.vid=\''+esc(v.id)+'\';edDraw()">'+esc(vl(v))+'</button>').join('')+'</div>':'')
  +'<label class="ppl" for="edl">Jumlah sebenarnya</label><div class="f2 big"><input type="text" inputmode="numeric" data-n id="edl" value="'+esc(dl)+'" oninput="edDiff()" aria-label="Lusin"><span>lusin</span><input type="text" inputmode="numeric" data-n id="edp" value="'+esc(dp)+'" oninput="edDiff()" aria-label="Pcs"><span>pcs</span></div><div id="edd" class="muted"></div>'
  +'<label class="ppl">Penyebab</label><div class="edc">'+ECAUSE.map(c=>'<button class="chp'+(ED.c===c?' on':'')+'" onclick="ED.c=\''+c+'\';edDraw()">'+c+'</button>').join('')+'</div>'
- +'<input id="eal" placeholder="Alasan / keterangan…" value="'+esc(al)+'" style="margin-top:8px" aria-label="Alasan">'
+ +'<input id="eal" placeholder="Keterangan lain (opsional)" value="'+esc(al)+'" style="margin-top:8px" aria-label="Keterangan">'
  +'<div class="pp2 edb"><button class="btn sec" onclick="ppOpen(\''+esc(G.k)+'\')">Batal</button><button class="btn" onclick="edSave()">Simpan koreksi</button></div>';
  edDiff()}
 function edDiff(){const G=groups().find(x=>x.k===(ED&&ED.k)),e=$('edd');if(!G||!e)return;const n=vqty('edl','edp'),d=n-G.qty;
@@ -502,15 +504,40 @@ function edDiff(){const G=groups().find(x=>x.k===(ED&&ED.k)),e=$('edd');if(!G||!
 async function edSave(){const G=groups().find(x=>x.k===(ED&&ED.k));if(!G||!ED)return;if(isV(G))return toast('Masih menyimpan, tunggu sebentar.',1);
  const x=allV().find(o=>String(o.v.id)===String(ED.vid));if(!x)return toast('Pilih produk dan ukurannya.',1);
  const N=vqty('edl','edp'),al=$('eal').value.trim(),nv=x.v.id,nn=cn(x.p,x.v),same=String(nv)===String(G.vid);
- if(same&&N===G.qty)return toast('Tidak ada yang berubah.',1);if(!ED.c)return toast('Pilih penyebabnya.',1);if(!al){$('eal').focus();return toast('Alasan wajib diisi.',1)}
+ if(same&&N===G.qty)return toast('Tidak ada yang berubah.',1);if(!ED.c)return toast('Pilih penyebabnya.',1);
  if(!(await chkSrv()))return;if(srvV<9){srv2=false;await chkSrv();if(srvV<9)return uiAlert('Server belum memakai Produksi.gs versi 9 (fitur edit). Salin Produksi.gs yang baru ke Apps Script, lalu Terapkan > Kelola deployment > pensil > Versi baru > Terapkan.')}
  /* bagi jumlah baru ke potongan order: berkurang diambil dari yang terbaru, bertambah masuk ke yang terlama */
  const parts=[...G.parts].sort((a,b)=>String(lastH(a.j).date).localeCompare(String(lastH(b.j).date))),q=parts.map(p=>p.it.qty);let d=N-G.qty;
  if(d>0)q[0]+=d;else for(let i=q.length-1;i>=0&&d<0;i--){const t=Math.min(q[i],-d);q[i]-=t;d+=t}
- const calls=[],ov=[];parts.forEach((p,i)=>{if(same&&q[i]===p.it.qty)return;calls.push([p.j.id,p.j.stage,ME,al,{},{mode:'edit',from:p.it.vid,vid:nv,name:nn,qty:q[i],cause:ED.c}]);ov.push({k:++PK,jid:p.j.id,vid:p.it.vid,mv:p.it.qty,to:p.j.stage,nv,nn,nq:q[i]})});
- const rows=[['Sebelumnya',esc(G.name)+' · '+dzf(G.qty)],['Menjadi',esc(nn)+' · '+dzf(N)],['Penyebab',esc(ED.c)],['Alasan',esc(al)]];
+ const calls=[],ov=[];parts.forEach((p,i)=>{if(same&&q[i]===p.it.qty)return;calls.push([p.j.id,p.j.stage,ME,al||'',{},{mode:'edit',from:p.it.vid,vid:nv,name:nn,qty:q[i],cause:ED.c}]);ov.push({k:++PK,jid:p.j.id,vid:p.it.vid,mv:p.it.qty,to:p.j.stage,nv,nn,nq:q[i]})});
+ const rows=[['Sebelumnya',esc(G.name)+' · '+dzf(G.qty)],['Menjadi',esc(nn)+' · '+dzf(N)],['Penyebab',esc(ED.c)+(al?' · '+esc(al):'')]];
  if(!(await uiBox({title:'Simpan koreksi?',html:rows.map(r=>'<div class="dr2"><span class="muted">'+r[0]+'</span><b>'+r[1]+'</b></div>').join(''),ok:'Ya, simpan',cancel:'Batal'})))return;
  ED=null;ppClose();enq(calls,ov,nn+': koreksi disimpan')}
+/* ===== Tambah barang langsung ke tahap (Owner & Admin): untuk barang yang ada di rak tapi belum tercatat ===== */
+const TSTG=['bahan','cutting','jahit','finishing'],TCAUSE=['Temuan audit','Lupa dicatat','Lainnya'];let TB=null;
+function addOpen(st){if(!isAdm)return toast('Hanya Owner dan Admin yang bisa menambah barang.',1);if(!TSTG.includes(st))return;
+ const gl=GL();TB={st,pid:'',loc:pg!=='Semua'?pg:(gl[0]?gl[0].id:''),c:'',q:{}};tbDraw();$('pp').classList.add('on')}
+function tbKeep(){if(!TB)return;document.querySelectorAll('#ppc [data-tv]').forEach(r=>{const l=r.querySelector('.tl'),p=r.querySelector('.tp');TB.q[r.dataset.tv]=[l?l.value:'',p?p.value:'']});const n=$('tnt');if(n)TB.nt=n.value}
+function tbDraw(){if(!TB)return;const P=[...S.products].filter(p=>p.variants&&p.variants.length).sort((a,b)=>a.name.localeCompare(b.name)),p=P.find(o=>String(o.id)===String(TB.pid)),gl=GL();
+ $('ppc').innerHTML='<div class="pph">'+schip(TB.st)+'<b class="edt">Tambah barang</b><span class="ppa"><button class="ppx" onclick="tbClose()" title="Tutup" aria-label="Tutup">'+XIC+'</button></span></div>'
+ +'<div class="muted eds">Untuk barang yang fisiknya ada di '+esc(STL[TB.st].toLowerCase())+' tapi belum tercatat.</div>'
+ +'<label class="ppl" for="tpr">Produk</label><select id="tpr" onchange="tbKeep();TB.pid=this.value;TB.q={};tbDraw()">'+(p?'':'<option value="">Pilih produk…</option>')+P.map(o=>'<option value="'+esc(o.id)+'"'+(p&&o.id===p.id?' selected':'')+'>'+esc(o.name)+(o.cat?' · '+esc(o.cat):'')+'</option>').join('')+'</select>'
+ +(p?'<label class="ppl">Jumlah per ukuran</label><div class="tbg"><span class="muted">Ukuran</span><span class="muted">Lusin</span><span class="muted">Pcs</span>'+p.variants.map(v=>{const q=TB.q[v.id]||['',''];return '<div class="tbr" data-tv="'+esc(v.id)+'"><b>'+esc(vl(v))+'</b><input class="tl" type="text" inputmode="numeric" data-n placeholder="0" value="'+esc(q[0])+'" oninput="tbSum()" aria-label="Lusin '+esc(vl(v))+'"><input class="tp" type="text" inputmode="numeric" data-n placeholder="0" value="'+esc(q[1])+'" oninput="tbSum()" aria-label="Pcs '+esc(vl(v))+'"></div>'}).join('')+'</div><div id="tbs" class="muted"></div>':'')
+ +(gl.length>1?'<label class="ppl" for="tlc">Gudang</label><select id="tlc" onchange="TB.loc=this.value">'+gl.map(g=>'<option value="'+esc(g.id)+'"'+(g.id===TB.loc?' selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select>':'')
+ +'<label class="ppl">Penyebab</label><div class="edc">'+TCAUSE.map(c=>'<button class="chp'+(TB.c===c?' on':'')+'" onclick="tbKeep();TB.c=\''+c+'\';tbDraw()">'+c+'</button>').join('')+'</div>'
+ +'<input id="tnt" placeholder="Keterangan lain (opsional)" value="'+esc(TB.nt||'')+'" style="margin-top:8px" aria-label="Keterangan">'
+ +'<div class="pp2 edb"><button class="btn sec" onclick="tbClose()">Batal</button><button class="btn" onclick="tbSave()">Tambahkan ke '+esc(STL[TB.st])+'</button></div>';
+ tbSum()}
+function tbRows(){const out=[];document.querySelectorAll('#ppc [data-tv]').forEach(r=>{const n=(Math.max(0,Math.floor(+r.querySelector('.tl').value||0))*12)+Math.max(0,Math.floor(+r.querySelector('.tp').value||0));if(n>0)out.push({vid:r.dataset.tv,n})});return out}
+function tbSum(){const e=$('tbs');if(!e)return;const R=tbRows(),t=R.reduce((a,r)=>a+r.n,0);e.textContent=t?'Total: '+dz(t)+' ('+R.length+' ukuran)':'Isi jumlah di ukuran yang ditemukan.'}
+function tbClose(){TB=null;$('pp').classList.remove('on')}
+async function tbSave(){if(!TB)return;const R=tbRows();if(!TB.pid)return toast('Pilih produk dulu.',1);if(!R.length)return toast('Isi jumlah minimal satu ukuran.',1);if(!TB.c)return toast('Pilih penyebabnya.',1);
+ const loc=$('tlc')?$('tlc').value:TB.loc,nt=($('tnt').value||'').trim(),items=R.map(r=>{const x=allV().find(o=>String(o.v.id)===String(r.vid));return{vid:r.vid,name:x?cn(x.p,x.v):'',qty:r.n}}),tot=R.reduce((a,r)=>a+r.n,0);
+ if(!(await chkSrv()))return;if(srvV<11){srv2=false;await chkSrv();if(srvV<11)return uiAlert('Server belum memakai Produksi.gs versi 11 (fitur tambah barang). Salin Produksi.gs yang baru ke Apps Script, lalu Terapkan > Kelola deployment > pensil > Versi baru > Terapkan.')}
+ const rows=[['Tahap',esc(STL[TB.st])+(GL().length>1?' · '+esc(gname(loc)):'')],...items.map(i=>[esc(i.name),dzf(i.qty)]),['Total',dzf(tot)],['Penyebab',esc(TB.c)+(nt?' · '+esc(nt):'')]];
+ if(!(await uiBox({title:'Tambahkan barang?',html:rows.map(r=>'<div class="dr2"><span class="muted">'+r[0]+'</span><b>'+r[1]+'</b></div>').join(''),ok:'Ya, tambahkan',cancel:'Batal'})))return;
+ const st=TB.st,c=TB.c;tbClose();toast('Menyimpan…');
+ try{await api('jobAdvance','__tambah__',{},ME,nt,{},{stage:st,loc,cause:c,note:nt,items});await load(true);toast(dz(tot)+' ditambahkan ke '+STL[st])}catch(e){toast('Gagal menambah: '+e.message,1)}}
 /* batalkan order (masih di vendor) / hapus permanen — lewat server */
 async function pdel(k){const G=groups().find(x=>x.k===k);if(!G||isV(G))return;const c=G.st==='cetak'||G.st==='rencana';if(c?!can('prod_buat'):!can('hapus'))return;
  const al=await uiPrompt(c?'Batalkan '+dz(G.qty)+' "'+G.name+'"? Tetap tersimpan di riwayat sebagai Dibatalkan. Tulis alasannya:':'Hapus permanen '+dz(G.qty)+' "'+G.name+'"? Riwayatnya ikut hilang. Tulis alasannya:','',{ok:c?'Batalkan order':'Hapus permanen',danger:true});
