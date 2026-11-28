@@ -242,7 +242,7 @@ td.lt,.lt{color:#ff8a80;font-weight:600}
 <div id="plabels"></div>
 <script>window.PAGE_TABS=["produksi","produksiK"];window.PAGE_HOME="produksi";</script>
 <script src="ikon.js?v=2"></script>
-<script src="inti.js?v=20261127e"></script>
+<script src="inti.js?v=20261128a"></script>
 <script>
 /* =====================================================================
    MENU PRODUKSI (v6)
@@ -451,7 +451,7 @@ function panel(G,W){if(G.st==='rencana'&&LN()!=='kaos')return panelR(G,W);
  const rjSel='<div class="r2"><select id="ra" title="Alasan reject"><option value="">Alasan reject…</option>'+RSN.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select><select id="rt" title="Tindak lanjut reject"><option value="buang">Buang / afkir</option>'+(LN()==='kaos'?LSTK.slice(1,Math.max(1,LSTK.indexOf(G.st)+1)):RS.slice(0,ix+1)).map(s=>'<option value="'+s+'">'+(s==='cetak'?'Cetak ulang di vendor':'Perbaiki di '+STL[s])+'</option>').join('')+'</select></div>';
  if(!cet){const one=oth.length===1;
   const d1=dDef(G),npj=needPj(G),npt=needPt(G),jk=jhKdw(G);
-  if(jk&&!isAdm)return h+'<div class="card" style="margin:10px 0;padding:12px;border-color:var(--lmb)"><b>Pindah ke Finishing lewat setor jahit</b><p class="muted" style="margin:6px 0 0">Di Workshop Kedawung, barang Jahit pindah ke Finishing setelah unit jahit menyetor di menu Kinerja dan disetujui supervisor. Pemindahan manual khusus Owner/Admin.</p></div>'
+  if(jk&&!manOk())return h+'<div class="card" style="margin:10px 0;padding:12px;border-color:var(--lmb)"><b>Pindah ke Finishing lewat setor jahit</b><p class="muted" style="margin:6px 0 0">Di Workshop Kedawung, barang Jahit pindah ke Finishing setelah unit jahit menyetor di menu Kinerja dan disetujui supervisor. Pemindahan manual khusus Owner, Admin, dan akun yang diberi izin "Pindah manual Jahit → Finishing".</p></div>'
    +'<label class="ppl" for="dl">Jumlah untuk kirim / kembalikan</label><div class="f2"><input '+ni+' id="dl" value="'+Math.floor(G.qty/12)+'" aria-label="Lusin"><span>lusin</span><input '+ni+' id="dp" value="'+G.qty%12+'" aria-label="Pcs"><span>pcs</span></div>'
    +(oth.length>1?'<select id="kt" class="kts" aria-label="Workshop tujuan">'+oth.map(x=>'<option value="'+esc(x.id)+'">Kirim ke '+esc(x.name)+'</option>').join('')+'</select>':'')+'<div class="pp2">'+(oth.length?'<button class="btn sec" onclick="psend(\''+k+'\')">'+MS('truck')+(one?'Kirim ke '+esc(oth[0].name):'Kirim')+'</button>':'')+(pv?'<button class="btn sec bk2" onclick="pback(\''+k+'\')">'+MS('undo')+'Kembali '+STL[pv]+'</button>':'')+'</div><details><summary>Rincian & riwayat</summary>'+gabH(G)+'</details></div>';
   h+='<label class="ppl" for="dl">Jumlah</label><div class="f2 big"><input '+ni+' id="dl" value="'+Math.floor(d1/12)+'" oninput="prc(\''+k+'\')" aria-label="Lusin"><span>lusin</span><input '+ni+' id="dp" value="'+d1%12+'" oninput="prc(\''+k+'\')" aria-label="Pcs"><span>pcs</span></div>'
@@ -461,7 +461,7 @@ function panel(G,W){if(G.st==='rencana'&&LN()!=='kaos')return panelR(G,W);
   +(npj?'<label class="ppl" for="pjh">Unit jahit <small class="muted">(wajib)</small></label><div class="pjw"><select id="pjh" data-loc="'+esc(G.loc)+'"></select>'+(isAdm?'<button type="button" class="ib pjr" onclick="pjhSync(1)" title="Perbarui daftar dari data karyawan" aria-label="Perbarui daftar unit jahit">'+LKI('refresh')+'</button>':'')+'</div>':'')
   +'<label class="ppl" for="rj">Reject</label><div class="rjr"><input '+ni+' id="rj" placeholder="0 pcs" oninput="prc(\''+k+'\')" aria-label="Reject (pcs)"><input id="nt" placeholder="'+(jk?'Alasan pindah manual (wajib)':'Catatan…')+'" aria-label="Catatan"></div><div id="rjx" hidden>'+rjSel+'</div>'
   +(isMk(G.loc)?'<label class="ppl" for="tg2">Diterima dari makloon di workshop</label><select id="tg2">'+GL().map(g=>'<option value="'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</select>':'')
-  +'<button class="btn wide go" style="'+scv(nx)+'" onclick="padv(\''+k+'\')">'+(jk?'Pindah manual ke Finishing (Owner/Admin)':nx==='selesai'?'Selesai: masuk stok POS':'Pindahkan ke '+STL[nx])+'</button>'
+  +'<button class="btn wide go" style="'+scv(nx)+'" onclick="padv(\''+k+'\')">'+(jk?'Pindah manual ke Finishing':nx==='selesai'?'Selesai: masuk stok POS':'Pindahkan ke '+STL[nx])+'</button>'
   +(oth.length>1?'<select id="kt" class="kts" aria-label="Workshop tujuan">'+oth.map(x=>'<option value="'+esc(x.id)+'">Kirim ke '+esc(x.name)+'</option>').join('')+'</select>':'')
   +'<div class="pp2">'+(oth.length?'<button class="btn sec" onclick="psend(\''+k+'\')">'+MS('truck')+(one?'Kirim ke '+esc(oth[0].name):'Kirim')+'</button>':'')
   +(pv?'<button class="btn sec bk2" onclick="pback(\''+k+'\')">'+MS('undo')+'Kembali '+STL[pv]+'</button>':'')+'</div>';
@@ -519,6 +519,8 @@ async function pjhFetch(){const t=(typeof TOK!=='undefined'&&TOK)||(getCred()||{
 const kJ=k=>k.j===undefined||!!k.j,kP=k=>!!k.p;
 const needPt=G=>nxSt(G.st)==='cutting'&&G.st!=='cetak'&&isKdw(G.loc);
 const jhKdw=G=>G.st==='jahit'&&nxSt(G.st)==='finishing'&&isKdw(G.loc);
+/* pindah manual Jahit → Finishing di Kedawung: Owner, Admin, atau akun berizin prod_jahit_manual */
+const manOk=()=>isAdm||can('prod_jahit_manual');
 function ptOpts(loc){const L=pjhList().l.filter(kP),w=L.filter(k=>k.gud===String(loc));return (w.length?w:L).map(k=>({v:'k:'+k.id,pj:k.nama,id:k.id,lab:k.nama}))}
 function ptFill(){const s=$('pth');if(!s)return;const O=ptOpts(s.dataset.loc),cur=s.value||lpj('pt_'+s.dataset.loc);s.innerHTML=O.length?'<option value="">Pilih pemotong…</option>'+O.map(o=>'<option value="'+esc(o.v)+'"'+(o.v===cur?' selected':'')+'>'+esc(o.lab)+'</option>').join(''):'<option value="">Daftar pemotong belum ada — minta Owner/Admin memperbarui</option>'}
 let pjhBusy=false,pjhTried=false;
@@ -559,7 +561,7 @@ async function padv(k){const G=groups().find(x=>x.k===k);if(!G)return;if(isV(G))
  const nx=nxSt(G.st),fix=r>0&&rt!=='buang'?rt:'';
  let pj=null,pjv='';if(needPj(G)&&d>0){const s=$('pjh');pjv=s?s.value:'';const o=pjv&&pjhOpts(G.loc).find(x=>x.v===pjv);if(!o){if(s)s.focus();return toast(pjhList().l.length?'Pilih unit jahit dulu (wajib untuk Workshop Kedawung).':'Daftar unit jahit belum ada. Minta Owner/Admin membuka menu Produksi atau Atur → Unit jahit.',1)}pj={id:o.id,nama:o.pj}}
  let pt=null,ptv='';if(needPt(G)&&d>0){const s=$('pth');ptv=s?s.value:'';const o=ptv&&ptOpts(G.loc).find(x=>x.v===ptv);if(!o){if(s)s.focus();return toast(pjhList().l.some(kP)?'Pilih pemotong dulu (wajib untuk Workshop Kedawung).':'Daftar pemotong belum ada. Minta Owner/Admin memperbarui di Atur → Unit jahit & pemotong.',1)}pt={id:o.id,nama:o.pj}}
- const jkm=jhKdw(G)&&d>0;if(jkm){if(!isAdm)return toast('Di Kedawung, Jahit → Finishing lewat setor jahit di menu Kinerja.',1);if(!nt.trim()){$('nt').focus();return toast('Isi alasan pindah manual di kolom catatan.',1)}}
+ const jkm=jhKdw(G)&&d>0;if(jkm){if(!manOk())return toast('Di Kedawung, Jahit → Finishing lewat setor jahit di menu Kinerja.',1);if(!nt.trim()){$('nt').focus();return toast('Isi alasan pindah manual di kolom catatan.',1)}}
  const rows=[[cet?'Diterima':'Jadi dipindah',d?dzf(d):'-']];if(pj)rows.push(['Unit jahit',esc(pj.nama)]);if(pt)rows.push(['Pemotong',esc(pt.nama)]);if(jkm)rows.push(['Pindah manual','tanpa setoran (tercatat di rekap unit)']);if(r)rows.push(['Reject',r+' pcs · '+esc(ra)],['Tindak lanjut',fix?(fix==='cetak'?'Cetak ulang di vendor':'Perbaiki di '+STL[fix]):'Buang / afkir']);
  rows.push(['Sisa di '+STL[G.st],dzf(G.qty-d-r)]);if(cet||$('tg2'))rows.push(['Masuk ke workshop',esc(gname(g))]);if(nt)rows.push(['Catatan',esc(nt)]);
  if(!(await uiBox({title:cet?'Terima dari vendor?':'Pindahkan produk?',html:mvSum(G,rows,STL[G.st],nx==='selesai'?'Masuk stok POS':STL[nx],G.st,nx,cet?0:d),ok:'Ya, simpan',cancel:'Batal'})))return;
