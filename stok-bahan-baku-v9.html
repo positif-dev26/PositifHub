@@ -400,6 +400,10 @@ POSBAR.mount({active:'bahan'});
 // URL Web App Google Apps Script (berakhiran /exec). Masuk otomatis memakai akun Positif POS.
 var API="https://script.google.com/macros/s/AKfycbxIEy8C4YY0H_DJJHRWjAA38YvpD2M01Kb7H-zcvaXqnFWJk0HWnIgg2Vtj0MMivl41/exec";
 // ========================
+/* v12 (28 Nov 2026): peran "kantor" dihapus. Hak akses langsung dari akun Positif POS:
+   Owner & Admin = semua. Supervisor = semua kecuali hapus bahan & kelola divisi.
+   Staf = ambil, request order, ubah pengambilan sendiri; tambahan lewat izin POS
+   bahan_kelola (kelola bahan & stok), bahan_order (kelola order), bahan_alat (inventaris alat). */
 /* v10: tanpa "Dalam perjalanan" (order lama di tahap itu dianggap Dibelanjakan) */
 var ST=["Diminta","Dibelanjakan","Sampai gudang","Unboxing","Masuk rak"],SAT=["pcs","pack","roll","kg","cone","botol"],KOND=["Baik","Perlu servis","Rusak"];
 var S={Bahan:[],Divisi:[],Order:[],Riwayat:[],Alat:[]},me=null,READY=false,VER=-1,CK="",view="ambil",fs="Semua",fd="Semua",qs="",ex={},foc=null,pend=0,lm="minggu",lo=0,cart={},cat="",pm=null,ot=null,ad=null,sq=Promise.resolve(),W=(function(){try{return localStorage.getItem("ws")||"1"}catch(e){return"1"}})();
@@ -410,7 +414,7 @@ var RSEL={},OSEL={},MSEL={};
 var GNM={"1":"Workshop Wonodadi","2":"Workshop Kedawung"},GN=function(){return GNM[W]||("Gudang "+W)};
 
 // ---- ikon ----
-var MSN={dash:'dashboard',swap:'swap_horiz',box:'box',layers:'layers',cart:'shopping_cart',wrench:'build',user:'person',users:'group',chart:'bar_chart',hist:'history',out:'logout',inn:'login',chev:'expand_more',scissors:'content_cut',shirt:'checkroom',printer:'print',tag:'sell',sticker:'sticky_note_2',receipt:'receipt_long',dots:'more_horiz',x:'close',gear:'settings',barcode:'barcode'};
+var MSN={dash:'dashboard',swap:'swap_horiz',box:'box',layers:'layers',cart:'shopping_cart',wrench:'build',user:'person',users:'group',chart:'bar_chart',hist:'history',out:'logout',inn:'login',chev:'expand_more',scissors:'content_cut',shirt:'checkroom',printer:'print',tag:'sell',sticker:'sticky_note_2',receipt:'receipt_long',dots:'more_horiz',x:'close',gear:'settings',barcode:'barcode',archive:'archive',delete:'delete'};
 (function(){if(!document.querySelector('link[data-ms]')){var l=document.createElement('link');l.rel='stylesheet';l.setAttribute('data-ms','1');l.href='https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block';document.head.appendChild(l)}if(!document.getElementById('mscss')){var s=document.createElement('style');s.id='mscss';s.textContent='.ms{font-family:"Material Symbols Sharp";font-weight:400;font-style:normal;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;-webkit-font-smoothing:antialiased;font-feature-settings:"liga";-webkit-font-feature-settings:"liga";font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24;transition:font-variation-settings .15s;user-select:none;overflow:hidden;line-height:1;flex:none;width:1em;height:1em}.ms{display:inline-block;vertical-align:middle;font-size:20px}.dvt .ig .ms{font-size:34px}#rail .ri .ms{font-size:22px;display:block}.acb .ms{font-size:22px}.acb .ms:last-child{font-size:16px}.ddm .ms{font-size:20px;color:var(--mu)}#rail .ri.on .ms,.rmm button.on .ms{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}@media(max-width:760px){#rail .ri .ms{font-size:24px}.dvt .ig .ms{font-size:26px}}';document.head.appendChild(s)}})();
 var IC=function(n){return'<span class="ms" aria-hidden="true">'+(MSN[n]||n)+'</span>'};
 function tgAcc(e){e.stopPropagation();var m=$("accm");if(m)m.classList.toggle("o")}
@@ -421,14 +425,19 @@ var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){re
 var uid=function(){return"x"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
 var rd=function(v){return Math.round(v*1000)/1000};
 var idx=function(t,id){for(var i=0;i<t.length;i++)if(t[i].id==id)return i;return-1};
-var kantor=function(){return me&&me.role=="kantor"};
+/* ===== HAK AKSES: langsung dari akun Positif POS (peran + izin). Aturan sama dengan Code.gs ===== */
+var RLN={owner:"Owner",admin:"Admin",supervisor:"Supervisor",staf:"Staf"};
+function aksesDari(role,perm){role=String(role||"").trim().toLowerCase();perm=Array.isArray(perm)?perm:[];
+  var full=role=="owner"||role=="admin",top=full||role=="supervisor",h=function(k){return perm.indexOf(k)>=0};
+  return{role:role,full:full,kelola:top||h("bahan_kelola"),order:top||h("bahan_order"),alat:top||h("bahan_alat")}}
+var AK=function(){return(me&&me.ak)||{}};
+var kelola=function(){return!!AK().kelola};      /* tambah/edit bahan, stok, kain, arsip */
+var bisaHapus=function(){return!!AK().full};     /* hapus bahan & kelola divisi: Owner/Admin */
+var bisaAlat=function(){return!!AK().alat};      /* inventaris alat */
 /* boleh memproses order restok: Admin/Supervisor, atau izin POS "Stok bahan: kelola order" */
-var bisaOrd=function(){return!!me&&(me.role=="kantor"||!!me.ord)};
-var ed=kantor;
-/* peran dari server bisa berupa nama peran POS (admin/supervisor) -> disamakan jadi "kantor" */
-function nrole(r){r=String(r||"").toLowerCase();return r=="admin"||r=="supervisor"||r=="kantor"?"kantor":r}
-var rlName=function(){return!me?"belum masuk":me.role=="kantor"?"Kantor":me.role=="editor"?"Editor":"Pengambil"};
-var noEd=function(){return ed()?"":'<div class="al y" style="margin-top:12px"><span>Anda masuk sebagai <b>'+esc(me?me.name:"-")+'</b> ('+rlName()+'). Edit dan hapus bahan hanya untuk akun Admin/Supervisor di Positif POS.</span></div>'};
+var bisaOrd=function(){return!!AK().order};     /* proses & batalkan order restok */
+var rlName=function(){return!me?"belum masuk":RLN[AK().role]||AK().role||"-"};
+var noEd=function(){return kelola()?"":'<div class="al y" style="margin-top:12px"><span>Anda masuk sebagai <b>'+esc(me?me.name:"-")+'</b> ('+rlName()+'). Edit bahan hanya untuk Owner, Admin, Supervisor, atau akun dengan izin POS "Stok bahan: kelola bahan &amp; stok".</span></div>'};
 function toast(m){var t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(function(){t.style.display="none"},2600)}
 /* kotak konfirmasi bertema (pengganti confirm bawaan browser) */
 function ask(m,okL){return new Promise(function(res){var d=$("cf"),fin=function(v){d.onclose=null;if(d.open)d.close();res(v)};
@@ -445,34 +454,36 @@ function setData(d){S={Bahan:d.Bahan||[],Divisi:d.Divisi||[],Order:d.Order||[],R
 var hasHist=function(id){return S.Riwayat.some(function(h){return h.bahanId==id})||S.Order.some(function(o){return o.bahanId==id})};
 
 // ---- aturan data (sama dengan Code.gs, dipakai supaya perubahan langsung tampil) ----
-function run(L,p,role,a){
-  var E=function(m){return{ok:0,err:m}},ok={ok:1},kt=role=="kantor",
+function run(L,p,ak,a){
+  var E=function(m){return{ok:0,err:m}},ok={ok:1},NK="Akun Anda tidak punya izin kelola bahan",
   gl=function(id){return L.Bahan[idx(L.Bahan,id)]},par=function(id){return L.Bahan.some(function(b){return b.parent==id})},
   dup=function(rid){return!!rid&&L.Riwayat.some(function(h){return h.id==rid})};
-  if(!role)return E("Masuk dulu di Positif POS");
+  if(!ak||!ak.role)return E("Masuk dulu di Positif POS");
   switch(p.op){
   case"upsert":if(["Bahan","Divisi","Order","Alat"].indexOf(p.sheet)<0)return E("Tabel tidak valid");
     var t=L[p.sheet],row=p.row,i=idx(t,row.id);
     if(p.sheet=="Order"){if(i<0){var ob=gl(row.bahanId);if(row.status!="Diminta"||!(Number(row.qty)>0))return E("Order tidak valid");
         if(!ob||ob.arsip)return E("Bahan tidak ada");if(par(ob.id))return E("Pilih variasinya, bukan bahan utama")}
-      else if(!kt&&!(me&&me.ord))return E("Akun Anda tidak punya izin memproses order restok")
+      else if(!ak.order)return E("Akun Anda tidak punya izin memproses order restok")
       if(i<0&&L.Order.some(function(o){return o.bahanId==row.bahanId&&open_(o)}))return E("Bahan ini masih dalam proses order")}
-    else{if(!kt)return E("Hanya kantor yang boleh mengubah data");
+    else{if(p.sheet=="Alat"){if(!ak.alat)return E("Akun Anda tidak punya izin inventaris alat")}
+      else if(p.sheet=="Divisi"){if(!ak.full&&!(ak.kelola&&i<0&&/^kain$/i.test(String(row.nama||"").trim())))return E("Hanya Owner/Admin yang boleh mengatur divisi")}
+      else if(!ak.kelola)return E(NK);
       if(p.sheet=="Bahan"){var ex0=i<0?null:t[i];if(!String(row.nama||"").trim())return E("Isi nama");if(!DVof(L,row.divisi))return E("Divisi tidak ada");
         if(row.parent){var pr=gl(row.parent);if(!pr||pr.parent||row.parent==row.id)return E("Bahan utama tidak valid");
           if(!ex0&&Number(pr.stok||0)!==0)return E("Stok "+pr.nama+" masih "+pr.stok+". Pindahkan dulu ke variasi.")}
         row.stok=ex0?ex0.stok:0;row.arsip=ex0?(ex0.arsip||""):""}}
     if(i<0)t.push(row);else t[i]=row;return ok;
-  case"del":if(!kt)return E("Hanya kantor yang boleh menghapus");
+  case"del":if(p.sheet=="Alat"?!ak.alat:!ak.full)return E(p.sheet=="Alat"?"Akun Anda tidak punya izin inventaris alat":"Hanya Owner/Admin yang boleh menghapus");
     if(p.sheet=="Bahan"){if(par(p.id))return E("Hapus variasinya dulu");
       if(L.Riwayat.some(function(h){return h.bahanId==p.id})||L.Order.some(function(o){return o.bahanId==p.id}))return E("Bahan ini punya riwayat atau order. Arsipkan saja.")}
     else if(p.sheet=="Divisi"){if(L.Bahan.some(function(b){return b.divisi==p.id}))return E("Masih ada bahan di divisi ini, pindahkan dulu")}
     else if(["Order","Alat"].indexOf(p.sheet)<0)return E("Tabel tidak valid");
     L[p.sheet]=L[p.sheet].filter(function(x){return x.id!=p.id});return ok;
-  case"arsip":if(!kt)return E("Hanya kantor yang boleh mengarsipkan");var n=0;
+  case"arsip":if(!ak.kelola)return E(NK);var n=0;
     L.Bahan.forEach(function(b){if(b.id==p.id||b.parent==p.id){b.arsip=p.on?"1":"";n++}});return n?ok:E("Bahan tidak ada");
   case"adjust":var b=gl(p.id),d=rd(Number(p.delta));if(!b||!d)return E("Data tidak valid");if(dup(p.rid))return ok;
-    if(b.arsip)return E("Bahan sudah diarsipkan");if(d>0&&!kt)return E("Hanya kantor yang boleh menambah stok");
+    if(!ak.kelola)return E(NK);if(b.arsip)return E("Bahan sudah diarsipkan");
     var nv=rd(Number(b.stok)+d);if(nv<0)return E("Stok tidak cukup");if(par(b.id)&&nv!==0)return E("Stok bahan utama dihitung dari variasinya");
     b.stok=nv;L.Riwayat.push({id:p.rid||uid(),tgl:p.t||new Date().toISOString(),bahanId:b.id,jumlah:d,oleh:a.name,ket:p.ket||""});return ok;
   case"ambil":var it=p.items||[],j,bb,qq;if(!it.length)return E("Keranjang kosong");if(dup(it[0].rid))return ok;
@@ -484,7 +495,7 @@ function run(L,p,role,a){
     for(mk=0;mk<mi.length;mk++){mx=mi[mk];mb=gl(mx.bahanId);if(!mb||mb.arsip)return E("Bahan tidak ada");if(!(Number(mx.qty)>0))return E("Jumlah "+mb.nama+" tidak valid");
       if(par(mb.id))return E("Pilih variasi "+mb.nama);if(L.Order.some(function(o){return o.bahanId==mb.id&&open_(o)}))return E(mb.nama+" masih dalam proses order")}
     mi.forEach(function(x){L.Order.push({id:x.id,bahanId:x.bahanId,qty:Number(x.qty),diterima:"",pemohon:a.name,urgensi:p.urgensi||"Biasa",catatan:p.catatan||"",status:"Diminta",tgl:tm,log:"Diminta|"+a.name+"|"+tm,beli:""})});return ok;
-  case"ordstep":if(!kt&&!(me&&me.ord))return E("Akun Anda tidak punya izin memproses order restok");
+  case"ordstep":if(!ak.order)return E("Akun Anda tidak punya izin memproses order restok");
     var ti=ST.indexOf(p.to),oi=p.items||[],ts=p.t||new Date().toISOString(),os=[],ok2;if(ti<1||!oi.length)return E("Data tidak valid");
     for(ok2=0;ok2<oi.length;ok2++){var oo=L.Order[idx(L.Order,oi[ok2].id)];if(!oo||!open_(oo))return E("Order sudah selesai atau dibatalkan");
       if(ST.indexOf(stOf(oo))!=ti-1)return E("Tahap order sudah berubah di perangkat lain. Muat ulang halaman.");os.push(oo)}
@@ -494,7 +505,7 @@ function run(L,p,role,a){
         if(bq&&q>0&&!dup(x.rid)){bq.stok=rd(Number(bq.stok)+q);L.Riwayat.push({id:x.rid||uid(),tgl:ts,bahanId:bq.id,jumlah:q,oleh:a.name,ket:"Restok order"})}}
       o.status=p.to;o.log=(o.log?o.log+";":"")+p.to+"|"+a.name+"|"+ts+(p.to=="Dibelanjakan"?"|"+o.beli:"")});return ok;
   case"editambil":var h=L.Riwayat[idx(L.Riwayat,p.id)],q=Number(p.jumlah);
-    if(!h||h.jumlah>=0)return E("Data tidak valid");if(!kt&&h.oleh!=a.name)return E("Hanya pengambil atau kantor yang boleh mengubah");
+    if(!h||h.jumlah>=0)return E("Data tidak valid");if(!ak.kelola&&h.oleh!=a.name)return E("Hanya pengambil atau pengelola bahan yang boleh mengubah");
     if(!(q>0))return E("Jumlah tidak valid");var b2=gl(h.bahanId);if(!b2)return E("Bahan tidak ada");
     var df=-q-Number(h.jumlah);if(Number(b2.stok)+df<0)return E("Stok tidak cukup");
     b2.stok=rd(Number(b2.stok)+df);h.jumlah=-q;return ok}
@@ -519,7 +530,7 @@ function cacheLoad(){try{var o=JSON.parse(localStorage.getItem(CK)||"null");if(o
 var setSync=function(t){$("sync").textContent=t};
 /* perubahan: tampil langsung, dikirim ke server di belakang layar (berurutan) */
 async function call(op,p){p=p||{};p.op=op;p.auth=AUTH();
-  var c=JSON.parse(JSON.stringify(S)),r0=run(c,p,me&&me.role,p.auth);
+  var c=JSON.parse(JSON.stringify(S)),r0=run(c,p,AK(),p.auth);
   if(!r0.ok){toast(r0.err);return r0}
   setData(c);render();cacheSave();pend++;setSync("Menyimpan...");
   sq=sq.then(function(){return send(p)}).then(function(x){pend--;
@@ -531,7 +542,7 @@ async function call(op,p){p=p||{};p.op=op;p.auth=AUTH();
 async function refresh(){if(pend)return;
   try{var r=await send({op:"load",auth:AUTH(),ver:VER});
     if(!r.ok){if(/AUTH/.test(r.err||""))return sesiHabis();setSync("Koneksi bermasalah");return}
-    if(me&&r.ord!=null)me.ord=!!r.ord;
+    if(me&&r.ak)me.ak=r.ak;
     if(r.data&&!pend){VER=r.ver;setData(r.data);cacheSave();READY=true;render()}
     setSync("Tersinkron")}catch(e){setSync("Offline · data terakhir")}}
 
@@ -557,7 +568,7 @@ var ordW=function(){return S.Order.filter(function(o){return inW(o.bahanId)})};
 function setW(w){W=w;fd="Semua";cart={};ad=null;try{localStorage.setItem("ws",w)}catch(e){}render()}
 function render(){
     $("w1").className=W=="1"?"on":"";$("w2").className=W=="2"?"on":"";
-  var rl=me?(me.role=="kantor"?"Kantor":me.role=="editor"?"Editor":"Pengambil"):"";
+  var rl=rlName();
   if(0)$("who").innerHTML='<button class="acb'+(view=="lap"||view=="riwayat"?" on":"")+'" onclick="tgAcc(event)">'+IC("user")+'<b>Laporan</b>'+IC("chev")+'</button><div class="ddm" id="accm">'+(me?'<div class="whoi">Masuk sebagai <b>'+esc(me.name)+'</b> · '+rl+'</div>':"")+'<button onclick="go(\'lap\')">'+IC("chart")+'Laporan</button><button onclick="go(\'riwayat\')">'+IC("hist")+'Riwayat</button></div>';
   var lv=leaves(),c={habis:0,tipis:0,aman:0},ns=0,nk=0;lv.forEach(function(b){var s=sts(b);c[s]++;if(s!="aman"){if(isK(b))nk++;else ns++}});
   var cn={stok:ns,kain:nk,order:ordW().filter(open_).length};window.CN=cn;
@@ -610,14 +621,14 @@ function vStok(){var its=items(false),filt=!!qs||fs!="Semua",
     return'<section class="dvb"><div class="dvh"><h3>'+esc(nm)+'</h3><span class="mu">'+l.length+' bahan</span><span class="sp"></span>'+(nh?'<span class="bd habis">'+nh+' habis</span>':"")+(nt?'<span class="bd tipis">'+nt+' menipis</span>':"")+(!nh&&!nt&&l.length?'<span class="bd aman">Semua aman</span>':"")+'</div><div class="gr dvg">'+(l.map(function(it){return stCard(it.m)}).join("")||'<div class="mu">Belum ada bahan di divisi ini.</div>')+'</div></section>'},
   out=dvs.map(function(d){return box(d.name||d.nama,its.filter(function(it){return it.m.divisi==d.id}))}).join("");
   if(fd=="Semua"){var rest=its.filter(function(it){return!dvs.some(function(d){return d.id==it.m.divisi})});if(rest.length)out+=box("Lainnya",rest)}
-  return'<div class="bar">'+sbox()+dsel()+'<span class="sp"></span>'+(ed()?'<button class="pri" onclick="dBahan()">+ Bahan</button><button onclick="dDiv()">Kelola divisi</button>':"")+(nArs()?'<button onclick="dArsip()">Arsip ('+nArs()+')</button>':"")+'</div>'
+  return'<div class="bar">'+sbox()+dsel()+'<span class="sp"></span>'+(kelola()?'<button class="pri" onclick="dBahan()">+ Bahan</button>':"")+(bisaHapus()?'<button onclick="dDiv()">Kelola divisi</button>':"")+(nArs()?'<button onclick="dArsip()">Arsip ('+nArs()+')</button>':"")+'</div>'
   +'<div class="bar chips">'+spills(false)+'</div>'
   +(out||'<div class="mu">Belum ada bahan di '+GN()+(fd!="Semua"?" untuk divisi ini":"")+'.</div>')}
 var nArs=function(){return S.Bahan.filter(function(b){return b.arsip&&wsOf(b)==W&&(!b.parent||!(gb(b.parent)||{}).arsip)}).length};
 function vKain(){var its=items(true);
-  return'<div class="bar">'+sbox("Cari kain atau warna...")+'<span class="sp"></span>'+(ed()?'<button class="pri" onclick="dKain()">+ Kain</button>':"")+'</div>'
+  return'<div class="bar">'+sbox("Cari kain atau warna...")+'<span class="sp"></span>'+(kelola()?'<button class="pri" onclick="dKain()">+ Kain</button>':"")+'</div>'
   +'<div class="bar chips">'+spills(true)+'</div>'
-  +'<div class="gr" style="grid-template-columns:repeat(auto-fill,minmax(270px,1fr))">'+(its.map(function(it){return stCard(it.m)}).join("")||'<div class="mu">Belum ada stok kain di '+GN()+'.'+(ed()?' Klik "+ Kain" untuk menambah.':"")+'</div>')+'</div>'}
+  +'<div class="gr" style="grid-template-columns:repeat(auto-fill,minmax(270px,1fr))">'+(its.map(function(it){return stCard(it.m)}).join("")||'<div class="mu">Belum ada stok kain di '+GN()+'.'+(kelola()?' Klik "+ Kain" untuk menambah.':"")+'</div>')+'</div>'}
 function setD(i){fd=i;render()}function setS(i){fs=i;render()}
 function dIco(n){n=String(n).toLowerCase();return/resi/.test(n)?"receipt":/stiker/.test(n)?"sticker":/potong|cutting/.test(n)?"scissors":/jahit/.test(n)?"shirt":/dtf|pres|cetak|print/.test(n)?"printer":/packing|kemas/.test(n)?"box":/kain/.test(n)?"layers":"tag"}
 function findCode(v){v=String(v||"").trim().toLowerCase();if(!v)return null;return leaves().filter(function(b){return String(b.id).toLowerCase()==v})[0]||null}
@@ -758,15 +769,15 @@ function vAlat(){var lk="Workshop "+W,M=S.Alat.filter(function(x){return!x.paren
   shown=M.filter(function(m){return!qs||(m.nama+" "+S.Alat.filter(function(x){return x.parent==m.id}).map(function(x){return x.nama+" "+x.merk+" "+x.tipe}).join(" ")).toLowerCase().indexOf(qs)>-1}),
   cards=shown.map(function(m){var u=S.Alat.filter(function(x){return x.parent==m.id}),c=aCnt("Rusak",u)?"var(--red)":aCnt("Perlu servis",u)?"var(--yel)":u.length?"var(--grn)":"#555";
     return'<div class="pc st" style="--c:'+c+'" onclick="dAlatDet(\''+m.id+'\')"><b>'+esc(m.nama)+'</b><span class="mu">'+esc(m.catatan)+'</span><div style="margin-top:6px"><span class="no">'+u.length+'</span> <span class="mu">unit</span></div><div>'+(u.length?KOND.map(function(k){return aCnt(k,u)?'<span class="bd '+KC[k]+'">'+aCnt(k,u)+' '+k.toLowerCase()+'</span>':""}).join(""):'<span class="mu">Belum ada unit</span>')+'</div></div>'}).join("");
-  return'<div class="bar">'+sbox("Cari alat atau mesin...")+'<span class="mu">Total '+U.length+' unit · baik '+aCnt("Baik",U)+' · perlu servis '+aCnt("Perlu servis",U)+' · rusak '+aCnt("Rusak",U)+'</span><span class="sp"></span>'+(ed()?'<button class="pri" onclick="dAlat()">+ Kategori alat/mesin</button>':"")+'</div>'
+  return'<div class="bar">'+sbox("Cari alat atau mesin...")+'<span class="mu">Total '+U.length+' unit · baik '+aCnt("Baik",U)+' · perlu servis '+aCnt("Perlu servis",U)+' · rusak '+aCnt("Rusak",U)+'</span><span class="sp"></span>'+(bisaAlat()?'<button class="pri" onclick="dAlat()">+ Kategori alat/mesin</button>':"")+'</div>'
   +'<div class="gr">'+(cards||'<div class="mu">Belum ada data. Tambahkan kategori seperti "Mesin Jahit", lalu isi unitnya.</div>')+'</div>'}
 function dAlatDet(id){var m=S.Alat[idx(S.Alat,id)];if(!m)return X();var u=S.Alat.filter(function(x){return x.parent==id});
   D('<h3 style="font-size:26px">'+esc(m.nama)+'</h3><div class="mu">'+u.length+' unit'+KOND.map(function(k){return aCnt(k,u)?' · '+aCnt(k,u)+' '+k.toLowerCase():""}).join("")+(m.catatan?" · "+esc(m.catatan):"")+'</div>'
   +'<div class="tw"><table><thead><tr><th>Unit</th><th>Merk</th><th>Tipe</th><th>No. seri</th><th>Kondisi</th><th>Servis terakhir</th><th>Rincian lain</th><th></th></tr></thead><tbody>'
-  +(u.map(function(x){return'<tr><td><b>'+esc(x.nama)+'</b></td><td>'+esc(x.merk)+'</td><td>'+esc(x.tipe)+'</td><td>'+esc(x.seri)+'</td><td><span class="bd '+(KC[x.kondisi]||"")+'" style="margin:0">'+esc(x.kondisi)+'</span></td><td>'+esc(x.servis)+'</td><td class="mu">'+esc(x.catatan)+'</td><td>'+(ed()?'<button onclick="dAlat(\''+x.id+'\')">Edit</button>':"")+'</td></tr>'}).join("")||'<tr><td colspan="8" class="mu">Belum ada unit.</td></tr>')
-  +'</tbody></table></div><div class="rw">'+(ed()?'<button onclick="dAlat(null,\''+id+'\')">+ Unit</button><button onclick="dAlat(\''+id+'\')">Edit kategori</button>':"")+'<button class="pri" onclick="X()">Tutup</button></div>',"min(980px,95vw)")}
+  +(u.map(function(x){return'<tr><td><b>'+esc(x.nama)+'</b></td><td>'+esc(x.merk)+'</td><td>'+esc(x.tipe)+'</td><td>'+esc(x.seri)+'</td><td><span class="bd '+(KC[x.kondisi]||"")+'" style="margin:0">'+esc(x.kondisi)+'</span></td><td>'+esc(x.servis)+'</td><td class="mu">'+esc(x.catatan)+'</td><td>'+(bisaAlat()?'<button onclick="dAlat(\''+x.id+'\')">Edit</button>':"")+'</td></tr>'}).join("")||'<tr><td colspan="8" class="mu">Belum ada unit.</td></tr>')
+  +'</tbody></table></div><div class="rw">'+(bisaAlat()?'<button onclick="dAlat(null,\''+id+'\')">+ Unit</button><button onclick="dAlat(\''+id+'\')">Edit kategori</button>':"")+'<button class="pri" onclick="X()">Tutup</button></div>',"min(980px,95vw)")}
 function vRiwayat(){
-  var r=S.Riwayat.filter(function(h){return inW(h.bahanId)}).sort(function(a,b){return String(b.tgl).localeCompare(String(a.tgl))}).slice(0,300).map(function(h){return'<tr><td class="cw">'+fmt(h.tgl)+'</td><td class="cb">'+esc(bn(h.bahanId))+'</td><td class="cj '+(h.jumlah<0?"habis":"aman")+'"><b>'+(h.jumlah>0?"+":"")+h.jumlah+'</b></td><td class="co">'+esc(h.oleh)+'</td><td class="mu ck">'+esc(h.ket)+'</td><td class="ce">'+(h.jumlah<0&&me&&(kantor()||h.oleh==me.name)?'<button onclick="dEA(\''+h.id+'\')">Edit</button>':"")+'</td></tr>'}).join("");
+  var r=S.Riwayat.filter(function(h){return inW(h.bahanId)}).sort(function(a,b){return String(b.tgl).localeCompare(String(a.tgl))}).slice(0,300).map(function(h){return'<tr><td class="cw">'+fmt(h.tgl)+'</td><td class="cb">'+esc(bn(h.bahanId))+'</td><td class="cj '+(h.jumlah<0?"habis":"aman")+'"><b>'+(h.jumlah>0?"+":"")+h.jumlah+'</b></td><td class="co">'+esc(h.oleh)+'</td><td class="mu ck">'+esc(h.ket)+'</td><td class="ce">'+(h.jumlah<0&&me&&(kelola()||h.oleh==me.name)?'<button onclick="dEA(\''+h.id+'\')">Edit</button>':"")+'</td></tr>'}).join("");
   return'<h4 style="margin-top:0">Riwayat · '+GN()+'</h4><table class="cardt"><thead><tr><th>Waktu</th><th>Bahan</th><th>Jumlah</th><th>Oleh</th><th>Keterangan</th><th></th></tr></thead><tbody>'+(r||'<tr><td colspan="6" class="mu">Belum ada riwayat.</td></tr>')+'</tbody></table>'}
 function vLap(){
   var t=new Date(),a,b,lab;t.setHours(0,0,0,0);
@@ -817,14 +828,14 @@ function dItem(id){var m=gb(id);if(!m)return X();var k=kids(id),kain=isK(m),lv=k
     +'<span class="irq '+s+'">'+x.stok+'<small>'+esc(x.satuan)+'</small></span>'
     +(o?'<button class="opb" title="Lihat order" onclick="dOrdDet(\''+o.id+'\')">'+opill(o)+'</button>':'<span class="bd '+s+'">'+LB[s]+'</span>')
     +'<button class="ic" title="Barcode" aria-label="Barcode '+esc(fn(x))+'" onclick="dBar(\''+x.id+'\')">'+IC("barcode")+'</button>'
-    +(ed()&&k.length&&!kain?'<button class="ic" title="Edit rincian" aria-label="Edit '+esc(fn(x))+'" onclick="dBahan(\''+x.id+'\')">'+IC("gear")+'</button><button class="ic" title="Hapus variasi" aria-label="Hapus '+esc(fn(x))+'" onclick="hapus(\''+x.id+'\')">'+IC("delete")+'</button>':"")+'</div>'},
+    +(kelola()&&k.length&&!kain?'<button class="ic" title="Edit rincian" aria-label="Edit '+esc(fn(x))+'" onclick="dBahan(\''+x.id+'\')">'+IC("gear")+'</button><button class="ic" title="'+(bisaHapus()?"Hapus":"Arsipkan")+' variasi" aria-label="'+(bisaHapus()?"Hapus ":"Arsipkan ")+esc(fn(x))+'" onclick="hapus(\''+x.id+'\')">'+IC(bisaHapus()?"delete":"archive")+'</button>':"")+'</div>'},
   /* data lama: stok masih tercatat di bahan utama padahal sudah punya variasi */
-  sisa=k.length&&Number(m.stok)?'<div class="al y" style="margin-top:12px"><span>Bahan utama masih mencatat stok <b>'+m.stok+' '+esc(m.satuan)+'</b>. Stok yang benar adalah jumlah variasinya.</span>'+(kantor()?'<i onclick="nolGrup(\''+id+'\')">Nolkan stok bahan utama</i>':"")+'</div>':"";
+  sisa=k.length&&Number(m.stok)?'<div class="al y" style="margin-top:12px"><span>Bahan utama masih mencatat stok <b>'+m.stok+' '+esc(m.satuan)+'</b>. Stok yang benar adalah jumlah variasinya.</span>'+(kelola()?'<i onclick="nolGrup(\''+id+'\')">Nolkan stok bahan utama</i>':"")+'</div>':"";
   D('<div class="ih"><div><h3>'+esc(m.nama)+'</h3><div class="mu">'+(kain?(m.satuan=="kg"?"Berat":"Panjang")+" · "+esc(m.satuan):esc(dn(m.divisi)))+(k.length?" · "+k.length+(kain?" warna":" variasi"):"")+'</div></div><button class="ic xb" onclick="X()" aria-label="Tutup">'+IC("x")+'</button></div>'
   +'<div class="is"><span><b>'+tot+'</b> '+esc(m.satuan)+(k.length?" total":"")+'</span>'+(nh?'<span class="habis">'+nh+' habis</span>':"")+(no?'<span class="info">'+no+' sedang diorder</span>':"")+(ns?'<span style="color:var(--ac)">'+ns+' dipilih</span>':"")
   +(nd2.length?'<button class="lnk" onclick="mAll(\''+id+'\')">Pilih semua yang perlu restok ('+nd2.length+')</button>':"")+'</div>'
   +'<div class="il">'+lv.map(row).join("")+'</div>'+sisa+noEd()
-  +'<div class="rw" style="flex-wrap:wrap">'+(ed()?(kain?'<button onclick="dKain(\''+id+'\')">Edit / tambah warna</button>':'<button onclick="dBahan(null,\''+id+'\')">+ Variasi</button><button onclick="dBahan(\''+id+'\')">Edit bahan</button>')+'<button onclick="hapus(\''+id+'\')">Hapus bahan</button>':"")
+  +'<div class="rw" style="flex-wrap:wrap">'+(kelola()?(kain?'<button onclick="dKain(\''+id+'\')">Edit / tambah warna</button>':'<button onclick="dBahan(null,\''+id+'\')">+ Variasi</button><button onclick="dBahan(\''+id+'\')">Edit bahan</button>')+'<button onclick="hapus(\''+id+'\')">'+(bisaHapus()?"Hapus bahan":"Arsipkan bahan")+'</button>':"")
   +'<span class="sp"></span><button class="pri bk" '+(ns?"":"disabled ")+'onclick="mReq(\''+id+'\')">'+IC("cart")+' Request order ('+ns+')</button></div>',"min(680px,94vw)")}
 function mTog(x,on,id){if(on)MSEL[x]=1;else delete MSEL[x];dItem(id)}
 function mAll(id){var k=kids(id),lv=k.length?k:[gb(id)];lv.forEach(function(x){if(!actOrder(x.id)&&sts(x)!="aman")MSEL[x.id]=1});dItem(id)}
@@ -851,7 +862,7 @@ function dBahan(id,par){var dvs=S.Divisi.filter(function(d){return(d.ws||"1")==W
   +'<label>Nama'+(pr?" variasi (warna/ukuran)":"")+'</label><input id="bn" value="'+esc(b.nama)+'">'
   +(pr?"":'<label>Divisi ('+GN()+')</label><select id="bd">'+(b.divisi?"":'<option value="">— Pilih divisi —</option>')+S.Divisi.filter(function(d){return((d.ws||"1")==W&&!isKd(d))||d.id==b.divisi}).map(function(d){return'<option value="'+d.id+'"'+(d.id==b.divisi?" selected":"")+'>'+esc(d.nama)+'</option>'}).join("")+'</select><label>Satuan</label><select id="bs">'+opt(SAT,b.satuan)+'</select>')
   +stk+'<label>Batas minimum</label><input id="bm" type="number" step="any" min="0" placeholder="0" value="'+b.min+'">'
-  +'<div class="rw">'+(id?'<button onclick="hapus(\''+id+'\')">Hapus</button>':"")+'<button onclick="'+bk+'">Batal</button><button class="pri" onclick="svB(\''+(id||"")+'\',\''+(b.parent||"")+'\')">Simpan</button></div>')}
+  +'<div class="rw">'+(id?'<button onclick="hapus(\''+id+'\')">'+(bisaHapus()?"Hapus":"Arsipkan")+'</button>':"")+'<button onclick="'+bk+'">Batal</button><button class="pri" onclick="svB(\''+(id||"")+'\',\''+(b.parent||"")+'\')">Simpan</button></div>')}
 async function svB(id,par){var n=$("bn").value.trim(),pr=par?gb(par):null;if(!n)return toast("Isi nama");
   var row={id:id||uid(),nama:n,divisi:pr?pr.divisi:$("bd").value,satuan:pr?pr.satuan:$("bs").value,min:parseFloat($("bm").value)||0,parent:par},
   ke=$("bk"),tg=ke&&ke.value!==""?parseFloat(ke.value):NaN,al=$("bka")?$("bka").value.trim():"";
@@ -864,7 +875,9 @@ async function svB(id,par){var n=$("bn").value.trim(),pr=par?gb(par):null;if(!n)
   if(pr)dItem(pr.id);else if(id)dItem(id);else X()}
 /* bahan yang sudah punya riwayat/order tidak dihapus, tapi diarsipkan (riwayat tetap utuh) */
 async function hapus(id){var b=gb(id);if(!b)return;var pa=b.parent,k=KA[id]||[],all=[id].concat(k.map(function(x){return x.id}));
-  if(all.some(hasHist)){if(!(await ask(fn(b)+" punya riwayat atau order, jadi tidak dihapus. Arsipkan? Bahan hilang dari daftar, riwayatnya tetap tersimpan dan bisa dipulihkan.","Arsipkan")))return;
+  if(!bisaHapus()){if(!(await ask("Arsipkan "+fn(b)+(k.length?" beserta "+k.length+" variasinya":"")+"? Bahan hilang dari daftar, riwayatnya tetap tersimpan. Menghapus permanen hanya bisa oleh Owner/Admin.","Arsipkan")))return;
+    var ra=await call("arsip",{id:id,on:1});if(!ra.ok)return}
+  else if(all.some(hasHist)){if(!(await ask(fn(b)+" punya riwayat atau order, jadi tidak dihapus. Arsipkan? Bahan hilang dari daftar, riwayatnya tetap tersimpan dan bisa dipulihkan.","Arsipkan")))return;
     var r=await call("arsip",{id:id,on:1});if(!r.ok)return}
   else{if(!(await ask("Hapus "+fn(b)+(k.length?" beserta "+k.length+" variasinya":"")+"?","Hapus")))return;
     for(var i=0;i<k.length;i++){var rk=await call("del",{sheet:"Bahan",id:k[i].id});if(!rk.ok)return}
@@ -872,7 +885,7 @@ async function hapus(id){var b=gb(id);if(!b)return;var pa=b.parent,k=KA[id]||[],
   if(pa&&gb(pa)&&!gb(pa).arsip)dItem(pa);else X()}
 function dArsip(){var l=S.Bahan.filter(function(b){return b.arsip&&wsOf(b)==W&&(!b.parent||!(gb(b.parent)||{}).arsip)});
   D('<h3>Arsip bahan · '+GN()+'</h3><p class="mu" style="font-size:16px;margin:0 0 6px">Bahan yang diarsipkan tidak muncul di daftar, tetapi riwayatnya tetap tersimpan.</p>'
-  +(l.map(function(b){return'<div class="vr"><div style="flex:1"><b>'+esc(fn(b))+'</b><div class="mu">'+esc(dn(b.divisi))+' · stok '+b.stok+' '+esc(b.satuan)+'</div></div>'+(kantor()?'<button onclick="pulih(\''+b.id+'\')">Pulihkan</button>':"")+'</div>'}).join("")||'<div class="mu">Belum ada bahan yang diarsipkan.</div>')
+  +(l.map(function(b){return'<div class="vr"><div style="flex:1"><b>'+esc(fn(b))+'</b><div class="mu">'+esc(dn(b.divisi))+' · stok '+b.stok+' '+esc(b.satuan)+'</div></div>'+(kelola()?'<button onclick="pulih(\''+b.id+'\')">Pulihkan</button>':"")+'</div>'}).join("")||'<div class="mu">Belum ada bahan yang diarsipkan.</div>')
   +'<div class="rw"><button class="pri" onclick="X()">Tutup</button></div>',"min(560px,94vw)")}
 async function pulih(id){var r=await call("arsip",{id:id,on:0});if(r.ok){toast("Bahan dipulihkan");dArsip()}}
 
@@ -882,7 +895,7 @@ async function kainDiv(){var d=S.Divisi.filter(function(x){return(x.ws||"1")==W&
 function kRow(x){x=x||{};return'<div class="kr" data-id="'+esc(x.id||"")+'"><input class="kw" placeholder="Warna, mis. Hitam" value="'+esc(x.nama||"")+'"><input class="ks" type="number" min="0" step="any" placeholder="0" value="'+(x.stok==null?"":x.stok)+'"><input class="km" type="number" min="0" step="any" placeholder="0" value="'+(x.min==null?"":x.min)+'"><button class="ic" title="Hapus warna" onclick="kRm(this)">✕</button></div>'}
 function kUnit(){var u=document.querySelector("input[name=ku]:checked").value;[].forEach.call(document.querySelectorAll(".ku"),function(e){e.textContent=u})}
 function kAdd(){var d=document.createElement("div");d.innerHTML=kRow();$("kr").appendChild(d.firstChild);var i=document.querySelectorAll("#kr .kw");i[i.length-1].focus()}
-async function kRm(b){var r=b.parentNode,id=r.getAttribute("data-id");if(id){var x=gb(id);if(!(await ask("Hapus warna "+(x?x.nama:"")+"?"+(hasHist(id)?" Warna ini punya riwayat, jadi akan diarsipkan.":""),"Hapus")))return;kRem.push(id)}r.parentNode.removeChild(r)}
+async function kRm(b){var r=b.parentNode,id=r.getAttribute("data-id");if(id){var x=gb(id);if(!(await ask("Hapus warna "+(x?x.nama:"")+"?"+(hasHist(id)?" Warna ini punya riwayat, jadi akan diarsipkan.":(bisaHapus()?"":" Warna akan diarsipkan.")),"Hapus")))return;kRem.push(id)}r.parentNode.removeChild(r)}
 function dKain(id){var m=id?gb(id):null;if(id&&!m)return;kRem=[];var k=m?kids(id):[],u=m?m.satuan:"meter",rows=k.length?k:(m?[{nama:"",stok:m.stok,min:m.min}]:[null]);
   D('<h3>'+(m?"Edit":"Tambah")+' kain</h3><label>Nama bahan kain</label><input id="kn" placeholder="mis. Dry-Fit, Lacoste, Milano" value="'+esc(m?m.nama:"")+'">'
   +'<label>Stok dihitung berdasarkan</label><div><label class="rd"><input type="radio" name="ku" value="meter" '+(u!="kg"?"checked ":"")+'onchange="kUnit()">Panjang (meter)</label><label class="rd"><input type="radio" name="ku" value="kg" '+(u=="kg"?"checked ":"")+'onchange="kUnit()">Berat (kg)</label></div>'
@@ -900,7 +913,7 @@ async function svKain(id){var n=$("kn").value.trim();if(!n)return toast("Isi nam
   if(m&&!KA[pid]&&Number(m.stok)){r=await call("adjust",{id:pid,delta:-Number(m.stok),ket:"Dipindah ke warna",rid:uid(),t:now()});if(!r.ok)return}
   for(var j=0;j<rows.length;j++){var x=rows[j],xid=x.id||uid();r=await call("upsert",{sheet:"Bahan",row:{id:xid,nama:x.w,divisi:dv,satuan:u,min:x.m,parent:pid}});if(!r.ok)return;
     if(!(await setStok(xid,x.s,x.id?"Koreksi stok":"Stok awal")))return}
-  for(var q=0;q<kRem.length;q++){r=await call(hasHist(kRem[q])?"arsip":"del",hasHist(kRem[q])?{id:kRem[q],on:1}:{sheet:"Bahan",id:kRem[q]});if(!r.ok)return}
+  for(var q=0;q<kRem.length;q++){var ar=hasHist(kRem[q])||!bisaHapus();r=await call(ar?"arsip":"del",ar?{id:kRem[q],on:1}:{sheet:"Bahan",id:kRem[q]});if(!r.ok)return}
   dItem(pid)}
 
 // ---- konfirmasi pengambilan ----
@@ -960,10 +973,10 @@ $("dlg").addEventListener("close",camOff);
 (async function(){
   var c=POSBAR.cred();if(!c){POSBAR.block();return}
   CK="positif-bahan-v9:"+c.u;var m=POSBAR.me()||{};
-  me={name:m.name||c.u,role:(m.role=="admin"||m.role=="supervisor")?"kantor":"user",ord:m.role=="admin"||(m.perm||[]).indexOf("bahan_order")>=0};
+  me={name:m.name||c.u,ak:aksesDari(m.role,m.perm)};
   READY=cacheLoad();render();setSync(READY?"Menyinkronkan...":"Memuat data...");
   var r=await send({op:"login",auth:AUTH(),ver:VER}).catch(function(){return{ok:0,net:1}});
-  if(r.ok){me.role=nrole(r.role)||me.role;if(r.name)me.name=r.name;if(r.ord!=null)me.ord=!!r.ord;if(r.data){VER=r.ver;setData(r.data);cacheSave()}READY=true;render();setSync("Tersinkron")}
+  if(r.ok){if(r.ak)me.ak=r.ak;if(r.name)me.name=r.name;if(r.data){VER=r.ver;setData(r.data);cacheSave()}READY=true;render();setSync("Tersinkron")}
   else if(r.net){setSync(READY?"Offline · data terakhir":"Tidak bisa terhubung ke server");if(!READY)toast("Tidak bisa terhubung ke server. Periksa internet.")}
   else if(/AUTH|sesi/i.test(r.err||"")){me=null;return sesiHabis()}
   else{setSync("Koneksi bermasalah");toast(r.err||"Gagal memuat data")}
