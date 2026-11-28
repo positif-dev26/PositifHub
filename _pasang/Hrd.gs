@@ -11,8 +11,13 @@
  * Pasang: tempel file ini di Extensions > Apps Script spreadsheet "Positif HRD", jalankan setup() sekali,
  * lalu Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone).
  * Setiap kode diubah: Deploy > Manage deployments > Edit > Version: New.
+ *
+ * v9 (unit jahit): daftar setor memisah barang Jahit per unit (butuh Kinerja.gs v4 di server POS).
+ *     Setoran mencatat src = unit pemilik jatah; dari jatah unit lain diberi tanda luar (tetap butuh persetujuan).
+ *     Persetujuan memindahkan barang dari jatah src saja. Workshop dengan potongProd (bawaan: Kedawung):
+ *     hasil potong dicatat dari menu Produksi, setor potong di sini ditolak. Aksi 'rekap' = rekap unit jahit & pemotong.
  */
-const HRD_V = 8;
+const HRD_V = 9;
 const KJ_V = 3; /* versi kontrak dengan kinerja.html */
 const POS_API = 'https://script.google.com/macros/s/AKfycbwUEqf4lS9mn3Gdyo3vpDmTl3u9gxQzIEIf83dJMeopMDDQpHu_-pcG9puoPFHfMOOBkA/exec';
 
@@ -155,7 +160,9 @@ const KJ_CFG_DEF = {
   /* v7 */
   hariKerja: [1, 2, 3, 4, 5, 6], jamMasuk: '08:00', jamPulang: '16:00', istirahat: '12:00-13:00', upahDef: 0, targetDef: 0, ws: {}, akses: null,
   /* v8: sistem upah & uang makan per workshop */
-  sistemUpah: 'jam', tarif: {}, tarifDef: 0, makanMode: 'lama', makanJam: 6.5, makanRp: 7500, tunjOn: true, korAjuan: false
+  sistemUpah: 'jam', tarif: {}, tarifDef: 0, makanMode: 'lama', makanJam: 6.5, makanRp: 7500, tunjOn: true, korAjuan: false,
+  /* v9: true = hasil potong dicatat dari menu Produksi (setor potong ditolak); null = bawaan (workshop bernama Kedawung) */
+  potongProd: null
 };
 const KJ_KERJA = ['jahit', 'potong', 'hasil', 'qc'];
 const KJ_KEG = ['Menunggu bahan', 'Bantu packing', 'Bantu bagian lain', 'Belanja', 'Mesin / alat bermasalah', 'Bersih-bersih', 'Lainnya'];
@@ -191,6 +198,7 @@ function kinerja_(a, u) {
     case 'ckKor': return kjCkKor_(p, u);
     case 'ckPutus': return kjCkPutus_(p, u);
     case 'migrasi': return kjMigrasi_(u);
+    case 'rekap': return kjRekap_(p, u);
     default: throw new Error('Aksi Kinerja tidak dikenal');
   }
 }
@@ -235,7 +243,15 @@ function kjJ_(v, d) { if (v && typeof v === 'object') return v; try { const x = 
 /* v7: aturan gaji & nilai disimpan per workshop (cfg.ws[gudang]); yang belum diisi memakai aturan umum lama */
 const KJ_WS_KEYS = ['poin', 'poinDef', 'makan', 'batas', 'penuh', 'setengah', 'jumBatas', 'jumPenuh', 'jumSetengah', 'hadir', 'kerja', 'hasilTangga', 'mutuTangga',
   'telatMaks', 'cekMin', 'hasilB', 'hasilC', 'mutuB', 'mutuC', 'jobB', 'jobC', 'ujiMulai', 'ujiMinggu', 'targetUnit', 'grade', 'hariKerja', 'jamMasuk', 'jamPulang', 'istirahat', 'upahDef', 'targetDef',
-  'sistemUpah', 'tarif', 'tarifDef', 'makanMode', 'makanJam', 'makanRp', 'tunjOn', 'korAjuan'];
+  'sistemUpah', 'tarif', 'tarifDef', 'makanMode', 'makanJam', 'makanRp', 'tunjOn', 'korAjuan', 'potongProd'];
+/* v9: di workshop ini hasil potong dicatat dari menu Produksi? */
+function potongProd_(u, ws) {
+  if (!ws) return false;
+  const c = kjCfg_(ws);
+  if (c.potongProd === true || c.potongProd === false) return c.potongProd;
+  const g = (posInfo_(u).gudang || []).filter(function (x) { return String(x.id) === String(ws); })[0];
+  return /kedawung/i.test(String(g ? g.name : ''));
+}
 function kjCfgRaw_() {
   const c = kjJ_(PropertiesService.getScriptProperties().getProperty('KJ_CFG'), {});
   const o = JSON.parse(JSON.stringify(KJ_CFG_DEF));
@@ -290,7 +306,7 @@ function kjPend_(rows) {
   const o = {};
   rows.forEach(function (x) {
     if (x.jenis !== 'setor' || (x.status !== 'tunggu' && x.status !== 'proses')) return;
-    const d = kjJ_(x.data, {}), key = String(d.tahap || 'jahit') + '|' + String(d.loc || '') + '|' + String(d.vid);
+    const d = kjJ_(x.data, {}), t = String(d.tahap || 'jahit'), key = t + '|' + String(d.loc || '') + '|' + String(d.vid) + (t === 'jahit' ? '|' + String(d.src || '') : '');
     o[key] = (o[key] || 0) + (+d.q || 0);
   });
   return o;
@@ -319,11 +335,12 @@ function kjLoad_(p, u) {
     return !from || String(x.tgl) >= from;
   }).map(function (x) { return {id: x.id, tgl: x.tgl, kid: String(x.kid), jenis: x.jenis, d: kjJ_(x.data, {}), st: x.status, oleh: x.oleh, cekBy: x.cekBy, cekAt: x.cekAt}; });
   /* v3: p.lite = daftar barang produksi diambil terpisah (aksi 'jobs') supaya membuka menu lebih cepat */
-  const jobs = p.lite ? {list: null, noLoc: null} : posK_(u, 'hrdJobs', {gud: gud, pend: kjPend_(all)});
+  const jobs = p.lite ? {list: null, noLoc: null} : posK_(u, 'hrdJobs', {gud: gud, pend: kjPend_(all), v: 4});
   /* aturan uang (upah, tunjangan, uang makan) hanya untuk Owner */
   const cf = JSON.parse(JSON.stringify(cfg));
   if (!gaji) { ['makan', 'hadir', 'kerja', 'upahDef', 'ws', 'akun', 'tarif', 'tarifDef', 'makanRp'].forEach(function (k) { delete cf[k]; }); }
   const out = {v: KJ_V, hrd: HRD_V, cfg: cf, kar: kar, akt: akt, jobs: jobs.list, keg: KJ_KEG, alasan: KJ_ALASAN, sop: kjSopGet_(),
+    potongProd: potongProd_(u, gud || REQ.ws),
     me: {cek: cek, gaji: gaji, input: boleh_(u, 'jobdesk', cfg), beri: boleh_(u, 'beri', cfg), lembar: boleh_(u, 'lembar', cfg), karyawan: boleh_(u, 'karyawan', cfg),
       peran: owner_(u) ? 'owner' : peran_(u), gud: gud, ws: REQ.ws, user: String(u.user || ''), name: String(u.name || '')},
     gudang: info.gudang, aksesDef: KJ_AKSES_DEF, aksesL: KJ_AKSES_L};
@@ -343,8 +360,8 @@ function kjPoin_(cfg, cat) {
 /* barang di tahap Cutting & Jahit untuk layar setor (dipanggil terpisah dari 'load') */
 function kjJobsAll_(u) {
   const cfg = kjCfg_(), gud = kjGud_(u, cfg);
-  const j = posK_(u, 'hrdJobs', {gud: gud, pend: kjPend_(kjRows_('akt', 8000))});
-  return {list: j.list, noLoc: boleh_(u, 'periksa', cfg) ? j.noLoc : null};
+  const j = posK_(u, 'hrdJobs', {gud: gud, pend: kjPend_(kjRows_('akt', 8000)), v: 4});
+  return {list: j.list, noLoc: boleh_(u, 'periksa', cfg) ? j.noLoc : null, potongProd: potongProd_(u, gud || REQ.ws)};
 }
 
 /* ---------------- setor jahit / potong ----------------
@@ -358,29 +375,41 @@ function kjSetor_(p, u) {
   if (k.kerja.indexOf(need) < 0) throw new Error(k.nama + ' bukan bagian ' + (need === 'jahit' ? 'jahit' : 'potong') + '.');
   const cfg = kjCfg_(), gud = kjGud_(u, cfg), kg = kjKarGud_(k, cfg);
   if (gud && kg !== gud) throw new Error(k.nama + ' bukan karyawan workshop ini.');
+  if (st === 'cutting' && potongProd_(u, kg || gud)) throw new Error('Di workshop ini hasil potong dicatat dari menu Produksi saat barang dipindah ke Cutting. Setor potong tidak dipakai.');
+  const unit = String(k.unit || '').trim() || k.nama;
   const want = {};
   (p.items || []).forEach(function (it) {
     const q = Math.floor(+it.q || 0), loc = String(it.loc || '');
     if (q <= 0) return;
     if (gud && loc !== gud) throw new Error('Barang ini bukan dari workshop akun ini. Muat ulang halaman.');
     if (kg && loc !== kg) throw new Error(k.nama + ' hanya bisa setor barang di workshopnya sendiri.');
-    const key = loc + '|' + String(it.vid);
+    /* v9: jahit dipisah per jatah unit (src); aplikasi lama tanpa src = jatah unit sendiri dulu (ditentukan di bawah) */
+    const src = st === 'jahit' ? (it.src === undefined || it.src === null ? null : String(it.src).slice(0, 60)) : '';
+    const key = loc + '|' + String(it.vid) + (st === 'jahit' ? '|' + (src === null ? '\u0000' : src) : '');
     want[key] = (want[key] || 0) + q;
   });
   if (!Object.keys(want).length) throw new Error('Isi jumlah yang disetor.');
-  const sep = function (key) { const i = key.indexOf('|'); return {loc: key.slice(0, i), vid: key.slice(i + 1)}; };
+  const sep = function (key) { const a = key.split('|'); return {loc: a[0], vid: a[1], src: a.length > 2 ? a.slice(2).join('|') : ''}; };
 
-  const unit = String(k.unit || '').trim() || k.nama;
-  const jobs = posK_(u, 'hrdJobs', {gud: gud, pend: {}}).list.filter(function (j) { return j.st === st; });
+  const jobs = posK_(u, 'hrdJobs', {gud: gud, pend: {}, v: 4}).list.filter(function (j) { return j.st === st; });
+  /* aplikasi lama (tanpa src): ambil dari jatah unit sendiri bila cukup, kalau tidak dari barang belum dibagi */
+  Object.keys(want).forEach(function (key) {
+    const x = sep(key);
+    if (x.src !== '\u0000') return;
+    const own = jobs.filter(function (y) { return y.loc === x.loc && y.vid === x.vid && String(y.pj || '') === unit; })[0];
+    const nk = x.loc + '|' + x.vid + '|' + (own && own.qty >= want[key] ? unit : '');
+    want[nk] = (want[nk] || 0) + want[key];
+    delete want[key];
+  });
   return kjLock_(function () {
     const pend = kjPend_(kjRows_('akt', 8000)), now = new Date().toISOString(), log = [];
     Object.keys(want).forEach(function (key) {
-      const x = sep(key), j = jobs.filter(function (y) { return y.loc === x.loc && y.vid === x.vid; })[0] || {qty: 0, name: '', cat: ''};
+      const x = sep(key), j = jobs.filter(function (y) { return y.loc === x.loc && y.vid === x.vid && (st !== 'jahit' || String(y.pj || '') === x.src); })[0] || {qty: 0, name: '', cat: ''};
       const sisa = j.qty - (pend[st + '|' + key] || 0);
-      if (want[key] > sisa) throw new Error('Setor ' + (j.name || 'barang') + ' melebihi yang ada di ' + (st === 'jahit' ? 'Jahit' : 'Cutting') + ' (sisa ' + Math.max(0, sisa) + ' pcs, sudah dikurangi setoran yang menunggu). Muat ulang halaman.');
-      log.push({id: kjId_(), tgl: now, kid: k.id, jenis: 'setor',
-        data: {tahap: st, vid: x.vid, nama: j.name, q: want[key], cat: j.cat || '', poin: kjPoin_(cfg, j.cat), loc: x.loc, unit: st === 'jahit' ? unit : k.nama},
-        status: 'tunggu', oleh: k.nama, dev: u.user});
+      if (want[key] > sisa) throw new Error('Setor ' + (j.name || 'barang') + ' melebihi yang ada di ' + (st === 'jahit' ? (x.src ? 'jatah ' + x.src : 'Jahit (belum dibagi)') : 'Cutting') + ' (sisa ' + Math.max(0, sisa) + ' pcs, sudah dikurangi setoran yang menunggu). Muat ulang halaman.');
+      const dt = {tahap: st, vid: x.vid, nama: j.name, q: want[key], cat: j.cat || '', poin: kjPoin_(cfg, j.cat), loc: x.loc, unit: st === 'jahit' ? unit : k.nama};
+      if (st === 'jahit') { dt.src = x.src; if (x.src && x.src !== unit) dt.luar = 1; }
+      log.push({id: kjId_(), tgl: now, kid: k.id, jenis: 'setor', data: dt, status: 'tunggu', oleh: k.nama, dev: u.user});
     });
     kjAppend_('akt', log);
     return {ok: 1, n: log.length, tunggu: 1};
@@ -412,7 +441,7 @@ function kjSetorOk_(id, ok, q, note, u, cfg, gud) {
       r = {moved: +((pr.items || [])[0] || {}).moved || 0, err: ''};
     } catch (e) { back(); throw e; }
   } else try {
-    r = posK_(u, 'hrdMove', {loc: d.loc || '', vid: d.vid, q: want, unit: d.unit || c.oleh,
+    r = posK_(u, 'hrdMove', {loc: d.loc || '', vid: d.vid, q: want, unit: d.unit || c.oleh, src: d.src === undefined ? null : String(d.src || ''),
       note: 'Setor ' + (d.unit || c.oleh) + ' via HRD, disetujui ' + u.name + (q != null && q !== +d.q ? ' (koreksi ' + d.q + ' → ' + q + ' pcs)' : '')});
   } catch (e) { back(); throw e; }
   const moved = +r.moved || 0, err = r.err || '';
@@ -902,4 +931,40 @@ function kjDocSave_(p, u) {
   const now = new Date().toISOString();
   kjLock_(function () { kjPut_('doc', {id: 'peraturan', isi: md, jobs: jobs, meta: meta, by: u.name, at: now}); });
   return {ok: 1, doc: {md: md, jobs: jobs, meta: meta, by: u.name, at: now}};
+}
+
+/* ======================= REKAP UNIT JAHIT & PEMOTONG (v9) =======================
+   p = {from, to} (ISO, periode [from, to)). Owner & pemeriksa. Data Produksi dari server POS (hrdRekap, Kinerja.gs v4),
+   setoran & reject dari lembar KJ Aktivitas. Unit = kolom Unit karyawan (kosong = nama). */
+function kjRekap_(p, u) {
+  butuh_(u, 'periksa');
+  const cfg = kjCfg_(), gud = kjGud_(u, cfg), from = String(p.from || ''), to = String(p.to || '');
+  if (!/^\d{4}-\d{2}-\d{2}/.test(from) || !/^\d{4}-\d{2}-\d{2}/.test(to) || from >= to) throw new Error('Periode tidak valid.');
+  const r = posK_(u, 'hrdRekap', {gud: gud, from: from, to: to});
+  const KM = {}, KL = kjRows_('kar');
+  KL.forEach(function (k) { KM[String(k.id)] = k; });
+  const unitOf = function (k) { return String(k.unit || '').trim() || String(k.nama || ''); };
+  const S = {}, RJ = {};
+  kjRows_('akt', 8000).forEach(function (x) {
+    const t = String(x.tgl || '');
+    if (t < from || t >= to) return;
+    const d = kjJ_(x.data, {}), k = KM[String(x.kid)] || {};
+    if (gud && kjKarGud_(k, cfg) !== gud) return;
+    if (x.jenis === 'setor' && String(d.tahap || 'jahit') === 'jahit') {
+      const un = String(d.unit || x.oleh || ''), o = S[un] = S[un] || {ok: 0, tunggu: 0, tolak: 0, luar: 0};
+      const q = +d.q || 0;
+      if (x.status === 'ok') { o.ok += q; if (d.luar) o.luar += q; }
+      else if (x.status === 'tunggu' || x.status === 'proses') o.tunggu += q;
+      else if (x.status === 'tolak') o.tolak += q;
+    } else if (x.jenis === 'reject' && x.status !== 'batal') {
+      const tk = KM[String(d.target || '')], un = tk ? unitOf(tk) : '(asal tidak diketahui)';
+      RJ[un] = (RJ[un] || 0) + (+d.q || 0);
+    }
+  });
+  const ang = {};
+  KL.forEach(function (k) {
+    if (String(k.on) === '0' || (gud && kjKarGud_(k, cfg) !== gud) || !/penjahit/i.test(String(k.posisi || ''))) return;
+    (ang[unitOf(k)] = ang[unitOf(k)] || []).push(String(k.nama));
+  });
+  return {from: from, to: to, gud: gud, jahit: r.jahit || {}, potong: r.potong || {}, setor: S, reject: RJ, anggota: ang};
 }

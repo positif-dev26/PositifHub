@@ -22,11 +22,15 @@
  * - Kepala gudang: cek hasil, putuskan rak reject, catatan disiplin
  * - Owner: rekap mingguan (Sabtu–Jumat) + gaji dari Excel ceklok, setujui & kunci
  *
+ * v4 (unit jahit): hrdJobs {v:4} memisah barang Jahit per unit (kolom pj order, diisi menu Produksi);
+ *     hrdMove {src} memindahkan dari jatah unit itu saja; hrdRekap = rekap unit jahit & pemotong per periode.
+ *     Pindah lewat setoran ditandai PROD_VIA_ = 'setor' (Produksi.gs v14: Kedawung Jahit → Finishing hanya lewat setoran).
+ *
  * Izin baru (tambahkan di PERMS Code.gs): kinerja_input, kinerja_cek, kinerja_gaji
  * Pintu masuk (tambahkan di switch api() Code.gs):  case 'kinerja': return kinerja_(a, u);
  * a = [aksi, data]
  */
-const KJ_V = 3;
+const KJ_V = 4;
 const KJ_SH = {
   kar: ['KJ Karyawan', ['id', 'cid', 'nama', 'bagian', 'kerja', 'hasil', 'satuan', 'area', 'upah', 'target', 'jobdesk', 'cek', 'pinh', 'on', 'urut', 'gud', 'unit']],
   akt: ['KJ Aktivitas', ['id', 'tgl', 'kid', 'jenis', 'data', 'status', 'oleh', 'dev', 'cekBy', 'cekAt']],
@@ -68,7 +72,8 @@ function kinerja_(a, u) {
     case 'gajiSave': return kjGajiSave_(p, u);
     case 'gajiGet': need_(u, 'kinerja_gaji'); return kjGajiGet_(String(p.week || ''));
     case 'hrdInfo': return kjHrdInfo_(u);
-    case 'hrdJobs': return kjJobs_(String(p.gud || ''), p.pend || {});
+    case 'hrdJobs': return kjJobs_(String(p.gud || ''), p.pend || {}, +p.v || 0);
+    case 'hrdRekap': return kjHrdRekap_(p, u);
     case 'hrdMove': return kjHrdMove_(p, u);
     case 'hrdPotong': return kjHrdPotong_(p, u);
     case 'hrdExport': need_(u, 'kinerja_gaji'); return kjHrdExport_();
@@ -192,7 +197,8 @@ function kjLoad_(p, u) {
 }
 /* ringkasan barang di tahap Cutting & Jahit per gudang + varian (untuk layar setor).
    gud kosong = semua gudang. qty sudah dikurangi setoran yang masih menunggu persetujuan. */
-function kjJobs_(gud, pend) {
+function kjJobs_(gud, pend, ver) {
+  const split = ver >= 4; /* v4: Jahit dipisah per unit (pj); kunci 'jahit|gudang|varian|unit' */
   const prod = {}, varn = {};
   rows_('products').forEach(function (r) { prod[r.id] = r; });
   rows_('variants').forEach(function (r) { varn[r.id] = r; });
@@ -205,8 +211,10 @@ function kjJobs_(gud, pend) {
     if (gud && loc !== gud) return;
     arr_(j.items).forEach(function (it) {
       const q = +it.qty || 0; if (q <= 0) return;
-      const k = j.stage + '|' + loc + '|' + it.vid, v = varn[String(it.vid)] || {}, pr = prod[String(v.pid)] || {};
+      const pj = split && j.stage === 'jahit' ? String(j.pj || '') : null;
+      const k = j.stage + '|' + loc + '|' + it.vid + (pj !== null ? '|' + pj : ''), v = varn[String(it.vid)] || {}, pr = prod[String(v.pid)] || {};
       const o = g[k] = g[k] || {st: j.stage, loc: loc, vid: String(it.vid), name: it.name, cat: pr.cat || '', qty: 0, due: '', tunggu: 0};
+      if (pj !== null) o.pj = pj;
       o.qty += q;
       if (j.due && (!o.due || j.due < o.due)) o.due = j.due;
     });
@@ -345,7 +353,8 @@ function kjSetorOk_(id, ok, q, note, u, cfg, gud) {
       if (!it) return;
       const take = Math.min(sisa, +it.qty), done = {};
       done[String(it.vid)] = take;
-      jobAdvance_([j.id, 'jahit', '', ket, {}, {done: done}], uAs);
+      PROD_VIA_ = 'setor';
+      try { jobAdvance_([j.id, 'jahit', '', ket, {}, {done: done}], uAs); } finally { PROD_VIA_ = ''; }
       sisa -= take; moved += take;
     });
   } catch (e) { err = e; }
@@ -547,8 +556,10 @@ function kjHrdMove_(p, u) {
   kjCekOk_(u);
   const loc = String(p.loc || ''), vid = String(p.vid || ''), want = Math.floor(+p.q || 0);
   if (!vid || !(want > 0)) throw new Error('Data setoran tidak valid.');
+  /* v4: src = unit pemilik jatah ('' = belum dibagi); tidak dikirim = cara lama (semua order Jahit) */
+  const src = p.src === undefined || p.src === null ? null : String(p.src);
   const jobs = rows_('jobs').filter(function (j) {
-    return j.stage === 'jahit' && String(j.loc || '') === loc &&
+    return j.stage === 'jahit' && String(j.loc || '') === loc && (src === null || String(j.pj || '') === src) &&
       arr_(j.items).some(function (it) { return String(it.vid) === vid && (+it.qty || 0) > 0; });
   }).sort(function (a, b) {
     const da = String(a.due || '9999'), db = String(b.due || '9999');
@@ -566,7 +577,8 @@ function kjHrdMove_(p, u) {
       if (!it) return;
       const take = Math.min(sisa, +it.qty), done = {};
       done[String(it.vid)] = take;
-      jobAdvance_([j.id, 'jahit', '', ket, {}, {done: done}], uAs);
+      PROD_VIA_ = 'setor';
+      try { jobAdvance_([j.id, 'jahit', '', ket, {}, {done: done}], uAs); } finally { PROD_VIA_ = ''; }
       sisa -= take; moved += take;
     });
   } catch (e) { err = String(e.message || e); }
@@ -607,4 +619,34 @@ function kjHrdPotong_(p, u) {
 /* Pindah data sekali ke server HRD: karyawan (tanpa PIN, karena kunci PIN milik server POS) + pengaturan */
 function kjHrdExport_() {
   return {cfg: kjCfg_(), kar: kjRows_('kar').map(function (k) { const o = {}; KJ_SH.kar[1].forEach(function (c) { if (c !== 'pinh') o[c] = k[c]; }); return o; })};
+}
+
+/* v4: Rekap unit jahit & pemotong untuk periode [from, to) di satu gudang (kosong = semua). Sumber: riwayat order Produksi.
+   beri = masuk Jahit atas nama unit; balik = dikembalikan dari Jahit; setor = pindah ke Finishing lewat setoran;
+   manual = pindah ke Finishing manual (Owner/Admin); tangan = masih di Jahit atas nama unit (saat ini).
+   Riwayat ikut tersalin saat order dipecah, jadi entri yang sama dihitung sekali (tanda waktu + isi). */
+function kjHrdRekap_(p, u) {
+  kjCekOk_(u);
+  const gud = String(p.gud || ''), from = String(p.from || ''), to = String(p.to || '');
+  const J = {}, P = {}, seen = {};
+  const unit = function (n) { return J[n] = J[n] || {beri: 0, balik: 0, setor: 0, manual: 0, tangan: 0}; };
+  const inR = function (d) { d = String(d || ''); return !!d && (!from || d >= from) && (!to || d < to); };
+  rows_('jobs').forEach(function (j) {
+    if (String(j.id) === 'pcfg' || j.stage === 'cfg') return;
+    if (gud && String(j.loc || '') !== gud) return;
+    if (j.stage === 'jahit' && j.pj) arr_(j.items).forEach(function (it) { unit(String(j.pj)).tangan += +it.qty || 0; });
+    arr_(j.hist).forEach(function (h) {
+      if (!h || !inR(h.date)) return;
+      const q = +h.q || 0;
+      if (!q) return;
+      const sig = [String(j.grp || j.no || '').replace(/(-p\d+)+$/, ''), h.date, h.stage, h.pj || '', h.pjFrom || '', h.pt || '', q, h.back ? 1 : 0].join('|');
+      if (seen[sig]) return;
+      seen[sig] = 1;
+      if (h.back) { if (h.from === 'jahit' && h.pjFrom) unit(String(h.pjFrom)).balik += q; return; }
+      if (h.stage === 'jahit' && h.pj) unit(String(h.pj)).beri += q;
+      else if (h.stage === 'finishing' && h.pjFrom) { if (h.manual) unit(String(h.pjFrom)).manual += q; else unit(String(h.pjFrom)).setor += q; }
+      else if (h.stage === 'cutting' && h.pt) P[String(h.pt)] = (P[String(h.pt)] || 0) + q;
+    });
+  });
+  return {v: KJ_V, jahit: J, potong: P};
 }
