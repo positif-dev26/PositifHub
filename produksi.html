@@ -436,7 +436,7 @@ if(!ICO.pencil)ICO.pencil='<path d="M21.17 6.81a1 1 0 0 0-3.98-3.98L3.84 16.17a2
 if(!ICO.undo)ICO.undo='<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>';
 const XIC='<span class="ms" style="font-size:20px" aria-hidden="true">close</span>';
 function ppOpen(k){const G=groups().find(x=>x.k===k);if(!G)return;if(isV(G))return toast('Masih menyimpan, tunggu sebentar.',1);
- psel=k;$('ppc').innerHTML=panel(G,warn(G));$('pp').classList.add('on');if($('sisa'))prc(k);if($('pjh')){pjhFill();if(isAdm&&!pjhTried)pjhSync()}
+ psel=k;$('ppc').innerHTML=panel(G,warn(G));$('pp').classList.add('on');if($('sisa'))prc(k);if($('pjh')||$('pth')){pjhFill();ptFill();if(isAdm&&!pjhTried)pjhSync()}
  document.querySelectorAll('.vr.on').forEach(b=>b.classList.remove('on'));}
 function ppClose(){const m=$('pp');if(m&&m.classList.contains('on')){m.classList.remove('on');psel='';document.querySelectorAll('.vr.on,.sb.cur').forEach(b=>b.classList.remove('on','cur'))}}
 addEventListener('keydown',e=>{if(e.key==='Escape')ppClose()});
@@ -450,14 +450,18 @@ function panel(G,W){if(G.st==='rencana'&&LN()!=='kaos')return panelR(G,W);
  if(!can(permSt(G.st)))return h+'<p class="muted" style="margin:10px 0">Akun Anda tidak punya akses untuk memproses tahap ini.</p>'+gabH(G)+'</div>';
  const rjSel='<div class="r2"><select id="ra" title="Alasan reject"><option value="">Alasan reject…</option>'+RSN.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select><select id="rt" title="Tindak lanjut reject"><option value="buang">Buang / afkir</option>'+(LN()==='kaos'?LSTK.slice(1,Math.max(1,LSTK.indexOf(G.st)+1)):RS.slice(0,ix+1)).map(s=>'<option value="'+s+'">'+(s==='cetak'?'Cetak ulang di vendor':'Perbaiki di '+STL[s])+'</option>').join('')+'</select></div>';
  if(!cet){const one=oth.length===1;
-  const d1=dDef(G),npj=needPj(G);
+  const d1=dDef(G),npj=needPj(G),npt=needPt(G),jk=jhKdw(G);
+  if(jk&&!isAdm)return h+'<div class="card" style="margin:10px 0;padding:12px;border-color:var(--lmb)"><b>Pindah ke Finishing lewat setor jahit</b><p class="muted" style="margin:6px 0 0">Di Workshop Kedawung, barang Jahit pindah ke Finishing setelah unit jahit menyetor di menu Kinerja dan disetujui supervisor. Pemindahan manual khusus Owner/Admin.</p></div>'
+   +'<label class="ppl" for="dl">Jumlah untuk kirim / kembalikan</label><div class="f2"><input '+ni+' id="dl" value="'+Math.floor(G.qty/12)+'" aria-label="Lusin"><span>lusin</span><input '+ni+' id="dp" value="'+G.qty%12+'" aria-label="Pcs"><span>pcs</span></div>'
+   +(oth.length>1?'<select id="kt" class="kts" aria-label="Workshop tujuan">'+oth.map(x=>'<option value="'+esc(x.id)+'">Kirim ke '+esc(x.name)+'</option>').join('')+'</select>':'')+'<div class="pp2">'+(oth.length?'<button class="btn sec" onclick="psend(\''+k+'\')">'+MS('truck')+(one?'Kirim ke '+esc(oth[0].name):'Kirim')+'</button>':'')+(pv?'<button class="btn sec bk2" onclick="pback(\''+k+'\')">'+MS('undo')+'Kembali '+STL[pv]+'</button>':'')+'</div><details><summary>Rincian & riwayat</summary>'+gabH(G)+'</details></div>';
   h+='<label class="ppl" for="dl">Jumlah</label><div class="f2 big"><input '+ni+' id="dl" value="'+Math.floor(d1/12)+'" oninput="prc(\''+k+'\')" aria-label="Lusin"><span>lusin</span><input '+ni+' id="dp" value="'+d1%12+'" oninput="prc(\''+k+'\')" aria-label="Pcs"><span>pcs</span></div>'
   +(G.qty>12?'<div class="qk"><button type="button" class="btn sec" onclick="qAdd(\''+k+'\',12)">+1 lusin</button><button type="button" class="btn sec" onclick="qAdd(\''+k+'\',-12)">&minus;1 lusin</button><button type="button" class="btn sec" onclick="qAll(\''+k+'\')">Semua ('+dz(G.qty)+')</button></div>':'')
   +'<div id="sisa" class="muted"></div>'
+  +(npt?'<label class="ppl" for="pth">Pemotong <small class="muted">(wajib)</small></label><div class="pjw"><select id="pth" data-loc="'+esc(G.loc)+'"></select>'+(isAdm?'<button type="button" class="ib pjr" onclick="pjhSync(1)" title="Perbarui daftar dari data karyawan" aria-label="Perbarui daftar pemotong">'+LKI('refresh')+'</button>':'')+'</div>':'')
   +(npj?'<label class="ppl" for="pjh">Unit jahit <small class="muted">(wajib)</small></label><div class="pjw"><select id="pjh" data-loc="'+esc(G.loc)+'"></select>'+(isAdm?'<button type="button" class="ib pjr" onclick="pjhSync(1)" title="Perbarui daftar dari data karyawan" aria-label="Perbarui daftar unit jahit">'+LKI('refresh')+'</button>':'')+'</div>':'')
-  +'<label class="ppl" for="rj">Reject</label><div class="rjr"><input '+ni+' id="rj" placeholder="0 pcs" oninput="prc(\''+k+'\')" aria-label="Reject (pcs)"><input id="nt" placeholder="Catatan…" aria-label="Catatan"></div><div id="rjx" hidden>'+rjSel+'</div>'
+  +'<label class="ppl" for="rj">Reject</label><div class="rjr"><input '+ni+' id="rj" placeholder="0 pcs" oninput="prc(\''+k+'\')" aria-label="Reject (pcs)"><input id="nt" placeholder="'+(jk?'Alasan pindah manual (wajib)':'Catatan…')+'" aria-label="Catatan"></div><div id="rjx" hidden>'+rjSel+'</div>'
   +(isMk(G.loc)?'<label class="ppl" for="tg2">Diterima dari makloon di workshop</label><select id="tg2">'+GL().map(g=>'<option value="'+esc(g.id)+'">'+esc(g.name)+'</option>').join('')+'</select>':'')
-  +'<button class="btn wide go" style="'+scv(nx)+'" onclick="padv(\''+k+'\')">'+(nx==='selesai'?'Selesai: masuk stok POS':'Pindahkan ke '+STL[nx])+'</button>'
+  +'<button class="btn wide go" style="'+scv(nx)+'" onclick="padv(\''+k+'\')">'+(jk?'Pindah manual ke Finishing (Owner/Admin)':nx==='selesai'?'Selesai: masuk stok POS':'Pindahkan ke '+STL[nx])+'</button>'
   +(oth.length>1?'<select id="kt" class="kts" aria-label="Workshop tujuan">'+oth.map(x=>'<option value="'+esc(x.id)+'">Kirim ke '+esc(x.name)+'</option>').join('')+'</select>':'')
   +'<div class="pp2">'+(oth.length?'<button class="btn sec" onclick="psend(\''+k+'\')">'+MS('truck')+(one?'Kirim ke '+esc(oth[0].name):'Kirim')+'</button>':'')
   +(pv?'<button class="btn sec bk2" onclick="pback(\''+k+'\')">'+MS('undo')+'Kembali '+STL[pv]+'</button>':'')+'</div>';
@@ -509,21 +513,28 @@ const pjhList=()=>{const v=PJ(((S.jobs||[]).find(x=>x.id==='pcfg')||{}).pjh);ret
 async function pjhFetch(){const t=(typeof TOK!=='undefined'&&TOK)||(getCred()||{}).t;if(!t)throw new Error('Sesi belum siap. Masuk ulang dulu.');
  const r=await fetch(HRD_API,{method:'POST',body:JSON.stringify({fn:'kinerja',tok:t,a:['load',{lite:1,from:new Date(Date.now()-864e5).toISOString()}]})}),j=await r.json();
  if(!j.ok)throw new Error(j.error||'Gagal memuat data karyawan');const d=j.data||{},dl=String((d.cfg||{}).loc||'');
- return (d.kar||[]).filter(k=>k&&k.on!==false&&/penjahit/i.test(String(k.posisi||''))).map(k=>({id:String(k.id),nama:String(k.nama||'').trim(),gud:String(k.gud||dl),unit:String(k.unit||'').trim()})).filter(k=>k.nama).sort((a,b)=>a.nama.localeCompare(b.nama,'id'))}
+ const isJ=k=>/penjahit/i.test(String(k.posisi||'')),isP=k=>/pemotong|potong|cutting/i.test(String(k.posisi||''))||(Array.isArray(k.kerja)&&k.kerja.includes('potong'));
+ return (d.kar||[]).filter(k=>k&&k.on!==false&&(isJ(k)||isP(k))).map(k=>({id:String(k.id),nama:String(k.nama||'').trim(),gud:String(k.gud||dl),unit:String(k.unit||'').trim(),j:isJ(k)?1:0,p:isP(k)?1:0})).filter(k=>k.nama).sort((a,b)=>a.nama.localeCompare(b.nama,'id'))}
+/* v14: daftar lama (tanpa tanda j/p) dianggap penjahit */
+const kJ=k=>k.j===undefined||!!k.j,kP=k=>!!k.p;
+const needPt=G=>nxSt(G.st)==='cutting'&&G.st!=='cetak'&&isKdw(G.loc);
+const jhKdw=G=>G.st==='jahit'&&nxSt(G.st)==='finishing'&&isKdw(G.loc);
+function ptOpts(loc){const L=pjhList().l.filter(kP),w=L.filter(k=>k.gud===String(loc));return (w.length?w:L).map(k=>({v:'k:'+k.id,pj:k.nama,id:k.id,lab:k.nama}))}
+function ptFill(){const s=$('pth');if(!s)return;const O=ptOpts(s.dataset.loc),cur=s.value||lpj('pt_'+s.dataset.loc);s.innerHTML=O.length?'<option value="">Pilih pemotong…</option>'+O.map(o=>'<option value="'+esc(o.v)+'"'+(o.v===cur?' selected':'')+'>'+esc(o.lab)+'</option>').join(''):'<option value="">Daftar pemotong belum ada — minta Owner/Admin memperbarui</option>'}
 let pjhBusy=false,pjhTried=false;
 async function pjhSync(manual){if(pjhBusy||!isAdm)return;pjhBusy=true;pjhTried=true;
  try{const L=await pjhFetch(),cur=pjhList();if(manual||JSON.stringify(L)!==JSON.stringify(cur.l))setPC({pjh:{t:Date.now(),l:L}});
-  if(manual)toast('Daftar unit jahit diperbarui: '+L.length+' penjahit.');const b=$('pjhbox');if(b)b.innerHTML=pjhH();pjhFill()}
+  if(manual)toast('Daftar diperbarui: '+L.filter(kJ).length+' penjahit, '+L.filter(kP).length+' pemotong.');const b=$('pjhbox');if(b)b.innerHTML=pjhH();pjhFill();ptFill()}
  catch(e){if(manual)toast('Gagal memperbarui daftar unit jahit: '+e.message,1)}finally{pjhBusy=false}}
-function pjhOpts(loc){const L=pjhList().l,w=L.filter(k=>k.gud===String(loc)),B=w.length?w:L,U={},solo=[];
+function pjhOpts(loc){const L=pjhList().l.filter(kJ),w=L.filter(k=>k.gud===String(loc)),B=w.length?w:L,U={},solo=[];
  B.forEach(k=>{if(k.unit)(U[k.unit]=U[k.unit]||[]).push(k.nama);else solo.push(k)});
  return Object.keys(U).sort((a,b)=>a.localeCompare(b,'id',{numeric:true})).map(u=>({v:'u:'+u,pj:u,id:'',lab:u+' ('+U[u].join(', ')+')'})).concat(solo.map(k=>({v:'k:'+k.id,pj:k.nama,id:k.id,lab:k.nama})))}
 function pjhOpt(sel,loc,cur){const O=pjhOpts(loc);sel.innerHTML=O.length?'<option value="">Pilih unit jahit…</option>'+O.map(o=>'<option value="'+esc(o.v)+'"'+(o.v===cur?' selected':'')+'>'+esc(o.lab)+'</option>').join(''):'<option value="">Daftar unit jahit belum ada — minta Owner/Admin memperbarui</option>'}
 function pjhFill(){const s=$('pjh');if(s)pjhOpt(s,s.dataset.loc,s.value||lpj(s.dataset.loc))}
 /* kartu di menu Atur */
-function pjhH(){const P=pjhList(),G={};P.l.forEach(k=>{const g=gname(k.gud)||k.gud||'Tanpa workshop',u=k.unit||'(tanpa unit)';const o=G[g]=G[g]||{};(o[u]=o[u]||[]).push(k.nama)});
- return '<div class="card sec" style="margin-top:14px"><h2 style="margin:0 0 6px">Unit jahit</h2><p class="muted" style="margin:0 0 10px">Dipilih (wajib) saat memindahkan barang dari Cutting ke Jahit di Workshop Kedawung. Diambil dari karyawan berposisi Penjahit di menu Kinerja; unitnya diatur di kolom <b>Unit</b> data karyawan (tulis nama unit yang sama persis untuk anggota satu unit). Diperbarui otomatis saat Owner/Admin membuka menu Produksi.</p>'
- +(P.l.length?Object.keys(G).map(g=>'<div style="margin:8px 0"><b>'+esc(g)+'</b>'+Object.keys(G[g]).sort((a,b)=>a.localeCompare(b,'id',{numeric:true})).map(u=>'<div class="dr2"><span>'+esc(u)+'</span><span class="muted">'+esc(G[g][u].join(', '))+'</span></div>').join('')+'</div>').join(''):'<p class="muted">Belum ada data.</p>')
+function pjhH(){const P=pjhList(),G={},PT={};P.l.forEach(k=>{const g=gname(k.gud)||k.gud||'Tanpa workshop';if(kJ(k)){const u=k.unit||'(tanpa unit)';const o=G[g]=G[g]||{};(o[u]=o[u]||[]).push(k.nama)}if(kP(k)){G[g]=G[g]||{};(PT[g]=PT[g]||[]).push(k.nama)}});
+ return '<div class="card sec" style="margin-top:14px"><h2 style="margin:0 0 6px">Unit jahit &amp; pemotong</h2><p class="muted" style="margin:0 0 10px">Di Workshop Kedawung, unit jahit wajib dipilih saat memindahkan barang dari Cutting ke Jahit, dan pemotong wajib dipilih saat memindahkan ke Cutting. Pemotong = karyawan berposisi Pemotong atau berjenis kerja potong. Diambil dari karyawan berposisi Penjahit di menu Kinerja; unitnya diatur di kolom <b>Unit</b> data karyawan (tulis nama unit yang sama persis untuk anggota satu unit). Diperbarui otomatis saat Owner/Admin membuka menu Produksi.</p>'
+ +(P.l.length?Object.keys(G).map(g=>'<div style="margin:8px 0"><b>'+esc(g)+'</b>'+Object.keys(G[g]).sort((a,b)=>a.localeCompare(b,'id',{numeric:true})).map(u=>'<div class="dr2"><span>'+esc(u)+'</span><span class="muted">'+esc(G[g][u].join(', '))+'</span></div>').join('')+(PT[g]?'<div class="dr2"><span>Pemotong</span><span class="muted">'+esc(PT[g].join(', '))+'</span></div>':'')+'</div>').join(''):'<p class="muted">Belum ada data.</p>')
  +'<p class="muted" style="font-size:13px;margin:8px 0 0">'+(P.t?'Diperbarui '+new Date(P.t).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'Belum pernah diperbarui')+'</p>'+(isAdm?'<button class="btn sec" style="margin-top:8px" onclick="pjhSync(1)">Perbarui dari data karyawan</button>':'')+'</div>'}
 /* ingat penjahit terakhir per workshop di perangkat ini */
 const lpj=l=>{try{return localStorage.getItem('pos_lpu_'+l)||''}catch(e){return ''}},spj=(l,v)=>{try{localStorage.setItem('pos_lpu_'+l,v)}catch(e){}};
@@ -547,11 +558,13 @@ async function padv(k){const G=groups().find(x=>x.k===k);if(!G)return;if(isV(G))
  if(r>0&&!ra){$('ra').focus();return toast('Pilih alasan reject.',1)}
  const nx=nxSt(G.st),fix=r>0&&rt!=='buang'?rt:'';
  let pj=null,pjv='';if(needPj(G)&&d>0){const s=$('pjh');pjv=s?s.value:'';const o=pjv&&pjhOpts(G.loc).find(x=>x.v===pjv);if(!o){if(s)s.focus();return toast(pjhList().l.length?'Pilih unit jahit dulu (wajib untuk Workshop Kedawung).':'Daftar unit jahit belum ada. Minta Owner/Admin membuka menu Produksi atau Atur → Unit jahit.',1)}pj={id:o.id,nama:o.pj}}
- const rows=[[cet?'Diterima':'Jadi dipindah',d?dzf(d):'-']];if(pj)rows.push(['Unit jahit',esc(pj.nama)]);if(r)rows.push(['Reject',r+' pcs · '+esc(ra)],['Tindak lanjut',fix?(fix==='cetak'?'Cetak ulang di vendor':'Perbaiki di '+STL[fix]):'Buang / afkir']);
+ let pt=null,ptv='';if(needPt(G)&&d>0){const s=$('pth');ptv=s?s.value:'';const o=ptv&&ptOpts(G.loc).find(x=>x.v===ptv);if(!o){if(s)s.focus();return toast(pjhList().l.some(kP)?'Pilih pemotong dulu (wajib untuk Workshop Kedawung).':'Daftar pemotong belum ada. Minta Owner/Admin memperbarui di Atur → Unit jahit & pemotong.',1)}pt={id:o.id,nama:o.pj}}
+ const jkm=jhKdw(G)&&d>0;if(jkm){if(!isAdm)return toast('Di Kedawung, Jahit → Finishing lewat setor jahit di menu Kinerja.',1);if(!nt.trim()){$('nt').focus();return toast('Isi alasan pindah manual di kolom catatan.',1)}}
+ const rows=[[cet?'Diterima':'Jadi dipindah',d?dzf(d):'-']];if(pj)rows.push(['Unit jahit',esc(pj.nama)]);if(pt)rows.push(['Pemotong',esc(pt.nama)]);if(jkm)rows.push(['Pindah manual','tanpa setoran (tercatat di rekap unit)']);if(r)rows.push(['Reject',r+' pcs · '+esc(ra)],['Tindak lanjut',fix?(fix==='cetak'?'Cetak ulang di vendor':'Perbaiki di '+STL[fix]):'Buang / afkir']);
  rows.push(['Sisa di '+STL[G.st],dzf(G.qty-d-r)]);if(cet||$('tg2'))rows.push(['Masuk ke workshop',esc(gname(g))]);if(nt)rows.push(['Catatan',esc(nt)]);
  if(!(await uiBox({title:cet?'Terima dari vendor?':'Pindahkan produk?',html:mvSum(G,rows,STL[G.st],nx==='selesai'?'Masuk stok POS':STL[nx],G.st,nx,cet?0:d),ok:'Ya, simpan',cancel:'Batal'})))return;
- if(!(await (pj?needV(13):(G.st==='rencana'||isMk(G.loc))?needV(12):chkSrv())))return;if(pj)spj(G.loc,pjv);if(!cet)sby(G.st,by);const calls=[],ov=[];let rd=d,rr=r;
- G.parts.slice().sort((a,b)=>a.j.date<b.j.date?-1:1).forEach(p=>{const cap=p.it.qty,td=Math.min(rd,cap),tr=Math.min(rr,cap-td),v=p.it.vid;rd-=td;rr-=tr;if(td||tr){const ex={done:td?{[v]:td}:{},reason:tr?ra:''};if(g)ex.loc=g;if(pj&&td)ex.pj=pj;if(tr&&fix)ex.fix={to:fix};calls.push([p.j.id,p.j.stage,by,nt,tr?{[v]:tr}:{},ex]);ov.push({k:++PK,jid:p.j.id,vid:v,done:td,rej:tr,to:nx,by,loc:g||undefined,pj:pj&&td?pj.nama:undefined});if(tr&&fix)ov.push({k:++PK,jid:p.j.id,vid:v,add:tr,to:fix})}});
+ if(!(await ((pt||jkm)?needV(14):pj?needV(13):(G.st==='rencana'||isMk(G.loc))?needV(12):chkSrv())))return;if(pj)spj(G.loc,pjv);if(pt)spj('pt_'+G.loc,ptv);if(!cet)sby(G.st,by);const calls=[],ov=[];let rd=d,rr=r;
+ G.parts.slice().sort((a,b)=>a.j.date<b.j.date?-1:1).forEach(p=>{const cap=p.it.qty,td=Math.min(rd,cap),tr=Math.min(rr,cap-td),v=p.it.vid;rd-=td;rr-=tr;if(td||tr){const ex={done:td?{[v]:td}:{},reason:tr?ra:''};if(g)ex.loc=g;if(pj&&td)ex.pj=pj;if(pt&&td)ex.pt=pt;if(tr&&fix)ex.fix={to:fix};calls.push([p.j.id,p.j.stage,by,nt,tr?{[v]:tr}:{},ex]);ov.push({k:++PK,jid:p.j.id,vid:v,done:td,rej:tr,to:nx,by,loc:g||undefined,pj:pj&&td?pj.nama:undefined});if(tr&&fix)ov.push({k:++PK,jid:p.j.id,vid:v,add:tr,to:fix})}});
  ppClose();enq(calls,ov,G.name+': '+dz(d)+' → '+(nx==='selesai'?'masuk stok POS':STL[nx])+(pj?' · '+pj.nama:'')+(r?' · reject '+r+' pcs':''))}
 /* kembalikan ke tahap sebelumnya / batalkan pindah: ambil dari order yang paling baru masuk dulu */
 async function pback(k){const G=groups().find(x=>x.k===k);if(!G)return;if(isV(G))return toast('Masih menyimpan, tunggu sebentar.',1);

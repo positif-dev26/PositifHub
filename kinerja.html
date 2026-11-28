@@ -215,7 +215,7 @@ function sync(on,lbl){LOADING=Math.max(0,LOADING+(on?1:-1));var e=$('sync');if(!
 function prep(){D.K={};D.kar.forEach(function(k){D.K[k.id]=k});if(!Array.isArray(D.jobs))D.jobs=[];if(WS)D.kar=D.kar.filter(function(k){return kG(k)===WS});D.K={};D.kar.forEach(function(k){D.K[k.id]=k});
   var T=tabs();if(!TAB||!T.some(function(t){return t[0]===TAB}))TAB=D.me.gaji&&!D.kar.length?'atur':(D.me.cek||D.me.gaji)?'hasil':(T[0]?T[0][0]:'')}
 function perluJobs(){return TAB==='jobdesk'||TAB==='hasil'}
-async function loadJobs(){if(!D)return;sync(1);try{var j=await kj('jobs',{});D.jobs=j.list||[];if(j.noLoc!=null)D.noLoc=j.noLoc;D.jobsOk=1;JOBS_AT=Date.now();simpanCache();render()}catch(e){toast(e.message,1)}finally{sync(0)}}
+async function loadJobs(){if(!D)return;sync(1);try{var j=await kj('jobs',{});D.jobs=j.list||[];if(j.noLoc!=null)D.noLoc=j.noLoc;if(j.potongProd!=null)D.potongProd=j.potongProd;D.jobsOk=1;JOBS_AT=Date.now();simpanCache();render()}catch(e){toast(e.message,1)}finally{sync(0)}}
 function simpanCache(){try{localStorage.setItem(CKEY(),JSON.stringify(D))}catch(e){}}
 async function load(){
   var from=new Date(satOf(new Date()));from.setDate(from.getDate()-14);
@@ -239,7 +239,7 @@ async function load(){
   simpanCache();render();
   if(perluJobs())loadJobs();
   if(D.me.gaji)docPrefetch()}
-var IC={setor:'assignment_turned_in',hari:'assignment_turned_in',cek:'task_alt',rekap:'payments',peraturan:'menu_book',atur:'tune',ulang:'refresh'};
+var IC={unit:'groups',setor:'assignment_turned_in',hari:'assignment_turned_in',cek:'task_alt',rekap:'payments',peraturan:'menu_book',atur:'tune',ulang:'refresh'};
 (function(){if(!document.querySelector('link[data-ms]')){var l=document.createElement('link');l.rel='stylesheet';l.setAttribute('data-ms','1');l.href='https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block';document.head.appendChild(l)}if(!document.getElementById('mscss')){var s=document.createElement('style');s.id='mscss';s.textContent='.ms{font-family:"Material Symbols Sharp";font-weight:400;font-style:normal;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;-webkit-font-smoothing:antialiased;font-feature-settings:"liga";-webkit-font-feature-settings:"liga";font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24;transition:font-variation-settings .15s;user-select:none;overflow:hidden;line-height:1;flex:none;width:1em;height:1em}.ms{display:block;font-size:22px}#tabs .ti.on .ms{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}';document.head.appendChild(s)}})();
 function MSI(n){return'<span class="ms" aria-hidden="true">'+(IC[n]||'')+'</span>'}
 IC.jobdesk=IC.hari;IC.hasil=IC.cek;
@@ -247,6 +247,7 @@ function tabs(){var m=D.me,t=[];
   if(!WS&&(m.peran==='owner'||m.peran==='admin'))return t;
   if(m.input)t.push(['jobdesk','Jobdesk']);
   if(m.cek||m.gaji)t.push(['hasil','Hasil kerja',nPeriksa()]);
+  if(m.cek||m.gaji)t.push(['unit','Rekap unit']);
   if(m.gaji)t.push(['rekap','Gaji &amp; Tunjangan']);
   t.push(['peraturan','Peraturan']);
   if(m.gaji||m.karyawan)t.push(['atur','Atur']);
@@ -260,7 +261,7 @@ function render(){
   $('tabs').innerHTML='<div class="wsb"><small>WORKSHOP</small><b>'+esc(gN(WS).replace(/^Workshop\s+/,''))+'</b>'+((D.me.peran==='owner'||D.me.peran==='admin')&&lain.length?'<a href="kinerja.html?ws='+encodeURIComponent(lain[0].id)+'" title="Buka '+esc(wsN(lain[0].name))+'">ganti ⇄</a>':'')+'</div>'+tabs().map(function(t){var ic=MSI(t[0]);
     return '<button class="ti'+(t[0]===TAB?' on':'')+'" onclick="go(\''+t[0]+'\')"'+(t[0]===TAB?' aria-current="page"':'')+'>'+ic+t[1]+(t[2]?'<span class="bd">'+t[2]+'</span>':'')+'</button>'}).join('')
    +'<hr><button class="ti" onclick="load()" title="Muat ulang">'+MSI('ulang')+'Muat ulang</button>';
-  var f={jobdesk:vSetor,hasil:vHasil,rekap:vRekap,peraturan:vPer,atur:vAtur}[TAB];
+  var f={jobdesk:vSetor,hasil:vHasil,unit:vUnit,rekap:vRekap,peraturan:vPer,atur:vAtur}[TAB];
   $('v').innerHTML=f?f():'<div class="card">Akun ini belum punya izin Kinerja.</div>'}
 function go(t){TAB=t;if(t!=='jobdesk')keluar(true);render();scrollTo(0,0);if(perluJobs()&&(!D.jobsOk||Date.now()-JOBS_AT>60000))loadJobs()}
 
@@ -375,25 +376,40 @@ function catH(k){var A=hariIni(k);return A.length?A.map(aktLine).join(''):'<span
 function rPart(){if(TAB==='jobdesk'&&SES&&$('secTugas')){var k=D.K[SES.kid];$('secTugas').innerHTML=tugasH(k);$('secCat').innerHTML=catH(k);if($('secTerjadi'))$('secTerjadi').innerHTML=terjadiH(k)}else render()}
 function stepH(id,v){return '<div class="step"><button aria-label="Kurangi" onclick="stp(\''+id+'\',-1)">−</button><input id="'+id+'" type="number" inputmode="numeric" min="0" value="'+v+'" aria-label="Jumlah"><button class="p" aria-label="Tambah" onclick="stp(\''+id+'\',1)">+</button></div>'}
 function stp(id,d){var e=$(id),mx=e.max?+e.max:1e9;e.value=Math.max(0,Math.min(mx,(+e.value||0)+d));aktif();if(e.oninput)e.oninput()}
-function setorH(k,st){if(!D.jobsOk&&!D.jobs.length)return '<div class="sec"><div class="card mu">Memuat daftar barang produksi…</div></div>';var g=kG(k),L=D.jobs.filter(function(j){return j.st===st&&j.qty>0&&(!g||j.loc===g)}).sort(function(a,b){return String(a.due||'9')<String(b.due||'9')?-1:1});
+/* v9: barang Jahit dipisah per jatah unit (kolom pj dari menu Produksi). Jatah unit sendiri di atas, lalu barang belum dibagi,
+   lalu jatah unit lain (boleh disetor, diberi tanda "di luar jatah" dan tetap perlu persetujuan supervisor). */
+function setorH(k,st){if(st==='cutting'&&D.potongProd)return '<div class="sec"><h2>Setor hasil potong</h2><div class="card mu"><b style="color:var(--tx)">Hasil potong di workshop ini dicatat dari menu Produksi.</b><br>Saat barang dipindah dari Rak bahan ke Cutting, petugas memilih nama pemotong. Tidak perlu setor di sini.</div></div>';
+  if(!D.jobsOk&&!D.jobs.length)return '<div class="sec"><div class="card mu">Memuat daftar barang produksi…</div></div>';var g=kG(k),L=D.jobs.filter(function(j){return j.st===st&&j.qty>0&&(!g||j.loc===g)}).sort(function(a,b){return String(a.due||'9')<String(b.due||'9')?-1:1});
   var W=D.jobs.filter(function(j){return j.st===st&&j.tunggu>0&&(!g||j.loc===g)}).reduce(function(a,j){return a+j.tunggu},0);
-  var jh=st==='jahit',ke=jh?'Finishing':'Jahit',lbl=(jh?'jahit':'potong')+' → disetujui supervisor → '+ke,banyak=!D.me.gud&&!g;
-  return '<div class="sec"><h2>Setor hasil '+lbl+'</h2><div class="mu" style="font-size:13px;margin:-4px 0 8px">Dicatat atas nama <b>'+esc(jh?(k.unit||k.nama):k.nama)+'</b>'+(g?' · '+esc(gN(g)):'')+'. Barang pindah ke '+ke+' setelah disetujui supervisor.'+(W?' <span class="warn">'+W+' pcs sedang menunggu disetujui.</span>':'')+'</div>'
-    +(L.length?'<div style="display:flex;flex-direction:column;gap:10px">'+L.map(function(j,i){var p=poinOf(j.cat);
-    return '<div class="it" id="it'+st+i+'"><div><b>'+esc(j.name)+'</b><div class="mu" style="font-size:12px">'+(banyak?esc(gN(j.loc))+' · ':'')+esc(j.cat||'-')+' · '+nf(p)+' poin/pcs · ada '+j.qty+' pcs'+(j.tunggu?' (+'+j.tunggu+' menunggu)':'')+(j.due?' · butuh '+esc(String(j.due).slice(0,10)):'')+'</div></div>'
-     +'<div class="step"><button aria-label="Kurangi" onclick="stp(\'q'+st+i+'\',-1)">−</button><input id="q'+st+i+'" type="number" inputmode="numeric" min="0" max="'+j.qty+'" value="0" data-vid="'+esc(j.vid)+'" data-loc="'+esc(j.loc)+'" data-p="'+p+'" oninput="setorSum(\''+st+'\')"><button class="p" aria-label="Tambah" onclick="stp(\'q'+st+i+'\',1)">+</button><button style="width:auto;padding:0 12px;font-size:14px" onclick="$(\'q'+st+i+'\').value='+j.qty+';setorSum(\''+st+'\')">Semua</button></div></div>'}).join('')+'</div>'
+  var jh=st==='jahit',ke=jh?'Finishing':'Jahit',lbl=(jh?'jahit':'potong')+' → disetujui supervisor → '+ke,banyak=!D.me.gud&&!g,un=jh?(String(k.unit||'').trim()||k.nama):k.nama;
+  var per=jh&&L.some(function(j){return j.pj!==undefined}),own=[],bebas=[],lain=[];
+  if(per)L.forEach(function(j){(j.pj===un?own:!j.pj?bebas:lain).push(j)});else bebas=L;
+  var all=own.concat(bebas,lain),grp=function(t,sub){return '<div style="margin:6px 0 -2px"><b style="font-size:15px">'+t+'</b>'+(sub?'<div class="mu" style="font-size:12px">'+sub+'</div>':'')+'</div>'};
+  var row=function(j,i){var p=poinOf(j.cat),lu=per&&j.pj&&j.pj!==un;
+    return '<div class="it" id="it'+st+i+'"'+(lu?' style="border-color:var(--or)"':'')+'><div><b>'+esc(j.name)+'</b>'+(lu?' <span class="pill" style="color:var(--or);border-color:var(--or)">jatah '+esc(j.pj)+'</span>':'')+'<div class="mu" style="font-size:12px">'+(banyak?esc(gN(j.loc))+' · ':'')+esc(j.cat||'-')+' · '+nf(p)+' poin/pcs · '+(per&&j.pj===un?'jatah ':'ada ')+j.qty+' pcs'+(j.tunggu?' (+'+j.tunggu+' menunggu)':'')+(j.due?' · butuh '+esc(String(j.due).slice(0,10)):'')+'</div></div>'
+     +'<div class="step"><button aria-label="Kurangi" onclick="stp(\'q'+st+i+'\',-1)">−</button><input id="q'+st+i+'" type="number" inputmode="numeric" min="0" max="'+j.qty+'" value="0" data-vid="'+esc(j.vid)+'" data-loc="'+esc(j.loc)+'"'+(per?' data-src="'+esc(j.pj||'')+'"':'')+' data-p="'+p+'" oninput="setorSum(\''+st+'\')"><button class="p" aria-label="Tambah" onclick="stp(\'q'+st+i+'\',1)">+</button><button style="width:auto;padding:0 12px;font-size:14px" onclick="$(\'q'+st+i+'\').value='+j.qty+';setorSum(\''+st+'\')">Semua</button></div></div>'};
+  var body='',i=0;
+  if(per){if(own.length)body+=grp('Jatah '+esc(un))+own.map(function(j){return row(j,i++)}).join('');
+    else body+='<div class="card mu" style="padding:10px 12px">Belum ada barang jatah <b>'+esc(un)+'</b> di Jahit.</div>';
+    if(bebas.length)body+=grp('Belum dibagi','Barang lama tanpa unit — boleh disetor siapa saja.')+bebas.map(function(j){return row(j,i++)}).join('');
+    if(lain.length)body+=grp('Jatah unit lain','Boleh disetor bila ikut mengerjakan, tapi ditandai “di luar jatah” untuk dicek supervisor.')+lain.map(function(j){return row(j,i++)}).join('')}
+  else body=all.map(function(j){return row(j,i++)}).join('');
+  return '<div class="sec"><h2>Setor hasil '+lbl+'</h2><div class="mu" style="font-size:13px;margin:-4px 0 8px">Dicatat atas nama <b>'+esc(un)+'</b>'+(g?' · '+esc(gN(g)):'')+'. Barang pindah ke '+ke+' setelah disetujui supervisor.'+(W?' <span class="warn">'+W+' pcs sedang menunggu disetujui.</span>':'')+'</div>'
+    +(L.length?'<div style="display:flex;flex-direction:column;gap:10px">'+body+'</div>'
     +'<button class="btn pri big" style="margin-top:10px" id="bs'+st+'" disabled onclick="setor(\''+st+'\')">Isi jumlah dulu</button>'
    :'<div class="card mu"><b style="color:var(--tx)">Belum ada barang di tahap '+(jh?'Jahit':'Cutting')+(g?' '+esc(gN(g)):'')+'.</b><br>Barang muncul di sini setelah order dipindahkan ke tahap '+(jh?'Jahit':'Cutting')+(g?' dan diberi workshop '+esc(gN(g)):'')+' di menu Produksi. Bila sudah ada barang tapi tidak muncul, hubungi admin.</div>')+'</div>'}
 function poinOf(cat){var c=String(cat||'').toLowerCase().trim();return D.cfg.poin[c]!=null?+D.cfg.poin[c]:(+D.cfg.poinDef||1)}
 function setorSum(st){var q=0,p=0;document.querySelectorAll('input[id^="q'+st+'"]').forEach(function(e){var v=Math.max(0,Math.min(+e.max,Math.floor(+e.value||0)));q+=v;p+=v*(+e.dataset.p);e.closest('.it').classList.toggle('on',v>0)});
   var b=$('bs'+st);b.disabled=!q;b.textContent=q?'Setor '+q+' pcs ('+nf(p)+' poin)':'Isi jumlah dulu';aktif()}
-async function setor(st){var it=[];document.querySelectorAll('input[id^="q'+st+'"]').forEach(function(e){var v=Math.floor(+e.value||0);if(v>0)it.push({vid:e.dataset.vid,loc:e.dataset.loc||'',q:Math.min(v,+e.max)})});
+async function setor(st){var it=[];document.querySelectorAll('input[id^="q'+st+'"]').forEach(function(e){var v=Math.floor(+e.value||0);if(v>0){var o={vid:e.dataset.vid,loc:e.dataset.loc||'',q:Math.min(v,+e.max)};if(e.dataset.src!==undefined)o.src=e.dataset.src;it.push(o)}});
   if(!it.length)return;var b=$('bs'+st);b.disabled=true;b.textContent='Menyimpan…';
   var r=await run('setor',Object.assign({tahap:st,items:it},SES),'Tersimpan. Menunggu persetujuan supervisor.');
   if(!r){setorSum(st);return}
   var k=D.K[SES.kid],now=new Date().toISOString();
-  it.forEach(function(x){var j=D.jobs.filter(function(y){return y.st===st&&y.vid===x.vid&&y.loc===x.loc})[0]||{};if(j.qty!=null){j.qty-=x.q;j.tunggu=(j.tunggu||0)+x.q}
-    D.akt.push({id:'tmp'+(++TMPN),tgl:now,kid:k.id,jenis:'setor',d:{tahap:st,vid:x.vid,nama:j.name||'',q:x.q,cat:j.cat||'',poin:poinOf(j.cat),loc:x.loc,unit:st==='jahit'?(k.unit||k.nama):k.nama},st:'tunggu',oleh:k.nama})});
+  var un=String(k.unit||'').trim()||k.nama;
+  it.forEach(function(x){var j=D.jobs.filter(function(y){return y.st===st&&y.vid===x.vid&&y.loc===x.loc&&(x.src===undefined||String(y.pj||'')===x.src)})[0]||{};if(j.qty!=null){j.qty-=x.q;j.tunggu=(j.tunggu||0)+x.q}
+    var dd={tahap:st,vid:x.vid,nama:j.name||'',q:x.q,cat:j.cat||'',poin:poinOf(j.cat),loc:x.loc,unit:st==='jahit'?un:k.nama};if(x.src!==undefined){dd.src=x.src;if(x.src&&x.src!==un)dd.luar=1}
+    D.akt.push({id:'tmp'+(++TMPN),tgl:now,kid:k.id,jenis:'setor',d:dd,st:'tunggu',oleh:k.nama})});
   render();load()}
 var TMPN=0;
 async function kirim(p,d,msg){if(!SES)return;aktif();var ses=SES,k=D.K[ses.kid];
@@ -433,7 +449,7 @@ async function rjSave(){var q=Math.floor(+$('rq').value||0);if(!(q>0))return toa
   kirim(Object.assign({jenis:'reject'},d),d,'Reject tercatat, masuk rak reject')}
 function aktLine(a){var k=D.K[a.kid]||{},d=a.d,t='';
   if(a.jenis==='setor')t='Setor '+(d.tahap==='jahit'?'jahit':'potong')+(d.unit&&d.unit!==a.oleh?' ('+esc(d.unit)+', oleh '+esc(a.oleh)+')':'')+' · '+esc(d.nama)+' · <b>'+d.q+' pcs</b> ('+nf(d.q*d.poin)+' poin)'
-    +stPill(a)+(d.qAsli!=null?' <span class="mu">(disetor '+d.qAsli+')</span>':'')+(d.catatan?' <span class="warn">'+esc(d.catatan)+'</span>':'');
+    +stPill(a)+(d.luar?' <span class="pill" style="color:var(--or);border-color:var(--or)">⚑ di luar jatah · milik '+esc(d.src)+'</span>':d.tahap==='jahit'&&d.src===''?' <span class="mu">· barang belum dibagi</span>':'')+(d.qAsli!=null?' <span class="mu">(disetor '+d.qAsli+')</span>':'')+(d.catatan?' <span class="warn">'+esc(d.catatan)+'</span>':'');
   else if(a.jenis==='hasil')t=esc(d.label)+' · <b>'+nf(d.q)+' '+esc(d.satuan)+'</b>'+(d.rj?' · reject '+d.rj:'')+(d.ket?' · '+esc(d.ket):'')+(d.qAsli!=null?' <span class="mu">(dicatat '+nf(d.qAsli)+')</span>':'')+stPill(a);
   else if(a.jenis==='reject')t='Reject '+d.q+' pcs · '+esc(d.produk||'-')+' · '+esc(d.alasan)+' · jahitan '+esc(d.target?(D.K[d.target]||{}).nama||'?':'tanpa kartu')+(a.st==='putus'?' · '+esc(d.putus):'');
   else if(a.jenis==='tugas')t='Tugas: '+esc(d.item)+stPill(a);
@@ -759,6 +775,28 @@ async function minus(){var n=$('mn').value.trim();if(!n)return toast('Tulis alas
 async function hapusAkt(id){if(!(await yakin('Hapus catatan ini?','Catatan dibatalkan dan tidak dihitung.','Ya, hapus')))return;if(await run('hapusAkt',{id:id},'Dihapus'))await load()}
 
 /* =================== REKAP & GAJI =================== */
+/* ---------- v9: Rekap unit jahit & pemotong per minggu (Sabtu–Jumat). Data Produksi + setoran + reject. ---------- */
+var UW='',UR={};
+var lz=function(n){n=Math.round(+n||0);if(n<12)return n+' pcs';return Math.floor(n/12)+' lsn'+(n%12?' '+(n%12)+' pcs':'')};
+function vUnit(){if(!UW)UW=ymd(satOf(new Date()));
+  var ws=[],w0=ymd(satOf(new Date()));for(var i=0;i<8;i++)ws.push(addD(w0,-7*i));
+  var h='<div class="row" style="margin-bottom:10px"><h1 style="font-size:30px">Rekap unit</h1><span class="sp"></span><select style="width:auto" aria-label="Minggu" onchange="UW=this.value;render()">'+ws.map(function(w){return '<option value="'+w+'"'+(w===UW?' selected':'')+'>'+fdl(w)+' – '+fdl(addD(w,6))+'</option>'}).join('')+'</select><button class="btn" style="width:auto" onclick="delete UR[UW];render()">'+MSI('ulang')+'</button></div>';
+  var r=UR[UW];
+  if(!r){UR[UW]={loading:1};kj('rekap',{from:new Date(UW+'T00:00').toISOString(),to:new Date(addD(UW,7)+'T00:00').toISOString()}).then(function(x){UR[UW]=x;if(TAB==='unit')render()}).catch(function(e){UR[UW]={err:String(e.message||e)};if(TAB==='unit')render()});r=UR[UW]}
+  if(r.loading)return h+'<div class="load">Memuat rekap…</div>';
+  if(r.err)return h+'<div class="card warn">'+(/tidak dikenal/i.test(r.err)?'Server belum diperbarui. Pasang Kinerja.gs v4 (server POS) dan Hrd.gs v9 (server HRD), lalu muat ulang.':esc(r.err))+'</div>';
+  var J=r.jahit||{},S=r.setor||{},RJ=r.reject||{},A=r.anggota||{},U={};[J,S,RJ,A].forEach(function(o){Object.keys(o).forEach(function(k){U[k]=1})});
+  var names=Object.keys(U).sort(function(a,b){return a.localeCompare(b,'id',{numeric:true})});
+  var num=function(n,cls){return '<td style="text-align:right;white-space:nowrap"'+(cls?' class="'+cls+'"':'')+'>'+(n?lz(n):'<span class="mu">–</span>')+'</td>'};
+  h+='<div class="card" style="overflow:auto"><h2 style="margin-top:0">Unit jahit</h2>'
+   +(names.length?'<table><tr><th>Unit</th><th style="text-align:right">Diberikan</th><th style="text-align:right">Dikembalikan</th><th style="text-align:right">Disetor (disetujui)</th><th style="text-align:right">Menunggu</th><th style="text-align:right">Di luar jatah</th><th style="text-align:right">Pindah manual</th><th style="text-align:right">Reject</th><th style="text-align:right">Di tangan sekarang</th></tr>'
+     +names.map(function(n){var j=J[n]||{},s=S[n]||{};return '<tr><td><b>'+esc(n)+'</b>'+(A[n]&&!(A[n].length===1&&A[n][0]===n)?'<div class="mu" style="font-size:12px">'+esc(A[n].join(', '))+'</div>':'')+'</td>'
+       +num((j.beri||0))+num(j.balik)+num(s.ok)+num(s.tunggu)+num(s.luar,'warn')+num(j.manual,'warn')+num(RJ[n],'warn')+num(j.tangan)+'</tr>'}).join('')+'</table>'
+     :'<p class="mu">Belum ada data minggu ini.</p>')
+   +'<p class="mu" style="font-size:12px;margin:10px 0 0">Diberikan = dipindah ke Jahit atas nama unit di menu Produksi. Disetor = setoran jahit yang sudah disetujui supervisor. Di luar jatah = bagian dari setoran yang diambil dari jatah unit lain. Pindah manual = Jahit → Finishing oleh Owner/Admin tanpa setoran. Reject = dicatat tim QC dengan unit asal jahitan. Di tangan = masih di tahap Jahit atas nama unit saat ini.</p></div>';
+  var P=r.potong||{},pn=Object.keys(P).sort(function(a,b){return P[b]-P[a]});
+  h+='<div class="card" style="margin-top:12px;overflow:auto"><h2 style="margin-top:0">Pemotong</h2>'+(pn.length?'<table><tr><th>Nama</th><th style="text-align:right">Dipindah ke Cutting</th></tr>'+pn.map(function(n){return '<tr><td>'+esc(n)+'</td>'+num(P[n])+'</tr>'}).join('')+'</table>':'<p class="mu">Belum ada data. Pemotong dipilih di menu Produksi saat barang dipindah dari Rak bahan ke Cutting.</p>')+'</div>';
+  return h}
 var RW='',RG=null,RF='',RD='',RTOT={t:0,n:0},GT={};
 /* ringkasan gaji semua workshop minggu ini (Owner) */
 function totalWsH(t,n){RTOT={t:t,n:n};if(!WS)return '';var g=GT[RW];
